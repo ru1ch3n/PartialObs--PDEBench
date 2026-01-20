@@ -1,0 +1,55 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: pde-refiner
+short_title: PDE-Refiner
+full_title: 'PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction'
+authors: (see paper)
+year: 2023
+category: Diffusion & generative PDE inference
+badges:
+- Iterative refinement
+- Rollouts
+tagline: Iteratively denoise/refine PDE rollouts to improve stability and accuracy.
+quick_facts:
+- 'Type: iterative refinement (diffusion-like)'
+- Targets long-horizon rollouts
+- Strong on chaotic PDEs
+links:
+  paper: https://arxiv.org/abs/2308.05732
+  paper_label: arXiv:2308.05732
+tldr: PDE-Refiner applies iterative refinement to improve long-horizon PDE rollouts, especially on chaotic systems where one-shot operators drift.
+contrib:
+- Introduces an iterative refinement loop for PDE trajectory prediction.
+- Targets error accumulation in long rollouts (forecasting) and reconstruction.
+- Demonstrates gains on chaotic PDE benchmarks.
+pdes:
+- Kuramoto–Sivashinsky
+- Kolmogorov flow
+tasks:
+- Long-horizon rollout forecasting
+- Partial reconstruction
+baselines:
+- FNO
+- U-Net
+- ResNet
+setting:
+- Iterative refine steps at inference; can be paired with neural operators.
+- Evaluates stability/accuracy for long rollouts on chaotic PDEs.
+results_tables:
+- title: Key results
+  header:
+  - Benchmark
+  - Metric
+  - Reported takeaway
+  rows:
+  - - KS long rollouts
+    - Trajectory error
+    - Refinement reduces drift vs one-shot operator baselines.
+  - - Kolmogorov flow
+    - Rollout stability
+    - Improves long-horizon stability without retraining the base solver.
+status: curated
+method_class: Diffusion
+auto:
+  pdes: []
+  tasks: []

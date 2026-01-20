@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Survey and Review
+method_class: PINN / physics-constrained
+full_title: 'Survey: Adaptive Physics-informed Neural Networks.'
+short_title: 'Survey: Adaptive Physics-informed Neural Networks.'
+year: 2024
+links:
+  paper: https://openreview.net/forum?id=bYP6YB84Pq
+badges:
+- PINN / physics-constrained
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Survey and Review). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: survey-adaptive-physics-informed-neural-networks
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

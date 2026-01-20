@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: AI4Phys/Awesome-AI-for-Physics
+category: AI4Phys (annotated)
+method_class: PINN / physics-constrained
+full_title: Multi-Objective Loss Balancing for Physics-Informed Deep Learning
+short_title: Multi-Objective Loss Balancing for Physics-Informed Deep…
+year: 2021
+month: 10
+links:
+  paper: https://doi.org/10.13140/RG.2.2.20057.24169
+  paper_label: link
+badges:
+- PINN / physics-constrained
+- AI4Phys
+quick_facts:
+- 'Source: AI4Phys (annotated)'
+- 'Class: PINN / physics-constrained'
+tldr: Proposes a novel self-adaptive algorithm, ReLoBRaLo, which dynamically balances multiple loss terms in PINNs based on their relative progress, an exponential moving average, and a unique random lookback mechanism to improve training speed and accuracy.
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: multi-objective-loss-balancing-for-physics-informed-deep
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

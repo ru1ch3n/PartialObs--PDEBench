@@ -1,0 +1,50 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: gpinn
+short_title: gPINN
+full_title: Gradient-Enhanced Physics-Informed Neural Networks
+authors: Yaxing Wang et al.
+year: 2021
+category: Physics-informed optimization
+badges:
+- PINN
+- Gradients
+tagline: Use derivative information to improve PINN training.
+quick_facts:
+- 'Type: gradient-enhanced loss'
+- Can reduce error
+- Adds higher-order constraints
+links:
+  paper: https://arxiv.org/abs/2112.02230
+  paper_label: arXiv:2112.02230
+tldr: gPINNs incorporate gradient information (derivative residuals) into the training objective to mitigate error and improve convergence.
+contrib:
+- Augments PINN loss with gradient-based constraints.
+- Improves approximation on some PDEs by adding extra supervision.
+- Highlights connections between PINNs and higher-order residual enforcement.
+pdes:
+- Poisson
+- Helmholtz
+- Burgers
+tasks:
+- Forward PDE solve
+- Inverse problems (some settings)
+baselines:
+- PINN
+setting:
+- Adds derivatives of PDE residuals to the loss; increases computational cost.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Accuracy
+    - Solution error
+    - Improves solution accuracy on selected benchmarks compared to vanilla PINNs.
+status: curated
+method_class: PINN / physics-constrained
+auto:
+  pdes: []
+  tasks: []

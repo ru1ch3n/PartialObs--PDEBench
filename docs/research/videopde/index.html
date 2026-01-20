@@ -25,7 +25,7 @@
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: diffusion video model<br/>Unifies forward + inverse PDE tasks<br/>Uses spatiotemporal inpainting masks</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
       </div>
 
-      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
     </div>
   </header>
 
@@ -34,13 +34,13 @@
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
 \[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
 \[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
 <li>Casts PDE trajectories as videos and uses diffusion inpainting for conditioning.</li>
 <li>Handles both forward forecasting and inverse reconstruction in one unified framework.</li>
 <li>Demonstrates performance gains vs diffusion and operator baselines on several PDEs.</li>
 </ul></section>
-<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Wave equation</li>
 <li>Navier–Stokes</li>
 <li>Kolmogorov flow</li>

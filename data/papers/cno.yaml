@@ -1,0 +1,59 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: cno
+short_title: CNO
+full_title: Convolutional Neural Operator
+authors: Božidar Raonić et al.
+year: 2023
+category: Neural operators
+badges:
+- Convolution
+- Operator learning
+tagline: Purely convolutional neural operator with strong multi-PDE benchmarking.
+quick_facts:
+- 'Type: convolutional operator'
+- Works on multiple PDE families
+- Competitive vs spectral operators
+links:
+  paper: https://arxiv.org/abs/2302.01178
+  paper_label: arXiv:2302.01178
+  code: https://github.com/camlab-ethz/ConvolutionalNeuralOperator
+tldr: CNO proposes a convolutional (non-Fourier) neural operator that performs competitively across a wide PDE suite including elliptic and time-dependent systems.
+contrib:
+- Defines an operator-learning architecture using only convolutions (no global Fourier mixing).
+- Benchmarks across a broad PDE suite (Poisson, Wave, Navier–Stokes, etc.).
+- Provides strong baseline performance with simple operations and good scaling.
+pdes:
+- Poisson
+- Wave equation
+- Navier–Stokes
+- Allen–Cahn
+- Transport
+- Compressible Euler
+- Darcy flow
+tasks:
+- Forward operator learning
+- Resolution generalization
+baselines:
+- FNO
+- U-NO
+- WNO
+- U-Net
+setting:
+- Evaluated on Representative PDE Benchmarks (RPB) and related datasets.
+- Reports accuracy and efficiency across PDE types.
+results_tables:
+- title: Key results
+  header:
+  - PDE suite
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Multiple PDEs
+    - L2 / rollout error
+    - Competitive accuracy across a wide PDE set with convolution-only design.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

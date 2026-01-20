@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Model Transfer & Meta-Learning
+method_class: SciML
+full_title: A physics-aware learning architecture with input transfer networks for predictive modeling
+short_title: A physics-aware learning architecture with input transfer…
+year: 2020
+links:
+  paper: https://www.sciencedirect.com/science/article/abs/pii/S1568494620306037
+badges:
+- SciML
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Model Transfer & Meta-Learning). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: a-physics-aware-learning-architecture-with-input-transfer
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -24,7 +24,7 @@
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: conservative PINN<br/>Good for shocks<br/>Discrete-domain formulation</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
       </div>
 
-      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
     </div>
   </header>
 
@@ -32,13 +32,13 @@
     <section id="tldr"><h2>TL;DR</h2><p>cPINNs enforce conservation laws on discrete domains (control volumes), improving robustness on PDEs with discontinuities and strong flux constraints.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>PINN / physics-constrained</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
 \[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
 <li>Conservative formulation of PINNs on discrete partitions.</li>
 <li>Better suited for conservation laws with shocks.</li>
 <li>Connects PINNs with finite volume ideas.</li>
 </ul></section>
-<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Burgers</li>
 <li>Compressible Euler</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>

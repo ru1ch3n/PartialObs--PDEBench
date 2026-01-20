@@ -1,0 +1,32 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Channels
+method_class: SciML
+full_title: 'Parallel Computing and Scientific Machine Learning profile Lecture videos for MIT''s 18.337J/6.338J: Parallel Computing and Scientific Machine Learning course of Fall 2020 and Spring 2021.'
+short_title: Parallel Computing and Scientific Machine Learning profil…
+year: 2021
+links: {}
+badges:
+- SciML
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Channels). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: parallel-computing-and-scientific-machine-learning-profil
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

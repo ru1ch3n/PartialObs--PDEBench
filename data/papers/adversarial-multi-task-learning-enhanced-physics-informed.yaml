@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Accerleration
+method_class: PINN / physics-constrained
+full_title: Adversarial Multi-task Learning Enhanced Physics-informed Neural Networks for Solving Partial Differential Equations
+short_title: Adversarial Multi-task Learning Enhanced Physics-informed…
+year: 2021
+links:
+  paper: https://arxiv.org/pdf/2104.14320
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Accerleration). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: adversarial-multi-task-learning-enhanced-physics-informed
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

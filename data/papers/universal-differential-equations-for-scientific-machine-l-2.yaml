@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Neural Differential Equations
+method_class: SciML
+full_title: Universal Differential Equations for Scientific Machine Learning arxiv code Rackauckas
+short_title: Universal Differential Equations for Scientific Machine L…
+year: 2020
+links:
+  paper: https://arxiv.org/abs/2001.04385
+  code: https://github.com/ChrisRackauckas/universal_differential_equations
+badges:
+- SciML
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Neural Differential Equations). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: universal-differential-equations-for-scientific-machine-l-2
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

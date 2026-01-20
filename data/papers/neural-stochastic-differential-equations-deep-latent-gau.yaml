@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Neural Differential Equations
+method_class: Diffusion
+full_title: 'Neural stochastic differential equations: Deep latent gaussian models in the diffusion limit arxiv Tzen'
+short_title: 'Neural stochastic differential equations: Deep latent gau…'
+year: 2019
+links:
+  paper: https://arxiv.org/abs/1905.09883
+badges:
+- Diffusion
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: Diffusion'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Neural Differential Equations). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: neural-stochastic-differential-equations-deep-latent-gau
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

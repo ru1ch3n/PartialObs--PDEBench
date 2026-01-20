@@ -1,0 +1,48 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: sindy
+short_title: SINDy
+full_title: Discovering governing equations from data by sparse identification of nonlinear dynamical systems
+authors: Steven L. Brunton, Joshua L. Proctor, J. Nathan Kutz
+year: 2016
+category: PDE discovery
+badges:
+- Sparse regression
+- Discovery
+tagline: Sparse regression for discovering dynamics (foundation for PDE-FIND).
+quick_facts:
+- 'Type: sparse system identification'
+- Library + regression
+- Interpretable equations
+links:
+  paper: https://www.pnas.org/doi/10.1073/pnas.1517384113
+  paper_label: PNAS 2016
+tldr: SINDy introduced sparse identification with a candidate library, enabling interpretable discovery of governing equations from data.
+contrib:
+- Sparse regression selects a small set of active terms from a large library.
+- Produces interpretable discovered dynamics.
+- Inspired many PDE discovery methods (e.g., PDE-FIND).
+pdes: []
+tasks:
+- Equation discovery
+baselines: []
+setting:
+- Requires time-series/state data and a candidate term library.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Interpretability
+    - Model sparsity
+    - Finds compact governing equations from data.
+  - - Robustness
+    - Noise sensitivity
+    - Works well with appropriate denoising/regularization.
+status: curated
+method_class: SciML
+auto:
+  pdes: []
+  tasks: []

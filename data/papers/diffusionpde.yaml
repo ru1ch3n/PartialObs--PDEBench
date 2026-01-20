@@ -1,0 +1,115 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: diffusionpde
+short_title: DiffusionPDE
+full_title: 'DiffusionPDE: Generative PDE-Solving Under Partial Observation'
+authors: Ruicheng He et al.
+year: 2024
+category: Diffusion & generative PDE inference
+badges:
+- Diffusion
+- Partial observation
+tagline: Diffusion model for PDE solving from sparse measurements.
+quick_facts:
+- 'Type: conditional diffusion for fields'
+- 'Setting: partial observation'
+- Covers elliptic + fluid PDEs
+links:
+  paper: https://arxiv.org/abs/2406.17763
+  paper_label: arXiv:2406.17763
+tldr: DiffusionPDE uses a conditional diffusion model to generate PDE solutions consistent with sparse observations, enabling both forward prediction and inverse reconstruction.
+contrib:
+- Introduces diffusion-based PDE solving under partial observation (mask-conditioned generation).
+- Unified framework for forward and inverse problems across multiple PDE families.
+- Shows robustness when measurements are sparse / missing compared to deterministic operators.
+pdes:
+- Darcy flow
+- Poisson
+- Helmholtz
+- Navier–Stokes
+tasks:
+- Forward solution generation
+- Inverse reconstruction
+baselines:
+- PINO
+- DeepONet
+- PINN
+- FNO
+setting:
+- Mask-conditioned diffusion; partial measurements of inputs/outputs.
+- Evaluates forward and inverse settings with relative error (%).
+- Uses iterative sampling (multiple diffusion steps).
+results_tables:
+- title: Reported relative error (examples)
+  note: Transcribed from the earlier site draft.
+  header:
+  - PDE
+  - Dir.
+  - DiffusionPDE
+  - PINO
+  - DeepONet
+  - PINN
+  - FNO
+  rows:
+  - - Darcy
+    - Fwd
+    - 4.1%
+    - 4.8%
+    - 4.8%
+    - 42.2%
+    - 4.9%
+  - - Darcy
+    - Inv
+    - 21.7%
+    - —
+    - —
+    - —
+    - —
+  - - Poisson
+    - Fwd
+    - 0.3%
+    - 0.1%
+    - 0.1%
+    - 1.2%
+    - 0.3%
+  - - Poisson
+    - Inv
+    - 19.3%
+    - —
+    - —
+    - —
+    - —
+  - - Helmholtz
+    - Fwd
+    - 0.8%
+    - 0.6%
+    - 0.7%
+    - 0.8%
+    - 0.7%
+  - - Helmholtz
+    - Inv
+    - 8.5%
+    - —
+    - —
+    - —
+    - —
+  - - Navier–Stokes
+    - Fwd
+    - 1.2%
+    - 1.4%
+    - 2.0%
+    - 3.0%
+    - 1.5%
+  - - Navier–Stokes
+    - Inv
+    - 11.7%
+    - —
+    - —
+    - —
+    - —
+benchmark_note: To reproduce, align observation masks, diffusion step schedule, and normalization.
+status: curated
+method_class: Diffusion
+auto:
+  pdes: []
+  tasks: []

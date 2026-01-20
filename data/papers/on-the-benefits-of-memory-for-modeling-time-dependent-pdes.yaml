@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Papers on PINN Analysis
+method_class: PINN / physics-constrained
+full_title: On the Benefits of Memory for Modeling Time-Dependent PDEs
+short_title: On the Benefits of Memory for Modeling Time-Dependent PDEs
+year: 2025
+links:
+  paper: https://arxiv.org/pdf/2409.02313
+badges:
+- PINN / physics-constrained
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Papers on PINN Analysis). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: on-the-benefits-of-memory-for-modeling-time-dependent-pdes
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

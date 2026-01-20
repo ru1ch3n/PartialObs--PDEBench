@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Software
+method_class: SciML
+full_title: Universal Differential Equations for Scientific Machine Learning
+short_title: Universal Differential Equations for Scientific Machine L…
+year: 2020
+links:
+  paper: https://arxiv.org/pdf/2001.04385.pdf
+  code: https://github.com/ChrisRackauckas/universal_differential_equations
+badges:
+- SciML
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Software). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: universal-differential-equations-for-scientific-machine-l
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

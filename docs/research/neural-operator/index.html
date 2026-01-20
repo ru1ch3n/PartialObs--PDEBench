@@ -24,7 +24,7 @@
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: operator learning<br/>View: maps between function spaces<br/>Covers many neural operator families</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
       </div>
 
-      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
     </div>
   </header>
 
@@ -32,13 +32,13 @@
     <section id="tldr"><h2>TL;DR</h2><p>Neural operator work formalizes learning solution operators (function-to-function maps) and connects integral, Fourier, and graph-based variants.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
 \[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
 <li>Frames PDE surrogate learning as operator learning between function spaces.</li>
 <li>Connects several architectures (kernel/integral, Fourier, graph) under a common viewpoint.</li>
 <li>Provides theoretical and empirical grounding for resolution-invariant surrogate solvers.</li>
 </ul></section>
-<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Burgers</li>
 <li>Darcy flow</li>
 <li>Navier–Stokes</li>

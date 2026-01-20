@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """Static-site generator for the *docs/* pages.
 
-It reads paper metadata from scripts/research_db.ndjson and writes:
+Source of truth
+--------------
+The generator prefers per-paper YAML files under ``data/papers/*.yaml``.
+If that folder is missing/empty, it falls back to the legacy
+``scripts/research_db.ndjson`` file.
+
+It writes:
   - docs/index.html                     (homepage: summary + paper tree)
   - docs/research/index.html            (research hub + category browser)
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
+  - docs/contribute/index.html          (how to add/curate papers)
 
 This repo uses GitHub Pages with /docs as the site root.
 """
@@ -22,9 +29,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
+import yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS = REPO_ROOT / "docs"
+
+# YAML paper database (preferred)
+PAPERS_YAML_DIR = REPO_ROOT / "data" / "papers"
 
 
 PAPER_TREE_ASCII = r"""
@@ -72,42 +84,42 @@ Scientific ML for PDEs (selected famous works)
 """.strip("\n")
 
 PAPER_TREE_MERMAID = r"""
-graph TD
-  Root[Scientific ML for PDEs]
-  Root --> PI[Physics-informed optimization]
-  PI --> DeepRitz[Deep Ritz (2018)]
-  PI --> DGM[DGM / Deep Galerkin (2018)]
-  PI --> DeepBSDE[DeepBSDE (2018)]
-  PI --> PINN[PINNs (2019)]
-  PINN --> cPINN[cPINNs (2020)]
-  PINN --> SAPINN[SA-PINNs (2020)]
-  PINN --> XPINN[XPINNs (2021)]
-  PINN --> gPINN[gPINNs (2021)]
-  PINN --> FBPINN[FBPINNs (2021)]
-  Root --> OL[Operator learning]
-  OL --> DeepONet[DeepONet (2021)]
-  OL --> FNO[FNO (2020)]
-  FNO --> PINO[PINO (2021)]
-  FNO --> GalerkinT[Galerkin Transformer (2021)]
-  FNO --> WNO[WNO (2022)]
-  WNO --> UWNO[U-WNO (2024)]
-  FNO --> UNO[U-NO (2022)]
-  FNO --> CNO[CNO (2023)]
-  OL --> GKN[GKN (2020)]
-  OL --> MGNO[MGNO (2020)]
-  Root --> Diff[Diffusion / generative PDE inference]
-  Diff --> DiffPDE[DiffusionPDE (2024)]
-  DiffPDE --> FunDPS[FunDPS (2025)]
-  FunDPS --> PRISMA[PRISMA (2025)]
-  DiffPDE --> VideoPDE[VideoPDE (2025)]
-  Root --> Graph[Graph simulators]
-  Graph --> GNS[Graph Networks for physics simulation (2020)]
-  Graph --> MGN[MeshGraphNets (2021)]
-  Root --> Bench[Benchmarks and datasets]
-  Bench --> PDEBench[PDEBench (2022)]
-  Bench --> PDEArena[PDEArena (2022)]
-  Bench --> FourCastNet[FourCastNet (2022)]
-  FourCastNet --> GraphCast[GraphCast (2023)]
+flowchart TD
+  Root["Scientific ML for PDEs"]
+  Root --> PI["Physics-informed optimization"]
+  PI --> DeepRitz["Deep Ritz (2018)"]
+  PI --> DGM["DGM / Deep Galerkin (2018)"]
+  PI --> DeepBSDE["DeepBSDE (2018)"]
+  PI --> PINN["PINNs (2019)"]
+  PINN --> cPINN["cPINNs (2020)"]
+  PINN --> SAPINN["SA-PINNs (2020)"]
+  PINN --> XPINN["XPINNs (2021)"]
+  PINN --> gPINN["gPINNs (2021)"]
+  PINN --> FBPINN["FBPINNs (2021)"]
+  Root --> OL["Operator learning"]
+  OL --> DeepONet["DeepONet (2021)"]
+  OL --> FNO["FNO (2020)"]
+  FNO --> PINO["PINO (2021)"]
+  FNO --> GalerkinT["Galerkin Transformer (2021)"]
+  FNO --> WNO["WNO (2022)"]
+  WNO --> UWNO["U-WNO (2024)"]
+  FNO --> UNO["U-NO (2022)"]
+  FNO --> CNO["CNO (2023)"]
+  OL --> GKN["GKN (2020)"]
+  OL --> MGNO["MGNO (2020)"]
+  Root --> DiffGen["Diffusion / generative PDE inference"]
+  DiffGen --> DiffPDE["DiffusionPDE (2024)"]
+  DiffPDE --> FunDPS["FunDPS (2025)"]
+  FunDPS --> PRISMA["PRISMA (2025)"]
+  DiffPDE --> VideoPDE["VideoPDE (2025)"]
+  Root --> GraphSim["Graph simulators"]
+  GraphSim --> GNS["Graph Networks for physics simulation (2020)"]
+  GraphSim --> MGN["MeshGraphNets (2021)"]
+  Root --> Bench["Benchmarks and datasets"]
+  Bench --> PDEBench["PDEBench (2022)"]
+  Bench --> PDEArena["PDEArena (2022)"]
+  Bench --> FourCastNet["FourCastNet (2022)"]
+  FourCastNet --> GraphCast["GraphCast (2023)"]
 """.strip("\n")
 
 
@@ -336,22 +348,121 @@ def infer_tasks(p: Dict[str, Any]) -> List[str]:
 
     return _dedup_keep_order(tasks)
 
+
+def infer_method_class(p: Dict[str, Any]) -> str:
+    """Best-effort method taxonomy label.
+
+    This is only a fallback when a paper YAML/DB entry does not specify
+    ``method_class``.
+    """
+    title = str(p.get("full_title") or p.get("title") or "").lower()
+    cat = str(p.get("category") or "").lower()
+    text = f"{title} {cat}"
+
+    if any(k in text for k in ["diffusion", "score-based", "score based", "denoising", "sde"]):
+        return "Diffusion"
+    if any(k in text for k in ["neural operator", "operator learning", "deeponet", "fno", "fourier neural operator"]):
+        return "Operator learning"
+    if any(k in text for k in ["pinn", "physics-informed", "physics informed", "physics-constrained", "physics constrained"]):
+        return "PINN / physics-constrained"
+    if any(k in text for k in ["graph", "mesh", "gns", "meshgraph", "mgno", "message passing"]):
+        return "Graph / mesh"
+    if any(k in text for k in ["transformer", "attention"]):
+        return "Transformers"
+    if any(k in text for k in ["benchmark", "dataset", "suite", "arena"]):
+        return "Benchmark"
+    return "SciML"
+
+
+def _as_list(v: Any) -> List[str]:
+    return v if isinstance(v, list) else []
+
+
+def get_manual_list(p: Dict[str, Any], key: str) -> List[str]:
+    return _as_list(p.get(key))
+
+
+def get_auto_list(p: Dict[str, Any], key: str) -> List[str]:
+    auto = p.get("auto") if isinstance(p.get("auto"), dict) else {}
+    return _as_list(auto.get(key))
+
+
+def get_display_list(p: Dict[str, Any], key: str) -> Tuple[List[str], bool]:
+    """Return (list, is_auto).
+
+    `is_auto=True` means the manual list is empty and we are showing auto-suggestions.
+    """
+    manual = get_manual_list(p, key)
+    auto = get_auto_list(p, key)
+    if manual:
+        return manual, False
+    return auto, bool(auto)
+
 def load_db() -> List[Dict[str, Any]]:
     """Load paper metadata.
 
-    We use NDJSON (one JSON object per line) so the database can be edited/appended
-    without reformatting a huge JSON array.
+    Preferred: YAML files under ``data/papers/*.yaml`` (one file per paper).
+    Fallback: NDJSON under ``scripts/research_db.ndjson`` (legacy).
     """
-    path = REPO_ROOT / "scripts" / "research_db.ndjson"
+
     papers: List[Dict[str, Any]] = []
+
+    # 1) YAML DB (preferred)
+    if PAPERS_YAML_DIR.exists():
+        for path in sorted(PAPERS_YAML_DIR.glob("*.y*ml")):
+            if path.name.startswith("_"):
+                continue
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if not isinstance(data, dict):
+                continue
+            data.setdefault("slug", path.stem)
+            data["_yaml_path"] = str(path.relative_to(REPO_ROOT))
+
+            # Allow a friendlier alias: `title:` instead of `full_title:`
+            if data.get("title") and not data.get("full_title"):
+                data["full_title"] = data["title"]
+            if data.get("full_title") and not data.get("title"):
+                data["title"] = data["full_title"]
+
+            # Normalize common fields
+            if "year" in data and isinstance(data["year"], str) and data["year"].isdigit():
+                data["year"] = int(data["year"])
+            data.setdefault("authors", "")
+            data.setdefault("short_title", data.get("short_title") or data.get("full_title") or data["slug"])
+            data.setdefault("method_class", data.get("method_class") or "SciML")
+            data.setdefault("status", data.get("status") or "index")
+            data.setdefault("links", {})
+            data.setdefault("badges", [])
+            data.setdefault("quick_facts", [])
+            data.setdefault("contrib", [])
+            data.setdefault("theory", [])
+            data.setdefault("core_math", [])
+            data.setdefault("pdes", [])
+            data.setdefault("tasks", [])
+            data.setdefault("baselines", [])
+            data.setdefault("setting", [])
+            data.setdefault("results_tables", [])
+            data.setdefault("auto", {})
+            if not isinstance(data["auto"], dict):
+                data["auto"] = {}
+            data["auto"].setdefault("pdes", [])
+            data["auto"].setdefault("tasks", [])
+
+            papers.append(data)
+
+    if papers:
+        return papers
+
+    # 2) NDJSON DB (legacy)
+    path = REPO_ROOT / "scripts" / "research_db.ndjson"
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
             obj = json.loads(line)
-            assert isinstance(obj, dict)
-            papers.append(obj)
+            if isinstance(obj, dict):
+                papers.append(obj)
     return papers
 
 
@@ -397,7 +508,7 @@ def badges(items: List[str]) -> str:
 
 
 def nav(root: str, current: str) -> str:
-    # current: one of "home", "research", "pde", "baselines", "benchmark"
+    # current: one of "home", "research", "pde", "baselines", "benchmark", "contribute"
     def a(href: str, label: str, key: str) -> str:
         aria = ' aria-current="page"' if key == current else ""
         return f"<a href=\"{href}\"{aria}>{label}</a>"
@@ -409,6 +520,7 @@ def nav(root: str, current: str) -> str:
         + a(f"{root}pde-problems/", "PDE problems", "pde")
         + a(f"{root}baselines/", "Baselines", "baselines")
         + a(f"{root}benchmark/", "Benchmark", "benchmark")
+        + a(f"{root}contribute/", "Contribute", "contribute")
         + "</nav>"
     )
 
@@ -499,10 +611,28 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         "</div>"
     )
 
-    sections = []
-    sections.append(
-        f"<section id=\"tldr\"><h2>TL;DR</h2><p>{p.get('tldr','')}</p></section>"
-    )
+    # --- Page body ---
+    sections: List[str] = []
+
+    # Curation status + source path
+    status = str(p.get("status", "index"))
+    yaml_path = p.get("_yaml_path") or f"data/papers/{p.get('slug','<slug>')}.yaml"
+    if status != "curated":
+        sections.append(
+            "<div class=\"note\">"
+            "This page is currently an <b>index-only</b> placeholder. "
+            "To improve it, edit the YAML file: "
+            f"<code>{html_escape(str(yaml_path))}</code> "
+            "(see the <b>Contribute</b> tab)."
+            "</div>"
+        )
+
+    tldr = (p.get("tldr") or "").strip()
+    if not tldr:
+        tldr_html = "<p class=\"muted\">Not curated yet. Add a 2–4 sentence TL;DR in the YAML file.</p>"
+    else:
+        tldr_html = f"<p>{html_escape(tldr)}</p>"
+    sections.append(f"<section id=\"tldr\"><h2>TL;DR</h2>{tldr_html}</section>")
 
     # Core method (math) + theory
     method_class = p.get("method_class", "SciML")
@@ -516,25 +646,36 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     sections.append(
         "<section id=\"theory\"><h2>Main theoretical contribution</h2>"
-        + ul_or_placeholder(p.get("theory", []), "Not extracted yet (paper page is index-only, or theory not summarized).")
+        + ul_or_placeholder(
+            p.get("theory", []),
+            "Not curated yet. Add bullet points under <code>theory</code> in YAML.",
+        )
         + "</section>"
     )
 
     sections.append(
         "<section id=\"contribution\"><h2>Main contribution</h2>"
-        + ul_or_placeholder(p.get("contrib", []), "Not extracted yet (paper page is index-only).")
+        + ul_or_placeholder(
+            p.get("contrib", []),
+            "Not curated yet. Add bullet points under <code>contrib</code> in YAML.",
+        )
         + "</section>"
     )
 
     # Experiments / PDE / tasks
+    pdes_display, pdes_is_auto = get_display_list(p, "pdes")
+    tasks_display, tasks_is_auto = get_display_list(p, "tasks")
+    pdes_title = "PDE problems" + (" <span class=\"muted\">(auto)</span>" if pdes_is_auto else "")
+    tasks_title = "Tasks" + (" <span class=\"muted\">(auto)</span>" if tasks_is_auto else "")
+
     exp_html = (
         "<section id=\"experiments\"><h2>Experiments</h2>"
         "<div class=\"grid2\">"
-        "  <div class=\"card\"><h3>PDE problems (as reported)</h3>"
-        + ul_or_placeholder(p.get("pdes", []), "Not specified in the source list entry.")
+        f"  <div class=\"card\"><h3>{pdes_title}</h3>"
+        + ul_or_placeholder(pdes_display, "Not specified yet.")
         + "</div>"
-        "  <div class=\"card\"><h3>Tasks</h3>"
-        + ul_or_placeholder(p.get("tasks", []), "Not specified in the source list entry.")
+        f"  <div class=\"card\"><h3>{tasks_title}</h3>"
+        + ul_or_placeholder(tasks_display, "Not specified yet.")
         + "</div>"
         "</div>"
     )
@@ -548,7 +689,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     sections.append(
         "<section id=\"baselines\"><h2>Comparable baselines</h2>"
-        + ul_or_placeholder(p.get("baselines", []))
+        + ul_or_placeholder(p.get("baselines", []), "Not curated yet. Add items under <code>baselines</code> in YAML.")
         + "</section>"
     )
 
@@ -603,13 +744,13 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     root = ""  # docs/index.html
     # Homepage stays compact: only website intro + a paper tree.
 
+    # The homepage should stay minimal (no long “get started” block).
     hero_card = (
         "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Quick start</div>"
+        "  <div class=\"smallcaps\">Contribute</div>"
         "  <p class=\"muted\" style=\"margin-top:8px;\">"
-        "    <b>Goal:</b> reconstruct PDE solutions under partial observation.<br/>"
-        "    <b>Browse:</b> Research → paper pages; PDE problems; Baselines.<br/>"
-        "    <b>Benchmark:</b> moved to the Benchmark tab." 
+        "    Add or improve paper pages by editing <code>data/papers/*.yaml</code>. "
+        "    See the <b>Contribute</b> tab for the step-by-step workflow and templates."
         "  </p>"
         "</div>"
     )
@@ -625,7 +766,8 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     <li><b>Research:</b> an index of ~300 AI4PDE papers with hyperlinks to one-page summaries (curated pages include structured experiment tables).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> the benchmark specification (PDE suite, masks, metrics, data generation).</li>
+    <li><b>Benchmark:</b> the benchmark specification (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
+    <li><b>Contribute:</b> how to add/curate papers via YAML (recommended if you want richer per-paper details).</li>
   </ul>
 </section>
 
@@ -672,7 +814,7 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
     root = "../"  # from docs/research/index.html
     # Filters
     method_classes = sorted({p.get("method_class", "SciML") for p in papers})
-    pde_tags = sorted({pde for p in papers for pde in (p.get("pdes", []) or [])})
+    pde_tags = sorted({pde for p in papers for pde in (get_display_list(p, "pdes")[0] or [])})
     statuses = sorted({p.get("status", "curated") for p in papers})
 
     def opt(value: str) -> str:
@@ -690,9 +832,9 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
         year = int(p.get("year", 0) or 0)
         method = html_escape(p.get("method_class", "SciML"))
         status = html_escape(p.get("status", "curated"))
-        pdes = p.get("pdes", []) or []
+        pdes, _ = get_display_list(p, "pdes")
         pde_str = ", ".join(html_escape(x) for x in pdes[:3]) + ("…" if len(pdes) > 3 else "")
-        tasks = p.get("tasks", []) or []
+        tasks, _ = get_display_list(p, "tasks")
         task_str = ", ".join(html_escape(x) for x in tasks[:2]) + ("…" if len(tasks) > 2 else "")
         rows.append(
             f"<tr class=\"paper-row\" "
@@ -806,7 +948,8 @@ def render_pde_problems(papers: List[Dict[str, Any]]) -> str:
     root = "../"  # docs/pde-problems/index.html
     pde_to_papers: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for p in papers:
-        for pde in p.get("pdes", []) or []:
+        pdes_display, _ = get_display_list(p, "pdes")
+        for pde in pdes_display:
             pde_to_papers[pde].append(p)
 
     def family(pde: str) -> str:
@@ -993,6 +1136,95 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
     )
 
 
+def render_contribute(papers: List[Dict[str, Any]]) -> str:
+    """Contribution guide (website page)."""
+    root = "../"  # docs/contribute/index.html
+
+    n_total = len(papers)
+    n_curated = sum(1 for p in papers if str(p.get("status", "index")) == "curated")
+
+    template_path = REPO_ROOT / "data" / "papers" / "_template.yaml"
+    template_text = ""
+    if template_path.exists():
+        template_text = template_path.read_text(encoding="utf-8")
+
+    template_block = (
+        f"<pre><code>{html_escape_pre(template_text.strip() or '# (template missing)')}</code></pre>"
+        if template_text
+        else "<div class=\"note\">Template file not found: <code>data/papers/_template.yaml</code></div>"
+    )
+
+    body = (
+        "<section class=\"section\">"
+        "  <h2>How this site is built</h2>"
+        "  <p>All paper metadata and summaries live as <b>YAML</b> under <code>data/papers/</code>. "
+        "The Python generator reads YAML and writes the static website into <code>docs/</code> (GitHub Pages).</p>"
+        f"  <p class=\"muted\">Current coverage: <b>{n_curated}</b> curated pages out of <b>{n_total}</b> indexed papers.</p>"
+        "</section>"
+        "<section class=\"section\">"
+        "  <h2>Add a new paper (or curate an existing one)</h2>"
+        "  <ol>"
+        "    <li><b>Create / edit a YAML file</b> in <code>data/papers/</code>. One paper = one YAML file. "
+        "        Use a short, URL-friendly filename (slug), e.g. <code>fno.yaml</code> or <code>diffusionpde.yaml</code>.</li>"
+        "    <li><b>Fill the key fields</b>: title, year, method class, links, and (ideally) PDEs/tasks/experiments/baselines.</li>"
+        "    <li><b>Regenerate the site</b>: run <code>python scripts/generate_research_site.py</code> from the repo root.</li>"
+        "    <li><b>Preview locally</b> (optional): <code>python -m http.server -d docs 8000</code> and open the shown URL.</li>"
+        "    <li><b>Commit + push</b> your changes (<code>data/papers/*.yaml</code> + regenerated <code>docs/</code>) and open a PR.</li>"
+        "  </ol>"
+        "</section>"
+        "<section class=\"section\">"
+        "  <h2>YAML schema (human-friendly)</h2>"
+        "  <p>Write plain text; the site will format it. You can include LaTeX in <code>core_math</code> and <code>theory</code> items.</p>"
+        "</section>"
+        + template_block
+        + "<section class=\"section\">"
+        "  <h2>Results tables</h2>"
+        "  <p>To include a paper's main quantitative results, add <code>results_tables</code> entries in YAML:</p>"
+        "  <pre><code>results_tables:\n"
+        "  - title: Main table (as reported)\n"
+        "    note: Optional short note / dataset / metric.\n"
+        "    header: [Model, Error \\u2193, Speed]  # columns\n"
+        "    rows:\n"
+        "      - [FNO, 0.012, 1\\u00d7]\n"
+        "      - [Your method, 0.008, 0.9\\u00d7]\n"
+        "</code></pre>"
+        "  <div class=\"note\">"
+        "    Please copy numbers exactly from the paper (and mention the setting in <code>note</code>)."
+        "  </div>"
+        "</section>"
+        "<section class=\"section\">"
+        "  <h2>Good curation checklist</h2>"
+        "  <ul>"
+        "    <li><b>Core method</b>: add 1\u20133 key equations in <code>core_math</code>.</li>"
+        "    <li><b>Theory</b>: list theorems/guarantees/assumptions in <code>theory</code>.</li>"
+        "    <li><b>PDEs & tasks</b>: name the PDEs used (Navier\u2013Stokes, Burgers, Darcy, etc.) and the task type (forecasting, inverse, UQ...).</li>"
+        "    <li><b>Partial observation</b>: describe the mask (sensors, missing pixels, sparse trajectories, etc.).</li>"
+        "    <li><b>Baselines</b>: list compared methods and training setup differences.</li>"
+        "  </ul>"
+        "</section>"
+    )
+
+    hero_card = (
+        "<div class=\"hero-card\">"
+        "  <div class=\"smallcaps\">Files to edit</div>"
+        "  <p class=\"muted\" style=\"margin-top:8px;\">"
+        "    <code>data/papers/&lt;slug&gt;.yaml</code> (source)\n"
+        "    <br/><code>python scripts/generate_research_site.py</code> (build)"
+        "  </p>"
+        "</div>"
+    )
+
+    return page(
+        title="Contribute — PartialObs–PDEBench",
+        root=root,
+        current="contribute",
+        hero_h1="Contribute",
+        hero_subtitle_html="How to add new papers and curate high-quality one-page summaries.",
+        hero_card_html=hero_card,
+        body_html=body,
+    )
+
+
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
@@ -1001,27 +1233,40 @@ def write(path: Path, content: str) -> None:
 def main() -> None:
     papers = load_db()
 
-    # Auto-fill missing PDE/problem + task tags (primarily for index-only entries).
+    # Normalize lists and populate "auto" suggestions (without overwriting human fields).
     for p in papers:
-        # Normalize / infer PDE tags
-        p.setdefault("pdes", [])
-        if p.get("pdes"):
-            p["pdes"] = _dedup_keep_order([normalize_pde_tag(x) for x in (p.get("pdes") or [])])
-        else:
-            p["pdes"] = infer_pdes(p)
+        p.setdefault("method_class", infer_method_class(p))
 
-        # Normalize / infer task tags
-        p.setdefault("tasks", [])
-        if p.get("tasks"):
-            p["tasks"] = _dedup_keep_order([x.strip() for x in (p.get("tasks") or []) if x and x.strip()])
-        else:
-            p["tasks"] = infer_tasks(p)
+        # --- Human-curated fields ---
+        p["pdes"] = _dedup_keep_order([normalize_pde_tag(x) for x in (p.get("pdes") or [])])
+        p["tasks"] = _dedup_keep_order([x.strip() for x in (p.get("tasks") or []) if x and x.strip()])
+
+        # --- Auto-suggested fields (stored under p["auto"]) ---
+        if not isinstance(p.get("auto"), dict):
+            p["auto"] = {}
+        p["auto"].setdefault("pdes", [])
+        p["auto"].setdefault("tasks", [])
+        p["auto"]["pdes"] = _dedup_keep_order(
+            [normalize_pde_tag(x) for x in (p["auto"].get("pdes") or [])]
+        )
+        p["auto"]["tasks"] = _dedup_keep_order(
+            [x.strip() for x in (p["auto"].get("tasks") or []) if x and x.strip()]
+        )
+
+        # If nothing is curated yet, fill auto suggestions from lightweight heuristics.
+        if not p["pdes"] and not p["auto"]["pdes"]:
+            p["auto"]["pdes"] = infer_pdes(p)
+        if not p["tasks"] and not p["auto"]["tasks"]:
+            p["auto"]["tasks"] = infer_tasks(p)
 
     # Home
     write(DOCS / "index.html", render_home(papers))
 
     # Research index
     write(DOCS / "research" / "index.html", render_research_index(papers))
+
+    # Contribute page
+    write(DOCS / "contribute" / "index.html", render_contribute(papers))
 
     # Per-paper pages
     for p in papers:

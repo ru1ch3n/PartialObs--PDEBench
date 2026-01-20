@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Software
+method_class: PINN / physics-constrained
+full_title: 'SciANN: A Keras wrapper for scientific computations and physics-informed deep learning using artificial neural networks'
+short_title: SciANN
+year: 2020
+links:
+  paper: https://www.sciencedirect.com/science/article/pii/S0045782520307374
+  code: https://github.com/sciann/sciann
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Software). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: sciann
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

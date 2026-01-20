@@ -1,0 +1,53 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: pde-net
+short_title: PDE-Net
+full_title: 'PDE-Net: Learning PDEs from data'
+authors: Zichao Long et al.
+year: 2018
+category: PDE discovery
+badges:
+- Discovery
+- Neural nets
+tagline: Neural architecture that identifies PDE forms from data.
+quick_facts:
+- 'Type: neural PDE identification'
+- Learns differential operators
+- Interpretable structure
+links:
+  paper: https://arxiv.org/abs/1710.09668
+  paper_label: arXiv:1710.09668
+tldr: PDE-Net learns differential operators with convolutional filters to identify PDE dynamics from data, combining learning with interpretability constraints.
+contrib:
+- Learns PDE structure via constrained convolutional filters approximating derivatives.
+- Balances prediction with interpretability of learned PDE terms.
+- Influential bridge between deep learning and PDE discovery.
+pdes:
+- Burgers
+- Reaction–diffusion
+- Navier–Stokes
+tasks:
+- Equation discovery
+- Short-term prediction
+baselines:
+- PDE-FIND
+setting:
+- Learns from spatiotemporal solution data; enforces derivative-like filter constraints.
+results_tables:
+- title: Key results
+  header:
+  - Benchmark
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Burgers/NS
+    - Model recovery
+    - Learns PDE structures that predict dynamics and are partially interpretable.
+  - - Generalization
+    - Prediction error
+    - Can generalize to nearby regimes while retaining PDE-like structure.
+status: curated
+method_class: SciML
+auto:
+  pdes: []
+  tasks: []

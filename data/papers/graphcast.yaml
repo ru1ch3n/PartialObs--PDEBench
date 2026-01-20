@@ -1,0 +1,53 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: graphcast
+short_title: GraphCast
+full_title: 'GraphCast: Learning Skillful Medium-Range Global Weather Forecasting'
+authors: Remi Lam et al.
+year: 2023
+category: Weather & climate models
+badges:
+- Graph neural network
+- Weather
+tagline: Graph neural network for global medium-range forecasting.
+quick_facts:
+- 'Type: graph neural network'
+- 'Task: deterministic weather forecasting'
+- 'Data: ERA5; compares to IFS'
+links:
+  paper: https://www.science.org/doi/10.1126/science.adi2336
+  paper_label: Science 2023
+tldr: GraphCast is a graph neural network trained on reanalysis data to produce fast global weather forecasts, reported to outperform a leading numerical model on many evaluation metrics for medium-range horizons.
+contrib:
+- Graph-based representation of the globe to model atmospheric dynamics.
+- Fast inference enabling rapid forecast generation.
+- Strong reported skill compared to operational numerical weather prediction baselines.
+pdes:
+- Atmospheric dynamics (primitive equations)
+tasks:
+- Deterministic medium-range forecasting
+baselines:
+- ECMWF IFS
+- Pangu-Weather
+- FourCastNet
+setting:
+- Trained on ERA5 reanalysis; predicts multiple meteorological variables.
+- Evaluated on medium-range horizons (days).
+results_tables:
+- title: Headline results (as reported)
+  header:
+  - Comparison
+  - Metric
+  - Reported takeaway
+  rows:
+  - - vs ECMWF HRES
+    - Forecast accuracy
+    - Outperforms the operational system on a majority of evaluated metrics in the reported study.
+  - - Runtime
+    - Wall-clock
+    - Produces global forecasts in minutes on accelerators, far faster than NWP.
+status: curated
+method_class: Graph / mesh
+auto:
+  pdes: []
+  tasks: []

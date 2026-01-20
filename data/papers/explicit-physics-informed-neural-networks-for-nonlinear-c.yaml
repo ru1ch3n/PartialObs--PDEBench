@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Applications
+method_class: PINN / physics-constrained
+full_title: 'Explicit physics-informed neural networks for nonlinear closure: The case of transport in tissues'
+short_title: Explicit physics-informed neural networks for nonlinear c…
+year: 2022
+links: {}
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+- Advection(-diffusion)
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Applications). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes:
+- Advection(-diffusion)
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: explicit-physics-informed-neural-networks-for-nonlinear-c
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -1,0 +1,54 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: fengwu
+short_title: FengWu
+full_title: 'FengWu: Pushing the Skillful Global Weather Forecasting Beyond 10 Days Lead'
+authors: Kexin Chen et al.
+year: 2023
+category: Weather & climate models
+badges:
+- Weather
+- Foundation-scale
+tagline: Extends skillful forecasting beyond 10 days (reported).
+quick_facts:
+- 'Type: large weather model'
+- 'Goal: longer lead time'
+- 'Domain: global atmospheric fields'
+links:
+  paper: https://arxiv.org/abs/2304.02948
+  paper_label: arXiv:2304.02948
+tldr: FengWu is a large-scale weather forecasting model that reports skillful predictions beyond 10-day lead times on global evaluation benchmarks.
+contrib:
+- Targets extended-range (10+ day) global forecasting with large models.
+- Reports improved skill vs prior ML and numerical baselines at longer lead times.
+- Highlights scaling + architecture choices for stable long-range prediction.
+pdes:
+- Atmospheric dynamics (primitive equations)
+tasks:
+- Deterministic extended-range forecasting
+baselines:
+- GraphCast
+- Pangu-Weather
+- FourCastNet
+- Numerical solver
+setting:
+- Global reanalysis training; multi-variable prediction.
+- Evaluation over many variables and lead times (days to >10 days).
+results_tables:
+- title: Headline results (as reported)
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - 10+ day lead
+    - Forecast skill
+    - Maintains skill beyond 10 days on reported benchmarks, surpassing earlier ML models.
+  - - Scaling
+    - Accuracy vs compute
+    - Shows benefits from scale and careful architecture/training.
+status: curated
+method_class: SciML
+auto:
+  pdes: []
+  tasks: []

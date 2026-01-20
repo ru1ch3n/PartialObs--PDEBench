@@ -91,15 +91,36 @@ These models are trained on paired data (partial observation → full field):
 
 ---
 
-# Project homepage (GitHub Pages)
+# Project website + research map (GitHub Pages)
 
-A single-page project website is included in `docs/` and is designed to “fit on one page”:
-- PDE definitions
-- Masks (M1–M3)
-- Method summaries (U-Net, FNO, CNO, DeepONet, PINN, DiffusionPDE)
-- Data download + classical-solver data generation notes
-- Quickstart commands
-- References
+The GitHub Pages site lives in `docs/`.
+
+It includes:
+- A **research map** (Research tab) with one-page summaries for papers related to PDE inference under partial observation.
+- A **PDE problems** tab that groups papers by the PDEs they study.
+- A **Baselines** tab that indexes commonly compared methods.
+- A **Benchmark** tab (work in progress).
+
+## Paper database (YAML source of truth)
+
+Paper metadata and summaries are stored as **one YAML per paper** in:
+
+```
+data/papers/<slug>.yaml
+```
+
+This is the recommended contribution workflow (easy to review in PRs):
+1) Add or edit a YAML file.
+2) Rebuild the static site.
+3) Commit the regenerated `docs/` outputs.
+
+To rebuild:
+```bash
+pip install pyyaml
+python scripts/generate_research_site.py
+```
+
+For details, see the **Contribute** tab on the website.
 
 ## Local preview
 ```bash
@@ -113,7 +134,7 @@ http://localhost:8000
 ## Publish with GitHub Pages
 1) GitHub repo → **Settings** → **Pages**  
 2) Build and deployment → **Deploy from a branch**  
-3) Branch: `main`  
+3) Branch: `main` (or `master`, depending on your repo default)  
 4) Folder: `/docs`  
 
 Your site:

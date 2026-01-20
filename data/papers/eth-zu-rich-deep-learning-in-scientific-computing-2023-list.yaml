@@ -1,0 +1,32 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Playlists
+method_class: SciML
+full_title: ETH Zürich | Deep Learning in Scientific Computing 2023 list
+short_title: ETH Zürich | Deep Learning in Scientific Computing 2023 list
+year: 2023
+links: {}
+badges:
+- SciML
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Playlists). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: eth-zu-rich-deep-learning-in-scientific-computing-2023-list
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

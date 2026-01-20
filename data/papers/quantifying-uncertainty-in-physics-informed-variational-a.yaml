@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Probabilistic PINNs and Uncertainty Quantification
+method_class: PINN / physics-constrained
+full_title: Quantifying Uncertainty in Physics-Informed Variational Autoencoders for Anomaly Detection
+short_title: Quantifying Uncertainty in Physics-Informed Variational A…
+year: 2020
+links:
+  paper: https://link.springer.com/chapter/10.1007/978-3-030-69367-1_3
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Probabilistic PINNs and Uncertainty Quantification). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: quantifying-uncertainty-in-physics-informed-variational-a
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Uncertainty quantification

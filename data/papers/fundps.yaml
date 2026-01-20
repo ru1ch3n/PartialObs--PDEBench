@@ -1,0 +1,101 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: fundps
+short_title: FunDPS
+full_title: Guided Diffusion Sampling on Function Spaces with Applications to PDEs
+authors: Alex Tong et al.
+year: 2025
+category: Diffusion & generative PDE inference
+badges:
+- Diffusion
+- Function-space guidance
+tagline: Function-space guidance to cut diffusion steps for PDE inference.
+quick_facts:
+- 'Type: diffusion sampling (function space)'
+- 'Goal: fast inference with few steps'
+- 'Guidance: PDE + measurement consistency'
+links:
+  paper: https://arxiv.org/abs/2505.17004
+  paper_label: arXiv:2505.17004
+  code: https://github.com/neuraloperator/FunDPS
+tldr: FunDPS introduces guidance in diffusion sampling directly on function spaces, enabling accurate PDE solution inference in as few as 1–2 steps on several benchmarks.
+contrib:
+- Formulates diffusion guidance on function spaces (not pixel grids) for PDE operators.
+- Demonstrates strong 1–2 step sampling while keeping errors competitive.
+- Applies to both forward and inverse (partial observation) PDE problems.
+pdes:
+- Darcy flow
+- Poisson
+- Helmholtz
+- Navier–Stokes
+tasks:
+- Forward operator learning
+- Inverse / partial-observation reconstruction
+baselines:
+- DiffusionPDE
+- PINO
+- FNO
+- DeepONet
+setting:
+- Guided diffusion sampling; compares different step counts.
+- Evaluated on standard PDE operator benchmarks; reports relative errors.
+- Includes both forward and inverse settings depending on PDE.
+results_tables:
+- title: Reported relative error (examples)
+  note: Transcribed from the earlier site draft; see the paper for full tables and exact splits.
+  header:
+  - PDE
+  - Dir.
+  - FunDPS (1)
+  - FunDPS (2)
+  - DiffPDE (10)
+  - DiffPDE (50)
+  - PINO
+  - FNO
+  rows:
+  - - Darcy
+    - Fwd
+    - 4.5%
+    - 4.2%
+    - 4.1%
+    - 4.1%
+    - 4.8%
+    - 4.9%
+  - - Darcy
+    - Inv
+    - 18.8%
+    - 18.4%
+    - 22.2%
+    - 21.7%
+    - —
+    - —
+  - - Poisson
+    - Inv
+    - 14.9%
+    - 14.1%
+    - 19.5%
+    - 19.3%
+    - —
+    - —
+  - - Helmholtz
+    - Inv
+    - 8.4%
+    - 7.8%
+    - 8.5%
+    - 8.5%
+    - —
+    - —
+  - - Navier–Stokes
+    - Inv
+    - 12.5%
+    - 11.8%
+    - 11.8%
+    - 11.7%
+    - —
+    - —
+benchmark_note: Check the mask generator and the measurement noise level when comparing to other methods.
+status: curated
+method_class: Diffusion
+auto:
+  pdes: []
+  tasks: []

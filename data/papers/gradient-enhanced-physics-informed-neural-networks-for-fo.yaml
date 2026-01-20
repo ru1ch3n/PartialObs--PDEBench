@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Accerleration
+method_class: PINN / physics-constrained
+full_title: Gradient-enhanced physics-informed neural networks for forward and inverse PDE problems
+short_title: Gradient-enhanced physics-informed neural networks for fo…
+year: 2021
+links:
+  paper: https://arxiv.org/abs/2111.02801
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Accerleration). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: gradient-enhanced-physics-informed-neural-networks-for-fo
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Inverse / partial-observation reconstruction

@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Probabilistic PINNs and Uncertainty Quantification
+method_class: PINN / physics-constrained
+full_title: Bayesian Physics Informed Neural Networks for real-world nonlinear dynamical systems
+short_title: Bayesian Physics Informed Neural Networks for real-world…
+year: 2022
+links:
+  paper: https://doi.org/10.1016/j.cma.2022.115346
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Probabilistic PINNs and Uncertainty Quantification). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: bayesian-physics-informed-neural-networks-for-real-world
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Uncertainty quantification

@@ -1,0 +1,49 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: sa-pinn
+short_title: SA-PINN
+full_title: Self-Adaptive Physics-Informed Neural Networks
+authors: Xuhui Meng et al.
+year: 2020
+category: Physics-informed optimization
+badges:
+- Adaptive weighting
+- PINN
+tagline: Adaptively reweight training points/loss terms in PINNs.
+quick_facts:
+- 'Type: adaptive loss weighting'
+- Improves training
+- Handles stiff PDEs
+links:
+  paper: https://arxiv.org/abs/2009.04544
+  paper_label: arXiv:2009.04544
+tldr: SA-PINNs introduce adaptive weighting for training points or loss terms to focus learning on hard-to-fit regions and improve convergence.
+contrib:
+- Self-adaptive weighting for residual and boundary losses.
+- Reduces sensitivity to manual hyperparameter tuning.
+- Improves learning on stiff or multi-scale PDE problems in reported tests.
+pdes:
+- Allen–Cahn
+- Poisson
+- Burgers
+tasks:
+- Forward PDE solve
+baselines:
+- PINN
+setting:
+- Learns weights jointly with network parameters; focuses sampling on difficult regions.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Convergence
+    - Residual/error
+    - Improves training stability and final error vs fixed-weight PINNs on some PDEs.
+status: curated
+method_class: PINN / physics-constrained
+auto:
+  pdes: []
+  tasks: []

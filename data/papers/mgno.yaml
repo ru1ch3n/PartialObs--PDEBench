@@ -1,0 +1,51 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: mgno
+short_title: MGNO
+full_title: Multipole Graph Neural Operator for Parametric Partial Differential Equations
+authors: Zongyi Li et al.
+year: 2020
+category: Neural operators
+badges:
+- Graph
+- Neural operator
+tagline: Graph neural operator using multipole (fast) interactions.
+quick_facts:
+- 'Type: graph neural operator'
+- 'Idea: multipole acceleration'
+- Handles irregular discretizations
+links:
+  paper: https://arxiv.org/abs/2006.09535
+  paper_label: arXiv:2006.09535
+tldr: MGNO builds an operator model on graphs with fast multipole-style interactions, enabling scalable learning of solution operators for parametric PDEs.
+contrib:
+- Graph-based neural operator with fast multipole-inspired message passing.
+- Aims to scale operator learning beyond dense integral kernels.
+- Applicable to unstructured meshes / nonuniform discretizations.
+pdes:
+- Poisson
+- Darcy flow
+- Navier–Stokes
+tasks:
+- Forward operator learning
+baselines:
+- GKN
+- FNO
+- DeepONet
+setting:
+- Operates on mesh/graph nodes; learns operator via graph interactions.
+results_tables:
+- title: Key results
+  header:
+  - Setting
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Graph/mesh PDEs
+    - Error vs runtime
+    - Improves scalability while maintaining competitive operator accuracy.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

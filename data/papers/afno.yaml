@@ -1,0 +1,48 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: afno
+short_title: AFNO
+full_title: 'Adaptive Fourier Neural Operators: Efficient Token Mixers for Transformers'
+authors: Johnathan Guibas et al.
+year: 2021
+category: Transformers for PDEs
+badges:
+- Fourier
+- Token mixing
+tagline: Adaptive frequency mixing used in large-scale forecasting models.
+quick_facts:
+- 'Type: adaptive Fourier mixing'
+- Used in FourCastNet
+- Scales to large grids
+links:
+  paper: https://arxiv.org/abs/2111.13587
+  paper_label: arXiv:2111.13587
+tldr: AFNO proposes adaptive Fourier-domain mixing as an efficient alternative to full self-attention, later used in operator-style models for high-resolution forecasting.
+contrib:
+- Fourier-domain token mixing with adaptive sparsification.
+- Reduces quadratic attention cost for large grids.
+- Became a common component in scalable weather/neural-operator models.
+pdes:
+- Atmospheric dynamics (primitive equations)
+tasks:
+- Efficient global mixing for high-resolution fields
+baselines:
+- Transformer
+- FNO
+setting:
+- Designed for very large spatial grids where attention is expensive.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Scaling
+    - Runtime/memory
+    - Achieves efficient global mixing without quadratic attention cost.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

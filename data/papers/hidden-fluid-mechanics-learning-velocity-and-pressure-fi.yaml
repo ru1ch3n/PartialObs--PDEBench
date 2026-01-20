@@ -1,0 +1,32 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Applications
+method_class: SciML
+full_title: 'Hidden fluid mechanics: Learning velocity and pressure fields from flow visualizations'
+short_title: 'Hidden fluid mechanics: Learning velocity and pressure fi…'
+year: 2020
+links: {}
+badges:
+- SciML
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Applications). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: hidden-fluid-mechanics-learning-velocity-and-pressure-fi
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

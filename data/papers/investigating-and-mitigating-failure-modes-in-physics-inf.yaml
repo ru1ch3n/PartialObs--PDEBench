@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Analysis
+method_class: PINN / physics-constrained
+full_title: Investigating and Mitigating Failure Modes in Physics-informed Neural Networks (PINNs)
+short_title: Investigating and Mitigating Failure Modes in Physics-inf…
+year: 2022
+links:
+  paper: https://arxiv.org/pdf/2209.09988.pdf
+  code: https://github.com/shamsbasir/investigating_mitigating_failure_modes_in_pinns
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Analysis). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: investigating-and-mitigating-failure-modes-in-physics-inf
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

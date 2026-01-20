@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Accerleration
+method_class: PINN / physics-constrained
+full_title: A comprehensive study of non-adaptive and residual-based adaptive sampling for physics-informed neural networks
+short_title: A comprehensive study of non-adaptive and residual-based…
+year: 2022
+links:
+  paper: https://arxiv.org/pdf/2207.10289.pdf
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Accerleration). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: a-comprehensive-study-of-non-adaptive-and-residual-based
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

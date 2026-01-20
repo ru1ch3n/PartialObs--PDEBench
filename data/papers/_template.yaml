@@ -1,0 +1,80 @@
+# Paper summary template (YAML)
+#
+# Copy this file to: data/papers/<slug>.yaml
+# Then fill in fields. The website generator reads *all* YAML files in
+# data/papers/ and builds docs/.
+#
+# Tips
+# - Keep lists short and specific.
+# - Put the most important equation(s) in core_math (LaTeX, no $...$ needed).
+# - If you don't know a field yet, leave it empty.
+
+slug: example-paper-slug  # file name without .yaml is used if omitted
+
+# Bibliography
+short_title: ExampleMethod
+full_title: Full paper title goes here
+authors: First Author, Second Author, …
+year: 2025
+venue: arXiv / NeurIPS / ICLR / JCP / …
+
+# Optional: lightweight classification used in filters/tables
+category: Operator learning / PINN / Diffusion / Theory / Survey / …
+method_class: Operator learning  # Operator learning | Diffusion | PINN / physics-constrained | Graph / mesh | Transformers | Benchmark | SciML
+status: index  # index (placeholder) | curated (has full summary)
+
+links:
+  paper: https://arxiv.org/abs/XXXX.XXXXX
+  paper_label: arXiv:XXXX.XXXXX
+  code: https://github.com/...
+  project: https://...
+
+# Short site-level summary
+tldr: >-
+  1–3 sentences. What problem is solved, what method is introduced, and what is the headline result?
+
+# “What is new?” bullets
+contrib:
+  - Main contribution #1
+  - Main contribution #2
+
+# Optional: theoretical contributions (with assumptions/conditions)
+theory:
+  - Main theorem / guarantee / analysis result #1
+  - Main theorem / guarantee / analysis result #2
+
+# Core method in math (LaTeX). Keep it minimal and correct.
+core_math:
+  - "\\min_\\theta \\; \\mathbb{E}_{(x,y)}\\, \\|f_\\theta(x) - y\\|^2"
+  - "\\text{s.t. }\\; \\mathcal{N}(f_\\theta) = 0"
+
+# Experiments (fill what the paper *actually* runs)
+pdes:
+  - Burgers
+  - Navier–Stokes
+tasks:
+  - Forward surrogate / operator learning
+  - Inverse problem / partial observation reconstruction
+
+setting:
+  - Data: (dataset name) / simulation / PDEBench / custom
+  - Observation: sparse sensors / random mask / block mask / noisy
+  - Metrics: relative L2 / RMSE / NLL / CRPS / …
+  - Train/test: (split description)
+
+baselines:
+  - FNO
+  - PINO
+  - DiffusionPDE
+
+# Optional: results tables (use for one or two key tables only)
+results_tables:
+  - title: Main table title
+    note: Optional short note (e.g., “lower is better”, “copied from Table 2”).
+    header: [Method, Metric1, Metric2]
+    rows:
+      - [Ours, "0.12", "0.08"]
+      - [Baseline, "0.20", "0.15"]
+
+# Optional: any replication warning
+benchmark_note: ""

@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Books
+method_class: SciML
+full_title: 'Data-Driven Science and Engineering: Machine Learning'
+short_title: 'Data-Driven Science and Engineering: Machine Learning'
+year: 2022
+links:
+  paper: https://doi.org/10.1017/9781009089517
+badges:
+- SciML
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Books). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: data-driven-science-and-engineering-machine-learning
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -1,0 +1,32 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Newly Updated Papers & Toolkit
+method_class: SciML
+full_title: Scientific Machine Learning Tutorial at SuperComputing Conference 2021 (Youtube Video List)
+short_title: Scientific Machine Learning Tutorial at SuperComputing Co…
+year: 2021
+links: {}
+badges:
+- SciML
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Newly Updated Papers & Toolkit). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: scientific-machine-learning-tutorial-at-supercomputing-co
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

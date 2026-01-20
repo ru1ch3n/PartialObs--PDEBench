@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Models
+method_class: Graph / mesh
+full_title: 'Physics-informed graph neural Galerkin networks: A unified framework for solving PDE-governed forward and inverse problems'
+short_title: 'Physics-informed graph neural Galerkin networks: A unifie…'
+year: 2022
+links:
+  paper: https://doi.org/10.1016/j.cma.2021.114502
+badges:
+- Graph / mesh
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: Graph / mesh'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Models). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: physics-informed-graph-neural-galerkin-networks-a-unifie
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Inverse / partial-observation reconstruction

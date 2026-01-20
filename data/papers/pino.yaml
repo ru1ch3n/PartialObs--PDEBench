@@ -1,0 +1,56 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: pino
+short_title: PINO
+full_title: Physics-Informed Neural Operator
+authors: Zongyi Li et al.
+year: 2021
+category: Neural operators
+badges:
+- Physics-informed
+- Operator learning
+tagline: Adds PDE residual constraints to neural operators.
+quick_facts:
+- 'Type: neural operator + PDE loss'
+- Works with scarce/supervision
+- Better physical consistency
+links:
+  paper: https://arxiv.org/abs/2111.03794
+  paper_label: arXiv:2111.03794
+tldr: PINO augments neural operators with physics-based constraints (PDE residuals), improving data efficiency and physical consistency for operator learning.
+contrib:
+- Combines operator learning with physics residual regularization.
+- Enables training with sparse/noisy data and improves generalization.
+- Popular baseline for partially observed PDE inference.
+pdes:
+- Burgers
+- Navier–Stokes
+- Kolmogorov flow
+tasks:
+- Forward operator learning
+- Partial-observation reconstruction (community use)
+baselines:
+- FNO
+- PINN
+- DeepONet
+setting:
+- Adds PDE residual loss on collocation points.
+- Often used when full-field supervision is limited.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Data efficiency
+    - Error vs data
+    - Physics loss reduces required labeled data for comparable accuracy.
+  - - Physical consistency
+    - Residual
+    - Improves residual satisfaction compared to purely data-driven operators.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

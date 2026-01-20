@@ -1,0 +1,52 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: poseidon
+short_title: Poseidon
+full_title: 'Poseidon: Efficient Foundation Models for PDEs'
+authors: Luca Herde et al.
+year: 2024
+category: Neural operators
+badges:
+- Foundation model
+- Scaling
+tagline: Pretrain a scalable foundation model for PDE data.
+quick_facts:
+- 'Type: foundation model'
+- Pretraining + finetuning
+- Targets many PDE tasks
+links:
+  paper: https://arxiv.org/abs/2405.19101
+  paper_label: arXiv:2405.19101
+  code: https://github.com/pdearena/poseidon
+tldr: Poseidon explores scalable foundation-model training for PDE data with an emphasis on efficiency and transfer across PDE tasks.
+contrib:
+- Introduces a foundation-model training recipe specialized for PDE trajectories.
+- Studies transfer/finetuning across PDE families and resolutions.
+- Emphasizes efficiency (compute/memory) for large-scale PDE pretraining.
+pdes:
+- Navier–Stokes
+- Shallow water
+- Maxwell
+tasks:
+- Pretraining
+- Finetuning for forecasting/reconstruction
+baselines:
+- FNO
+- Transformer
+setting:
+- Large-scale pretraining on PDE datasets; transfer to downstream tasks.
+results_tables:
+- title: Key results
+  header:
+  - Aspect
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Transfer
+    - Downstream error
+    - Pretraining improves performance/efficiency on multiple downstream PDE tasks in reported experiments.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

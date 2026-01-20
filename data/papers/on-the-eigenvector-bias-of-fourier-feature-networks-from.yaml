@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: awesome-scientific-machine-learning
+category: Physics Informed NNs
+method_class: PINN / physics-constrained
+full_title: 'On the eigenvector bias of fourier feature networks: From regression to solving multi-scale pdes with physics-informed neural networks pub arxiv code Wang'
+short_title: 'On the eigenvector bias of fourier feature networks: From…'
+year: 2021
+links:
+  paper: https://www.sciencedirect.com/science/article/abs/pii/S0045782521002759
+  code: https://github.com/PredictiveIntelligenceLab/MultiscalePINNs
+badges:
+- PINN / physics-constrained
+- awesome-scientific-machine-learning
+quick_facts:
+- 'Source: awesome-scientific-machine-learning'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from awesome-scientific-machine-learning (section: Physics Informed NNs). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: on-the-eigenvector-bias-of-fourier-feature-networks-from
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

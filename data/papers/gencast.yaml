@@ -1,0 +1,55 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: gencast
+short_title: GenCast
+full_title: 'GenCast: Probabilistic Weather Forecasting with Generative AI'
+authors: DeepMind (see paper)
+year: 2025
+category: Weather & climate models
+badges:
+- Generative
+- Probabilistic
+- Weather
+tagline: Probabilistic ensemble weather forecasting with a generative model.
+quick_facts:
+- 'Type: generative ensemble forecasting'
+- 'Output: probabilistic forecasts'
+- 'Data: ERA5 / NWP evaluation'
+links:
+  paper: https://deepmind.google/discover/blog/gencast-predicts-weather-and-the-risks-of-extreme-events/
+  paper_label: blog/paper link
+tldr: GenCast produces probabilistic global weather forecasts (ensembles) using a generative model, improving medium-range accuracy and extremes prediction compared to operational ensembles in reported evaluations.
+contrib:
+- Generates ensemble forecasts and event probabilities rather than a single deterministic trajectory.
+- Targets medium-range forecasting and extreme events.
+- Demonstrates strong skill vs operational ensemble baselines in reported studies.
+pdes:
+- Atmospheric dynamics (primitive equations)
+tasks:
+- Probabilistic forecasting
+- Extreme-event risk estimation
+baselines:
+- ECMWF ENS
+- GraphCast
+- Numerical solver
+setting:
+- Global weather forecasting at fixed grid/time step; trained on decades of reanalysis.
+- Evaluation on many meteorological variables with probabilistic skill metrics.
+results_tables:
+- title: Headline results (as reported)
+  header:
+  - Comparison
+  - Metric
+  - Reported takeaway
+  rows:
+  - - vs ECMWF ENS
+    - Skill / accuracy
+    - Improves average forecast skill on a large fraction of evaluated variables in reported benchmarks.
+  - - Extreme events
+    - Event probability
+    - Provides calibrated probabilities for rare/extreme events compared to deterministic models.
+status: curated
+method_class: SciML
+auto:
+  pdes: []
+  tasks: []

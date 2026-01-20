@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Parallel PINN
+method_class: PINN / physics-constrained
+full_title: 'PPINN: Parareal physics-informed neural network for time-dependent PDEs'
+short_title: PPINN
+year: 2020
+links:
+  paper: https://arxiv.org/pdf/2104.10013
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Parallel PINN). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: ppinn
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -18,10 +18,10 @@
           <div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench/" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div></div>
         </div>
 
-        <div class="hero-card">  <div class="smallcaps">Quick start</div>  <p class="muted" style="margin-top:8px;">    <b>Goal:</b> reconstruct PDE solutions under partial observation.<br/>    <b>Browse:</b> Research → paper pages; PDE problems; Baselines.<br/>    <b>Benchmark:</b> moved to the Benchmark tab.  </p></div>
+        <div class="hero-card">  <div class="smallcaps">Contribute</div>  <p class="muted" style="margin-top:8px;">    Add or improve paper pages by editing <code>data/papers/*.yaml</code>.     See the <b>Contribute</b> tab for the step-by-step workflow and templates.  </p></div>
       </div>
 
-      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a></nav>
+      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="contribute/">Contribute</a></nav>
     </div>
   </header>
 
@@ -37,7 +37,8 @@
     <li><b>Research:</b> an index of ~300 AI4PDE papers with hyperlinks to one-page summaries (curated pages include structured experiment tables).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> the benchmark specification (PDE suite, masks, metrics, data generation).</li>
+    <li><b>Benchmark:</b> the benchmark specification (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
+    <li><b>Contribute:</b> how to add/curate papers via YAML (recommended if you want richer per-paper details).</li>
   </ul>
 </section>
 
@@ -45,42 +46,42 @@
   <h2>Paper tree</h2>
   <p class="muted">A compact, conceptual lineage map for famous SciML-for-PDE works.</p>
   <div class="card" style="margin-top:12px;">
-    <pre class="mermaid">graph TD
-  Root[Scientific ML for PDEs]
-  Root --> PI[Physics-informed optimization]
-  PI --> DeepRitz[Deep Ritz (2018)]
-  PI --> DGM[DGM / Deep Galerkin (2018)]
-  PI --> DeepBSDE[DeepBSDE (2018)]
-  PI --> PINN[PINNs (2019)]
-  PINN --> cPINN[cPINNs (2020)]
-  PINN --> SAPINN[SA-PINNs (2020)]
-  PINN --> XPINN[XPINNs (2021)]
-  PINN --> gPINN[gPINNs (2021)]
-  PINN --> FBPINN[FBPINNs (2021)]
-  Root --> OL[Operator learning]
-  OL --> DeepONet[DeepONet (2021)]
-  OL --> FNO[FNO (2020)]
-  FNO --> PINO[PINO (2021)]
-  FNO --> GalerkinT[Galerkin Transformer (2021)]
-  FNO --> WNO[WNO (2022)]
-  WNO --> UWNO[U-WNO (2024)]
-  FNO --> UNO[U-NO (2022)]
-  FNO --> CNO[CNO (2023)]
-  OL --> GKN[GKN (2020)]
-  OL --> MGNO[MGNO (2020)]
-  Root --> Diff[Diffusion / generative PDE inference]
-  Diff --> DiffPDE[DiffusionPDE (2024)]
-  DiffPDE --> FunDPS[FunDPS (2025)]
-  FunDPS --> PRISMA[PRISMA (2025)]
-  DiffPDE --> VideoPDE[VideoPDE (2025)]
-  Root --> Graph[Graph simulators]
-  Graph --> GNS[Graph Networks for physics simulation (2020)]
-  Graph --> MGN[MeshGraphNets (2021)]
-  Root --> Bench[Benchmarks and datasets]
-  Bench --> PDEBench[PDEBench (2022)]
-  Bench --> PDEArena[PDEArena (2022)]
-  Bench --> FourCastNet[FourCastNet (2022)]
-  FourCastNet --> GraphCast[GraphCast (2023)]</pre>
+    <pre class="mermaid">flowchart TD
+  Root["Scientific ML for PDEs"]
+  Root --> PI["Physics-informed optimization"]
+  PI --> DeepRitz["Deep Ritz (2018)"]
+  PI --> DGM["DGM / Deep Galerkin (2018)"]
+  PI --> DeepBSDE["DeepBSDE (2018)"]
+  PI --> PINN["PINNs (2019)"]
+  PINN --> cPINN["cPINNs (2020)"]
+  PINN --> SAPINN["SA-PINNs (2020)"]
+  PINN --> XPINN["XPINNs (2021)"]
+  PINN --> gPINN["gPINNs (2021)"]
+  PINN --> FBPINN["FBPINNs (2021)"]
+  Root --> OL["Operator learning"]
+  OL --> DeepONet["DeepONet (2021)"]
+  OL --> FNO["FNO (2020)"]
+  FNO --> PINO["PINO (2021)"]
+  FNO --> GalerkinT["Galerkin Transformer (2021)"]
+  FNO --> WNO["WNO (2022)"]
+  WNO --> UWNO["U-WNO (2024)"]
+  FNO --> UNO["U-NO (2022)"]
+  FNO --> CNO["CNO (2023)"]
+  OL --> GKN["GKN (2020)"]
+  OL --> MGNO["MGNO (2020)"]
+  Root --> DiffGen["Diffusion / generative PDE inference"]
+  DiffGen --> DiffPDE["DiffusionPDE (2024)"]
+  DiffPDE --> FunDPS["FunDPS (2025)"]
+  FunDPS --> PRISMA["PRISMA (2025)"]
+  DiffPDE --> VideoPDE["VideoPDE (2025)"]
+  Root --> GraphSim["Graph simulators"]
+  GraphSim --> GNS["Graph Networks for physics simulation (2020)"]
+  GraphSim --> MGN["MeshGraphNets (2021)"]
+  Root --> Bench["Benchmarks and datasets"]
+  Bench --> PDEBench["PDEBench (2022)"]
+  Bench --> PDEArena["PDEArena (2022)"]
+  Bench --> FourCastNet["FourCastNet (2022)"]
+  FourCastNet --> GraphCast["GraphCast (2023)"]</pre>
   </div>
   <details style="margin-top:12px;">
     <summary class="muted">Show ASCII fallback</summary>

@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on Model Transfer & Meta-Learning
+method_class: PINN / physics-constrained
+full_title: Transfer learning enhanced physics informed neural network for phase-field modeling of fracture
+short_title: Transfer learning enhanced physics informed neural networ…
+year: 2020
+links:
+  paper: https://www.sciencedirect.com/science/article/abs/pii/S016784421930357X
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on Model Transfer & Meta-Learning). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: transfer-learning-enhanced-physics-informed-neural-networ
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -1,0 +1,65 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: pdebench
+short_title: PDEBench
+full_title: 'PDEBench: An Extensive Benchmark for Scientific Machine Learning'
+authors: Makoto Takamoto et al.
+year: 2022
+category: Benchmarks & datasets
+badges:
+- Benchmark
+- Datasets
+tagline: Large benchmark suite for PDE surrogate modeling.
+quick_facts:
+- 'Type: benchmark suite'
+- Many PDEs
+- Standardizes evaluation
+links:
+  paper: https://arxiv.org/abs/2210.07182
+  paper_label: arXiv:2210.07182
+  code: https://github.com/pdebench/PDEBench
+tldr: PDEBench provides a large, standardized benchmark of PDE datasets and evaluation protocols for scientific machine learning models.
+contrib:
+- Curates multiple PDE datasets with standardized splits and metrics.
+- Provides baselines (FNO, U-Net, etc.) and reproducible evaluation.
+- Widely used reference for comparing operator-learning methods.
+pdes:
+- Advection
+- Burgers
+- Diffusion–reaction
+- Diffusion–sorption
+- Compressible Navier–Stokes
+- Darcy flow
+- Shallow water
+tasks:
+- Forward operator learning
+- Rollout forecasting
+baselines:
+- FNO
+- U-Net
+- ResNet
+- DeepONet
+- PINN
+setting:
+- Standardized training/eval protocol across PDE datasets.
+results_tables:
+- title: What it provides
+  header:
+  - Component
+  - Metric
+  - Notes
+  rows:
+  - - Datasets
+    - —
+    - Multiple PDE families with standardized formats.
+  - - Baselines
+    - —
+    - Reference implementations for common models.
+  - - Metrics
+    - L2 / rollout
+    - Consistent evaluation across PDEs.
+status: curated
+method_class: Benchmark
+auto:
+  pdes: []
+  tasks: []

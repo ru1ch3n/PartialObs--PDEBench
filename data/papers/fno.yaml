@@ -1,0 +1,56 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: fno
+short_title: FNO
+full_title: Fourier Neural Operator for Parametric Partial Differential Equations
+authors: Zongyi Li et al.
+year: 2020
+category: Neural operators
+badges:
+- Fourier
+- Operator learning
+tagline: Fourier-domain integral operator layers for PDE solution operators.
+quick_facts:
+- 'Type: neural operator (Fourier)'
+- Resolution-invariant design
+- Fast surrogate inference
+links:
+  paper: https://arxiv.org/abs/2010.08895
+  paper_label: arXiv:2010.08895
+tldr: FNO learns PDE solution operators using Fourier-domain global convolutions, achieving strong accuracy and mesh-independent generalization on standard benchmarks.
+contrib:
+- Introduces Fourier layers to parameterize integral kernels efficiently.
+- Demonstrates discretization-invariant operator learning (train low-res, test high-res).
+- Becomes a standard baseline for PDE surrogate modeling.
+pdes:
+- Burgers
+- Darcy flow
+- Navier–Stokes
+tasks:
+- Forward operator learning
+- Longer rollouts (fluids)
+baselines:
+- U-Net
+- DeepONet
+- Numerical solver
+setting:
+- Supervised learning on simulated PDE datasets.
+- Often evaluated on resolution generalization and rollout stability.
+results_tables:
+- title: Key results
+  header:
+  - Benchmark
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Darcy
+    - L2 error
+    - Strong accuracy and resolution generalization vs CNN baselines.
+  - - Navier–Stokes
+    - Rollout error
+    - Competitive long-time prediction compared to prior surrogates.
+status: curated
+method_class: Operator learning
+auto:
+  pdes: []
+  tasks: []

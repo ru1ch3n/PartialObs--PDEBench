@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Neural Operator
+method_class: Diffusion
+full_title: 'Text2PDE: Latent Diffusion Models for Accessible Physics Simulation'
+short_title: Text2PDE
+year: 2025
+links:
+  paper: https://arxiv.org/pdf/2410.01153
+  code: https://github.com/anthonyzhou-1/ldm_pdes
+badges:
+- Diffusion
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: Diffusion'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Neural Operator). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: text2pde
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Forward surrogate / operator learning

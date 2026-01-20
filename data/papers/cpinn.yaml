@@ -1,0 +1,49 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: cpinn
+short_title: cPINN
+full_title: Conservative Physics-Informed Neural Networks on Discrete Domains for Conservation Laws
+authors: Ameya D. Jagtap et al.
+year: 2020
+category: Physics-informed optimization
+badges:
+- Conservation
+- PINN
+tagline: Enforce conservation laws on discrete control volumes.
+quick_facts:
+- 'Type: conservative PINN'
+- Good for shocks
+- Discrete-domain formulation
+links:
+  paper: https://arxiv.org/abs/1906.00300
+  paper_label: arXiv:1906.00300
+tldr: cPINNs enforce conservation laws on discrete domains (control volumes), improving robustness on PDEs with discontinuities and strong flux constraints.
+contrib:
+- Conservative formulation of PINNs on discrete partitions.
+- Better suited for conservation laws with shocks.
+- Connects PINNs with finite volume ideas.
+pdes:
+- Burgers
+- Compressible Euler
+tasks:
+- Forward PDE solve
+baselines:
+- PINN
+- Numerical solver
+setting:
+- Balances fluxes over control volumes; trains NN to satisfy discrete conservation.
+results_tables:
+- title: Key results
+  header:
+  - Setting
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Shock problems
+    - Error / stability
+    - Improves stability and conservation compared to vanilla PINNs in reported cases.
+status: curated
+method_class: PINN / physics-constrained
+auto:
+  pdes: []
+  tasks: []

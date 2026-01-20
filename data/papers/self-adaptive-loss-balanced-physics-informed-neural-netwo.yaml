@@ -1,0 +1,35 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Accerleration
+method_class: PINN / physics-constrained
+full_title: Self-adaptive loss balanced Physics-informed neural networks for the incompressible Navier-Stokes equations
+short_title: Self-adaptive loss balanced Physics-informed neural netwo…
+year: 2021
+links:
+  paper: https://arxiv.org/pdf/2104.06217
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+- Navier–Stokes
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Accerleration). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes:
+- Navier–Stokes
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: self-adaptive-loss-balanced-physics-informed-neural-netwo
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

@@ -1,0 +1,32 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Neural Operator
+method_class: Operator learning
+full_title: Optimal deep learning of holomorphic operators between Banach spaces
+short_title: Optimal deep learning of holomorphic operators between Ba…
+year: 2024
+links: {}
+badges:
+- Operator learning
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: Operator learning'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Neural Operator). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: optimal-deep-learning-of-holomorphic-operators-between-ba
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Forward surrogate / operator learning

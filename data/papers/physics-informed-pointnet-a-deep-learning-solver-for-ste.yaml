@@ -1,0 +1,33 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: idrl-lab/PINNpapers
+category: Papers on PINN Models
+method_class: PINN / physics-constrained
+full_title: 'Physics-informed PointNet: A deep learning solver for steady-state incompressible flows and thermal fields on multiple sets of irregular geometries'
+short_title: 'Physics-informed PointNet: A deep learning solver for ste…'
+year: 2022
+links:
+  paper: https://doi.org/10.1016/j.jcp.2022.111510
+badges:
+- PINN / physics-constrained
+- idrl-lab/PINNpapers
+quick_facts:
+- 'Source: idrl-lab/PINNpapers'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: PINN / physics-constrained'
+tldr: 'Imported from idrl-lab/PINNpapers (section: Papers on PINN Models). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: physics-informed-pointnet-a-deep-learning-solver-for-ste
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Method / analysis

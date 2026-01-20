@@ -1,0 +1,56 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+slug: conditional-diffusion-pde
+short_title: Conditional Diffusion for PDEs
+full_title: On Conditional Diffusion Models for PDE Simulations
+authors: Artemy Shysheya et al.
+year: 2024
+category: Diffusion & generative PDE inference
+badges:
+- Diffusion
+- Conditional generation
+tagline: Practical protocols for conditional diffusion in PDE simulation.
+quick_facts:
+- 'Type: conditional diffusion'
+- 'Focus: protocol + evaluation'
+- 'PDEs: Burgers / KS / flows'
+links:
+  paper: https://arxiv.org/abs/2410.16415
+  paper_label: arXiv:2410.16415
+tldr: This paper studies conditional diffusion models for PDE simulations and proposes practical design choices for conditioning, training, and evaluation.
+contrib:
+- Analyzes conditioning strategies for diffusion models in PDE simulation.
+- Benchmarks diffusion choices under sparse/noisy observations.
+- Provides practical guidance for stable training and inference.
+pdes:
+- Burgers
+- Kuramoto–Sivashinsky
+- Kolmogorov flow
+tasks:
+- Conditional generation
+- Partial-observation reconstruction
+baselines:
+- PDE-Refiner
+- U-Net
+- FNO
+setting:
+- Studies multiple conditioning setups (known IC/BC, sparse sensors, masked fields).
+- Compares diffusion sampling strategies and architecture choices.
+results_tables:
+- title: Key takeaways
+  header:
+  - Experiment
+  - Metric
+  - Reported takeaway
+  rows:
+  - - Sparse observations
+    - Error / likelihood
+    - Conditional diffusion improves robustness vs deterministic models in low-observation regimes.
+  - - Sampling choices
+    - Runtime vs error
+    - Careful step schedules and conditioning significantly affect quality.
+status: curated
+method_class: Diffusion
+auto:
+  pdes: []
+  tasks: []

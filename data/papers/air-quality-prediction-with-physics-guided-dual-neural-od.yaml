@@ -1,0 +1,34 @@
+# This file is the source-of-truth for the paper page on the website.
+# Edit fields to curate experiments/baselines/results.
+source: Event-AHU/PINN_Paper_List
+category: Papers on Applications
+method_class: SciML
+full_title: Air Quality Prediction with Physics-Guided Dual Neural ODEs in Open Systems
+short_title: Air Quality Prediction with Physics-Guided Dual Neural OD…
+year: 2025
+links:
+  paper: https://openreview.net/pdf?id=kOJf7Dklyv
+  code: https://github.com/decisionintelligence/Air-DualODE
+badges:
+- SciML
+- Event-AHU/PINN_Paper_List
+quick_facts:
+- 'Source: Event-AHU/PINN_Paper_List'
+- 'Summary: index-only (needs manual curation)'
+- 'Class: SciML'
+tldr: 'Imported from Event-AHU/PINN_Paper_List (section: Papers on Applications). This page is currently an index entry; a full experiment + theory summary is not yet curated.'
+contrib: []
+theory: []
+core_math: []
+pdes: []
+tasks: []
+baselines: []
+setting: []
+results_tables: []
+status: index
+slug: air-quality-prediction-with-physics-guided-dual-neural-od
+authors: ''
+auto:
+  pdes: []
+  tasks:
+  - Forecasting / time-series prediction
