@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Baselines — PartialObs–PDEBench</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Baselines & method taxonomy</h1>
+          <p class="subtitle">Tables of method classes and commonly compared baselines.</p>
+          
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Tip</div>  <p class="muted" style="margin-top:8px;">    Use <b>Method classes</b> to compare approaches, and <b>Baseline methods</b> to reproduce literature tables.  </p></div>
+      </div>
+
+      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/" aria-current="page">Baselines</a><a href="../benchmark/">Benchmark</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section">  <h2>Method classes</h2>  <p>High-level taxonomy used across this website. Each row links to the Research table with a class filter.</p></section><div class="tablewrap"><table><thead><tr><th>Method class</th><th># papers</th><th>Core objective (template)</th><th></th></tr></thead><tbody><tr><td><b>PINN / physics-constrained</b></td><td>143</td><td><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
+\[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></td><td><a href="../research/?method=PINN%20/%20physics-constrained">View papers</a></td></tr>
+<tr><td><b>Operator learning</b></td><td>81</td><td><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
+\[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></td><td><a href="../research/?method=Operator%20learning">View papers</a></td></tr>
+<tr><td><b>SciML</b></td><td>43</td><td><div class="equation">\[\text{A broad bucket: see the method class tags for the closest training objective.}\]</div></td><td><a href="../research/?method=SciML">View papers</a></td></tr>
+<tr><td><b>Diffusion</b></td><td>13</td><td><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
+\[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]</div></td><td><a href="../research/?method=Diffusion">View papers</a></td></tr>
+<tr><td><b>Graph / mesh</b></td><td>13</td><td><div class="equation">\[h_i^{(\ell+1)} = \phi\Big(h_i^{(\ell)},\ \sum_{j\in\mathcal{N}(i)} \psi(h_i^{(\ell)},h_j^{(\ell)},e_{ij})\Big)\]
+\[\min_\theta\ \sum_t\ \|u_{t+1}-\mathrm{GNN}_\theta(u_t,\text{mesh})\|^2\ \ \text{(rollout / one-step)}\]</div></td><td><a href="../research/?method=Graph%20/%20mesh">View papers</a></td></tr>
+<tr><td><b>Benchmark</b></td><td>4</td><td><div class="equation">\[\text{(No single method.) Benchmarks define datasets, masks, metrics, and protocols.}\]</div></td><td><a href="../research/?method=Benchmark">View papers</a></td></tr>
+<tr><td><b>Transformers</b></td><td>3</td><td><div class="equation">\[\mathrm{Attn}(Q,K,V)=\mathrm{softmax}(QK^\top/\sqrt{d})V\ \ \text{(global token mixing)}\]</div></td><td><a href="../research/?method=Transformers">View papers</a></td></tr></tbody></table></div><section class="section">  <h2>Baseline methods (curated pages)</h2>  <p>Baseline lists are only available on manually curated paper pages. This table summarizes what is currently extracted.</p></section><div class="tablewrap"><table><thead><tr><th>Baseline method</th><th># curated papers</th><th>Examples</th><th></th></tr></thead><tbody><tr><td><b>FNO</b></td><td>21</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=FNO">Search</a></td></tr>
+<tr><td><b>DeepONet</b></td><td>13</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=DeepONet">Search</a></td></tr>
+<tr><td><b>U-Net</b></td><td>13</td><td class="muted"><a href="../research/conditional-diffusion-pde/">Conditional Diffusion for PDEs</a>, <a href="../research/sinenet/">SineNet</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-Net">Search</a></td></tr>
+<tr><td><b>Numerical solver</b></td><td>12</td><td class="muted"><a href="../research/gencast/">GenCast</a>, <a href="../research/fengwu/">FengWu</a>, <a href="../research/fourcastnet/">FourCastNet</a></td><td><a href="../research/?q=Numerical%20solver">Search</a></td></tr>
+<tr><td><b>PINN</b></td><td>9</td><td class="muted"><a href="../research/diffusionpde/">DiffusionPDE</a>, <a href="../research/pdebench/">PDEBench</a>, <a href="../research/fbpinns/">FBPINNs</a></td><td><a href="../research/?q=PINN">Search</a></td></tr>
+<tr><td><b>PINO</b></td><td>4</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=PINO">Search</a></td></tr>
+<tr><td><b>Transformer</b></td><td>4</td><td class="muted"><a href="../research/poseidon/">Poseidon</a>, <a href="../research/sinenet/">SineNet</a>, <a href="../research/pdearena/">PDEArena</a></td><td><a href="../research/?q=Transformer">Search</a></td></tr>
+<tr><td><b>DiffusionPDE</b></td><td>3</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=DiffusionPDE">Search</a></td></tr>
+<tr><td><b>GraphCast</b></td><td>3</td><td class="muted"><a href="../research/gencast/">GenCast</a>, <a href="../research/fengwu/">FengWu</a>, <a href="../research/neuralgcm/">NeuralGCM</a></td><td><a href="../research/?q=GraphCast">Search</a></td></tr>
+<tr><td><b>PDE-FIND</b></td><td>3</td><td class="muted"><a href="../research/pde-net-2/">PDE-Net 2.0</a>, <a href="../research/deep-hpm/">Deep HPM</a>, <a href="../research/pde-net/">PDE-Net</a></td><td><a href="../research/?q=PDE-FIND">Search</a></td></tr>
+<tr><td><b>ResNet</b></td><td>3</td><td class="muted"><a href="../research/pde-refiner/">PDE-Refiner</a>, <a href="../research/pdearena/">PDEArena</a>, <a href="../research/pdebench/">PDEBench</a></td><td><a href="../research/?q=ResNet">Search</a></td></tr>
+<tr><td><b>DGM</b></td><td>2</td><td class="muted"><a href="../research/pinn/">PINNs</a>, <a href="../research/deepbsde/">DeepBSDE</a></td><td><a href="../research/?q=DGM">Search</a></td></tr>
+<tr><td><b>ECMWF IFS</b></td><td>2</td><td class="muted"><a href="../research/graphcast/">GraphCast</a>, <a href="../research/pangu-weather/">Pangu-Weather</a></td><td><a href="../research/?q=ECMWF%20IFS">Search</a></td></tr>
+<tr><td><b>FourCastNet</b></td><td>2</td><td class="muted"><a href="../research/fengwu/">FengWu</a>, <a href="../research/graphcast/">GraphCast</a></td><td><a href="../research/?q=FourCastNet">Search</a></td></tr>
+<tr><td><b>Pangu-Weather</b></td><td>2</td><td class="muted"><a href="../research/fengwu/">FengWu</a>, <a href="../research/graphcast/">GraphCast</a></td><td><a href="../research/?q=Pangu-Weather">Search</a></td></tr>
+<tr><td><b>U-NO</b></td><td>2</td><td class="muted"><a href="../research/u-wno/">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-NO">Search</a></td></tr>
+<tr><td><b>WNO</b></td><td>2</td><td class="muted"><a href="../research/u-wno/">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=WNO">Search</a></td></tr>
+<tr><td><b>CNO</b></td><td>1</td><td class="muted"><a href="../research/u-wno/">U-WNO</a></td><td><a href="../research/?q=CNO">Search</a></td></tr>
+<tr><td><b>Deep Ritz</b></td><td>1</td><td class="muted"><a href="../research/pinn/">PINNs</a></td><td><a href="../research/?q=Deep%20Ritz">Search</a></td></tr>
+<tr><td><b>DeepBSDE</b></td><td>1</td><td class="muted"><a href="../research/dgm/">DGM</a></td><td><a href="../research/?q=DeepBSDE">Search</a></td></tr>
+<tr><td><b>ECMWF ENS</b></td><td>1</td><td class="muted"><a href="../research/gencast/">GenCast</a></td><td><a href="../research/?q=ECMWF%20ENS">Search</a></td></tr>
+<tr><td><b>FunDPS</b></td><td>1</td><td class="muted"><a href="../research/prisma/">PRISMA</a></td><td><a href="../research/?q=FunDPS">Search</a></td></tr>
+<tr><td><b>GKN</b></td><td>1</td><td class="muted"><a href="../research/mgno/">MGNO</a></td><td><a href="../research/?q=GKN">Search</a></td></tr>
+<tr><td><b>PDE-Net</b></td><td>1</td><td class="muted"><a href="../research/pde-net-2/">PDE-Net 2.0</a></td><td><a href="../research/?q=PDE-Net">Search</a></td></tr>
+<tr><td><b>PDE-Refiner</b></td><td>1</td><td class="muted"><a href="../research/conditional-diffusion-pde/">Conditional Diffusion for PDEs</a></td><td><a href="../research/?q=PDE-Refiner">Search</a></td></tr>
+<tr><td><b>Persistence</b></td><td>1</td><td class="muted"><a href="../research/fourcastnet/">FourCastNet</a></td><td><a href="../research/?q=Persistence">Search</a></td></tr>
+<tr><td><b>SINDy</b></td><td>1</td><td class="muted"><a href="../research/pde-find/">PDE-FIND</a></td><td><a href="../research/?q=SINDy">Search</a></td></tr>
+<tr><td><b>Traditional GCM</b></td><td>1</td><td class="muted"><a href="../research/neuralgcm/">NeuralGCM</a></td><td><a href="../research/?q=Traditional%20GCM">Search</a></td></tr>
+<tr><td><b>XPINN</b></td><td>1</td><td class="muted"><a href="../research/fbpinns/">FBPINNs</a></td><td><a href="../research/?q=XPINN">Search</a></td></tr></tbody></table></div>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-20</div>
+    </footer>
+  </main>
+</body>
+</html>

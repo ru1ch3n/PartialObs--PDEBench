@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stochastic Physics-Informed Neural Networks (SPINN): A Mo… (2021) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Stochastic Physics-Informed Neural Networks (SPINN): A Mo… (2021)</h1>
+          <p class="subtitle"><b>Stochastic Physics-Informed Neural Networks (SPINN): A Moment-Matching Framework for Learning Hidden Physics within Stochastic Differential Equations</b><br/></p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="http://arxiv.org/pdf/2109.01621.pdf" target="_blank" rel="noopener noreferrer">link</a></div></div><div class="badges">
+<span class="badge">PINN / physics-constrained</span>
+<span class="badge">idrl-lab/PINNpapers</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Source: idrl-lab/PINNpapers<br/>Summary: index-only (needs manual curation)<br/>Class: PINN / physics-constrained</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>Imported from idrl-lab/PINNpapers (section: Papers on Probabilistic PINNs and Uncertainty Quantification). This page is currently an index entry; a full experiment + theory summary is not yet curated.</p></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>PINN / physics-constrained</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
+\[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="contribution"><h2>Main contribution</h2><p class="muted">Not extracted yet (paper page is index-only).</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><p class="muted">Not specified in the source list entry.</p></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Software / toolkit</li>
+<li>Uncertainty quantification</li>
+<li>PDE discovery / identification</li>
+<li>Neural ODE/SDE modeling</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><p class="muted">Not extracted yet.</p></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><p class="muted">Not extracted yet.</p></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-20</div>
+    </footer>
+  </main>
+</body>
+</html>

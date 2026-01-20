@@ -1,0 +1,260 @@
+:root {
+  --bg: #0b0f14;
+  --fg: #e7edf5;
+  --muted: #a8b3c2;
+  --card: #121826;
+  --border: #223047;
+  --accent: #7aa2ff;
+  --code: #0f1522;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+.container {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.hero {
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(1200px 420px at 30% -10%, rgba(122,162,255,.25), transparent 60%),
+              radial-gradient(900px 340px at 80% 0%, rgba(122,255,204,.14), transparent 55%);
+  padding: 48px 0 24px;
+}
+
+.hero-top {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .hero-top { grid-template-columns: 1fr; }
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 40px;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.meta {
+  margin: 8px 0 14px;
+  padding-left: 2px;
+  font-size: 14px;
+}
+
+/* Links in the header meta block */
+.meta-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+}
+
+.meta-link:hover {
+  border-bottom-color: var(--accent);
+}
+
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge {
+  border: 1px solid var(--border);
+  background: rgba(18,24,38,.65);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg);
+}
+
+.hero-card {
+  border: 1px solid var(--border);
+  background: rgba(18,24,38,.65);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.smallcaps {
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.nav {
+  margin-top: 18px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+}
+
+.nav a:hover {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+}
+
+.nav a[aria-current="page"] {
+  color: #111827;
+  background: rgba(199,210,254,.18);
+  border-radius: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(199,210,254,.45);
+  border-bottom: 1px solid rgba(199,210,254,.45);
+}
+
+.local-nav {
+  margin-top: 22px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15,21,34,.55);
+}
+
+.tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(122,162,255,.45);
+  background: rgba(122,162,255,.12);
+  color: rgba(240,244,255,.95);
+  font-size: 12px;
+}
+
+main { padding: 30px 0 60px; }
+
+h2 { margin: 34px 0 10px; font-size: 26px; }
+h3 { margin: 0 0 8px; font-size: 18px; }
+.subhead { margin-top: 18px; }
+
+.muted { color: var(--muted); }
+
+.equation {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(15,21,34,.6);
+  overflow-x: auto;
+}
+
+.note {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(122,162,255,.35);
+  background: rgba(122,162,255,.10);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .cards { grid-template-columns: 1fr; }
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .grid2 { grid-template-columns: 1fr; }
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+}
+
+pre {
+  margin: 10px 0 0;
+  border: 1px solid var(--border);
+  background: rgba(15,21,34,.9);
+  padding: 12px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+code {
+  background: rgba(15,21,34,.9);
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.footer {
+  margin-top: 46px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- Added for /research pages --- */
+
+/* General link styling inside main content */
+main a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+}
+
+main a:hover {
+  border-bottom-color: var(--accent);
+}
+
+/* Tables (results + comparisons) */
+.tablewrap {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15,21,34,.6);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+th {
+  background: rgba(18,24,38,.65);
+  text-align: left;
+}

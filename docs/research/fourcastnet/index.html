@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FourCastNet (2022) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>FourCastNet (2022)</h1>
+          <p class="subtitle"><b>FourCastNet: A Global Data-driven High-resolution Weather Model using Adaptive Fourier Neural Operators</b><br/>Jaideep Pathak et al.</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2202.11214" target="_blank" rel="noopener noreferrer">arXiv:2202.11214</a></div></div><div class="badges">
+<span class="badge">Neural operator</span>
+<span class="badge">Weather</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: neural operator (AFNO)<br/>Task: global weather forecasting<br/>Data: ERA5</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>FourCastNet applies Adaptive Fourier Neural Operators (AFNO) to global weather forecasting, showing that neural operators can produce high-resolution forecasts efficiently.</p></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
+\[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Introduces AFNO-based forecasting at global, high-resolution settings.</li>
+<li>Demonstrates strong accuracy–speed tradeoffs compared to earlier data-driven weather surrogates.</li>
+<li>Serves as a bridge between neural operator research and operational forecasting.</li>
+</ul></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<li>Atmospheric dynamics (primitive equations)</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Deterministic forecasting</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Trained on ERA5; predicts multi-channel meteorological fields.</li>
+<li>Evaluated on forecast skill across horizons and variables.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>Persistence</li>
+<li>Numerical solver</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key results</h3>
+<div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Forecast skill</td><td>RMSE/ACC</td><td>Competitive skill for short-to-medium horizons while being much faster than NWP.</td></tr>
+<tr><td>Scaling</td><td>Resolution/runtime</td><td>AFNO makes high-resolution inference feasible compared to naive attention.</td></tr></tbody></table></div>
+</section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-20</div>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deep Ritz (2018) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Deep Ritz (2018)</h1>
+          <p class="subtitle"><b>The Deep Ritz Method: A Deep Learning-Based Numerical Algorithm for Solving Variational Problems</b><br/>Weinan E and Bing Yu</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/1710.00211" target="_blank" rel="noopener noreferrer">arXiv:1710.00211</a></div></div><div class="badges">
+<span class="badge">Variational</span>
+<span class="badge">Elliptic</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: energy minimization<br/>Best for elliptic PDEs<br/>Mesh-free sampling</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>Deep Ritz solves variational (often elliptic) PDEs by minimizing the associated energy functional with a neural-network ansatz.</p></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>PINN / physics-constrained</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
+\[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Uses the Ritz variational principle with neural networks.</li>
+<li>Avoids discretizing differential operators directly.</li>
+<li>Provides an early foundation for physics-informed variational training.</li>
+</ul></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<li>Poisson</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Solve boundary value problems</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Monte Carlo sampling to approximate integrals in the energy functional.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>Numerical solver</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key results</h3>
+<div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Elliptic PDEs</td><td>Solution error</td><td>Competitive accuracy with mesh-free optimization in some regimes.</td></tr></tbody></table></div>
+</section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-20</div>
+    </footer>
+  </main>
+</body>
+</html>

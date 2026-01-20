@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(','\\)'], ['$', '$']] } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>PartialObs-PDEBench</h1>
+          <p class="subtitle">
+            A public benchmark harness for <b>PDE reconstruction under partial observations</b> (sparse sensors, masks, noisy measurements).
+            Includes standardized masks (M1–M3), multiple PDEs, baseline solvers, and a curated <b>research map</b> of diffusion/operator-learning approaches (2024–2025).
+          </p>
+
+          <div class="meta">
+            <div>
+              <b>Maintainer:</b>
+              <span class="muted">
+                <a class="meta-link" href="https://ru1ch3n.github.io/" target="_blank" rel="noopener noreferrer">Ruichen Xu</a>
+                (Ph.D. candidate, Computational Applied Mathematics, Stony Brook University)
+              </span>
+            </div>
+
+            <div>
+              <b>Repo:</b>
+              <span class="muted">
+                <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs-PDEBench" target="_blank" rel="noopener noreferrer">
+                  github.com/ru1ch3n/PartialObs-PDEBench
+                </a>
+              </span>
+            </div>
+
+            <div>
+              <b>Project page:</b>
+              <span class="muted">
+                <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs-PDEBench/" target="_blank" rel="noopener noreferrer">
+                  ru1ch3n.github.io/PartialObs-PDEBench/
+                </a>
+              </span>
+            </div>
+
+            <div>
+              <b>Personal page:</b>
+              <span class="muted">
+                <a class="meta-link" href="https://ru1ch3n.github.io/" target="_blank" rel="noopener noreferrer">
+                  ru1ch3n.github.io
+                </a>
+              </span>
+            </div>
+          </div>
+
+          <div class="badges">
+            <span class="badge">Burgers</span>
+            <span class="badge">Darcy</span>
+            <span class="badge">Poisson</span>
+            <span class="badge">Navier–Stokes</span>
+            <span class="badge">M1–M3 masks</span>
+            <span class="badge">Baselines</span>
+            <span class="badge">Research map</span>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="smallcaps">Problem setting</div>
+          <div class="equation">\( y = M(u) + \epsilon \)</div>
+          <p class="muted">
+            Given sparse/masked observations \(y\), reconstruct the full solution field \(u\).
+          </p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="../research/">Research</a>
+        <a href="../pde-problems/">PDE problems</a>
+        <a href="../baselines/">Baselines</a>
+        <a href="./" aria-current="page">Benchmark</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <nav class="nav local-nav" aria-label="On this page">
+      <a href="#overview">Overview</a>
+      <a href="#research">Recent research</a>
+      <a href="#pdes">PDE suite</a>
+      <a href="#masks">Masks</a>
+      <a href="#methods">Methods</a>
+      <a href="#data">Data</a>
+      <a href="#datagen">Data generation</a>
+            <a href="#refs">References</a>
+    </nav>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <div class="note">
+        🚧 <b>Work in progress:</b> the benchmark harness, datasets, and configs are still being finalized.
+        This page describes the intended protocol and will be updated as implementations land.
+      </div>
+      <p>
+        PartialObs-PDEBench standardizes PDE reconstruction from partial observations.
+        It is intended to support fair comparisons by fixing PDE testbeds, observation masks, and evaluation outputs.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Benchmark contract</h3>
+          <ul>
+            <li>Input: masked observations \(y\) and mask \(M\)</li>
+            <li>Output: reconstructed field \(\hat{u}\)</li>
+            <li>Primary objective: reconstruction error (and optionally physics residual, depending on method)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Reproducibility</h3>
+          <ul>
+            <li>Config-driven runs (Hydra-style)</li>
+            <li>Deterministic seeds</li>
+            <li>Saved config snapshots and metrics per run</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="research">
+      <h2>Recent research (2024–2025)</h2>
+      <p>
+        Diffusion models have rapidly become a strong default for <b>partial-observation PDE reconstruction</b>: they naturally support
+        arbitrary masks, noisy measurements, and uncertainty estimates.
+        After <b>DiffusionPDE (2024)</b>, several works generalized the idea for <b>faster inference</b>, <b>function-space conditioning</b>, and
+        <b>spatiotemporal inpainting</b>.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Most recent: PRISMA (Dec 2025)</h3>
+          <p class="muted">
+            Embeds PDE residuals <i>inside</i> the denoiser using <b>spectral residual attention</b>.
+            This replaces slow test-time gradient guidance with <b>fast, gradient-free sampling</b>.
+          </p>
+          <p><span class="smallcaps">Links</span><br>
+            <a href="../research/prisma/">One-page summary</a><br>
+            <code>arxiv.org/abs/2512.01370</code>
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Other key papers after DiffusionPDE</h3>
+          <ul>
+            <li><b>FunDPS (2025):</b> diffusion posterior sampling in <i>function space</i> (discretization-agnostic), fewer steps.
+              <a href="../research/fundps/">summary</a></li>
+            <li><b>VideoPDE (2025):</b> unified generative PDE solving by <i>video inpainting diffusion</i> over space-time.
+              <a href="../research/videopde/">summary</a></li>
+            <li><b>DiffusionPDE (2024):</b> canonical guided diffusion baseline for sparse observations.
+              <a href="../research/diffusionpde/">summary</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 class="subhead">How we classify methods</h3>
+      <div class="grid2">
+        <div class="card">
+          <h3>Deterministic surrogates</h3>
+          <p class="muted">
+            Fast, single forward pass after training. Often used as strong baselines, but typically require careful design
+            to handle arbitrary sparse masks.
+          </p>
+          <ul>
+            <li>Operator learning: <a href="../research/fno/">FNO</a>, <a href="../research/pino/">PINO</a>, <a href="../research/deeponet/">DeepONet</a></li>
+            <li>Per-instance optimization: <a href="../research/pinn/">PINN</a></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Generative inference (diffusion)</h3>
+          <p class="muted">
+            Inference is sampling-based (slower than a single forward pass), but supports mask flexibility and uncertainty.
+            Recent works focus on making sampling faster and more physics-aware.
+          </p>
+          <ul>
+            <li>Guided sampling: DiffusionPDE → FunDPS → PRISMA</li>
+            <li>Spatiotemporal inpainting: VideoPDE</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Full paper map:</b> <a href="../research/">Open the research index →</a>
+      </div>
+    </section>
+
+    <section id="pdes">
+      <h2>PDE suite</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>Burgers (1D, time-dependent)</h3>
+          <p class="muted">Canonical nonlinear PDE benchmark on trajectories \(u(x,t)\).</p>
+          <div class="equation">\( u_t + u\,u_x = \nu u_{xx} \)</div>
+        </div>
+
+        <div class="card">
+          <h3>Darcy (2D, elliptic)</h3>
+          <p class="muted">Elliptic PDE with spatially varying coefficient/permeability \(a(x)\).</p>
+          <div class="equation">\( -\nabla\cdot(a(x)\nabla u) = f \)</div>
+        </div>
+
+        <div class="card">
+          <h3>Poisson (2D, elliptic)</h3>
+          <p class="muted">Poisson equation solutions given forcing and boundary conditions (dataset-dependent).</p>
+          <div class="equation">\( -\Delta u = f \)</div>
+        </div>
+
+        <div class="card">
+          <h3>Navier–Stokes (2D vorticity)</h3>
+          <p class="muted">Incompressible NS in vorticity form; benchmarks often use vorticity fields over time.</p>
+          <div class="equation">
+            \( \partial_t \omega + u\cdot\nabla\omega = \nu \Delta \omega + f,\quad \nabla\cdot u=0 \)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="masks">
+      <h2>Partial-observation masks (M1–M3)</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3>M1: random points</h3>
+          <p class="muted">Observe a random subset of grid points at a specified observation ratio.</p>
+        </div>
+
+        <div class="card">
+          <h3>M2: regular subsampling</h3>
+          <p class="muted">Observe a regular lattice (e.g., every k-th point).</p>
+        </div>
+
+        <div class="card">
+          <h3>M3: block missing</h3>
+          <p class="muted">Hide a contiguous block (inpainting-style missing region).</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="methods">
+      <h2>Baseline methods</h2>
+      <p class="muted">
+        Below are the baseline families supported by this benchmark. We group them by how they are trained/used.
+      </p>
+
+      <h3 class="subhead">Supervised reconstruction (train yourself)</h3>
+      <div class="cards">
+        <div class="card">
+          <h3>U-Net</h3>
+          <p class="muted">
+            Encoder–decoder CNN with skip connections. Used as a strong convolutional baseline for reconstruction and inpainting-style tasks.
+          </p>
+          <p><span class="smallcaps">Reference</span><br><code>arxiv.org/abs/1505.04597</code></p>
+        </div>
+
+        <div class="card">
+          <h3>FNO (Fourier Neural Operator)</h3>
+          <p class="muted">
+            Neural operator that learns mappings between function spaces using global Fourier-domain convolutions.
+            Often strong for PDE operator learning when trained on sufficient data.
+          </p>
+          <p><span class="smallcaps">Resources</span><br>
+            <code>arxiv.org/abs/2010.08895</code><br>
+            <code>github.com/neuraloperator/neuraloperator</code>
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>CNO (Convolutional Neural Operator)</h3>
+          <p class="muted">
+            Operator learning with convolutional architectures inspired by U-Net, designed to better preserve operator structure and reduce aliasing.
+          </p>
+          <p><span class="smallcaps">Resources</span><br>
+            <code>arxiv.org/abs/2302.01178</code><br>
+            <code>github.com/camlab-ethz/ConvolutionalNeuralOperator</code>
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>DeepONet</h3>
+          <p class="muted">
+            Branch/trunk operator network: the branch encodes the input function (observations), and the trunk encodes evaluation coordinates.
+          </p>
+          <p><span class="smallcaps">Resources</span><br>
+            <code>nature.com/articles/s42256-021-00302-5</code><br>
+            <code>arxiv.org/abs/1910.03193</code>
+          </p>
+        </div>
+      </div>
+
+      <h3 class="subhead">Physics-based optimization (per-instance)</h3>
+      <div class="cards">
+        <div class="card">
+          <h3>PINN</h3>
+          <p class="muted">
+            Physics-Informed Neural Network: optimize a neural network per instance using PDE residual + data mismatch.
+            Typically slower than pretrained models but provides a physics-regularized baseline.
+          </p>
+          <p><span class="smallcaps">Resources</span><br>
+            <code>doi.org/10.1016/j.jcp.2018.10.045</code><br>
+            <code>github.com/maziarraissi/PINNs</code>
+          </p>
+        </div>
+      </div>
+
+      <h3 class="subhead">Pretrained generative prior (inference-only)</h3>
+      <div class="cards">
+        <div class="card">
+          <h3>DiffusionPDE</h3>
+          <p class="muted">
+            Uses a diffusion model as a generative prior for PDE solutions under partial observations. This benchmark calls the upstream inference pipeline
+            and uses the official pretrained checkpoints (downloaded by the user).
+          </p>
+          <p><span class="smallcaps">Resources</span><br>
+            <code>arxiv.org/abs/2406.17763</code><br>
+            <code>github.com/jhhuangchloe/DiffusionPDE</code>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="data">
+      <h2>Data</h2>
+      <p>
+        We recommend using DiffusionPDE datasets (distributed as `.npy` arrays) as a standardized benchmark source.
+        This repository does not redistribute third-party datasets or pretrained weights.
+      </p>
+      <div class="note">
+        <b>Suggested workflow:</b> clone DiffusionPDE into <code>third_party/</code>, download datasets/checkpoints, then run baseline configs in this repo.
+      </div>
+    </section>
+
+    <section id="datagen">
+      <h2>Dataset generation (classical solvers)</h2>
+      <p>
+        To generate datasets from scratch, classical solvers commonly used in operator-learning benchmarks include:
+      </p>
+      <ul>
+        <li><b>Burgers:</b> split-step Fourier method (diffusion solved exactly in Fourier space).</li>
+        <li><b>Darcy / Poisson:</b> finite-difference discretization + sparse linear solve (CG/multigrid/direct).</li>
+        <li><b>Navier–Stokes:</b> pseudospectral solver in vorticity form, with dealiasing and semi-implicit time stepping.</li>
+      </ul>
+      <p class="muted">
+        Practical option: reuse upstream generator code (DiffusionPDE <code>dataset_generation/</code>, NeuralOperator examples) and export to <code>.npy</code>.
+      </p>
+    </section>
+<section id="refs">
+      <h2>References</h2>
+      <ul>
+        <li><b>DiffusionPDE</b>: <code>https://arxiv.org/abs/2406.17763</code>, <code>https://github.com/jhhuangchloe/DiffusionPDE</code></li>
+        <li><b>PRISMA</b>: <code>https://arxiv.org/abs/2512.01370</code></li>
+        <li><b>FunDPS</b>: <code>https://arxiv.org/abs/2505.17004</code>, <code>https://github.com/neuraloperator/FunDPS</code></li>
+        <li><b>VideoPDE</b>: <code>https://arxiv.org/abs/2506.13754</code></li>
+        <li><b>Conditional diffusion for PDE simulations</b>: <code>https://arxiv.org/abs/2410.16415</code></li>
+        <li><b>PDE-Refiner</b>: <code>https://arxiv.org/abs/2308.05732</code></li>
+        <li><b>PINO</b>: <code>https://arxiv.org/abs/2111.03794</code></li>
+        <li><b>FNO</b>: <code>https://arxiv.org/abs/2010.08895</code>, <code>https://github.com/neuraloperator/neuraloperator</code></li>
+        <li><b>CNO</b>: <code>https://arxiv.org/abs/2302.01178</code>, <code>https://github.com/camlab-ethz/ConvolutionalNeuralOperator</code></li>
+        <li><b>U-Net</b>: <code>https://arxiv.org/abs/1505.04597</code></li>
+        <li><b>DeepONet</b>: <code>https://www.nature.com/articles/s42256-021-00302-5</code>, <code>https://arxiv.org/abs/1910.03193</code></li>
+        <li><b>PINN</b>: <code>https://doi.org/10.1016/j.jcp.2018.10.045</code>, <code>https://github.com/maziarraissi/PINNs</code></li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      <div class="muted">
+        © PartialObs-PDEBench. Please cite upstream works and comply with third-party licenses.
+      </div>
+    </footer>
+
+  </main>
+</body>
+</html>

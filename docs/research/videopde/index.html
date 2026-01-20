@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VideoPDE (2025) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>VideoPDE (2025)</h1>
+          <p class="subtitle"><b>Unified Generative PDE Solving via Video Inpainting Diffusion Models</b><br/>Ruicheng He et al.</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2506.13754" target="_blank" rel="noopener noreferrer">arXiv:2506.13754</a></div></div><div class="badges">
+<span class="badge">Diffusion</span>
+<span class="badge">Video inpainting</span>
+<span class="badge">Forward+Inverse</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: diffusion video model<br/>Unifies forward + inverse PDE tasks<br/>Uses spatiotemporal inpainting masks</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>VideoPDE reformulates PDE solution generation as spatiotemporal video inpainting, letting a single diffusion model handle both forward prediction and inverse reconstruction.</p></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
+\[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
+\[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not extracted yet (paper page is index-only, or theory not summarized).</p></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Casts PDE trajectories as videos and uses diffusion inpainting for conditioning.</li>
+<li>Handles both forward forecasting and inverse reconstruction in one unified framework.</li>
+<li>Demonstrates performance gains vs diffusion and operator baselines on several PDEs.</li>
+</ul></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems (as reported)</h3><ul>
+<li>Wave equation</li>
+<li>Navier–Stokes</li>
+<li>Kolmogorov flow</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Forward prediction</li>
+<li>Inverse reconstruction from sparse observations</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Spatiotemporal masking patterns (video inpainting).</li>
+<li>Reports both forward and inverse scenarios with MSE.</li>
+<li>Uses diffusion sampling at multiple step budgets.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>DiffusionPDE</li>
+<li>FNO</li>
+<li>PINO</li>
+<li>DeepONet</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Forward scenario (MSE)</h3>
+<p class="muted">Transcribed from the earlier site draft.</p>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>Wave-Layer</th><th>Navier–Stokes</th><th>Kolmogorov</th></tr></thead><tbody><tr><td>VideoPDE</td><td>0.023</td><td>0.026</td><td>0.125</td></tr>
+<tr><td>DiffusionPDE</td><td>0.102</td><td>0.051</td><td>0.140</td></tr>
+<tr><td>PINO</td><td>0.261</td><td>0.078</td><td>0.424</td></tr>
+<tr><td>DeepONet</td><td>0.254</td><td>0.083</td><td>0.421</td></tr>
+<tr><td>FNO</td><td>0.260</td><td>0.071</td><td>0.421</td></tr></tbody></table></div>
+<h3 class="subhead">Inverse scenario (MSE)</h3>
+<p class="muted">Transcribed from the earlier site draft.</p>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>Wave-Layer (inv)</th><th>Navier–Stokes (inv)</th></tr></thead><tbody><tr><td>VideoPDE</td><td>0.009</td><td>0.024</td></tr>
+<tr><td>DiffusionPDE</td><td>0.077</td><td>0.026</td></tr>
+<tr><td>PINO</td><td>0.034</td><td>0.044</td></tr>
+<tr><td>DeepONet</td><td>0.036</td><td>0.031</td></tr>
+<tr><td>FNO</td><td>0.031</td><td>0.030</td></tr></tbody></table></div>
+<div class="note">VideoPDE results depend strongly on the exact masking schedule and diffusion step budget.</div>
+</section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-20</div>
+    </footer>
+  </main>
+</body>
+</html>
