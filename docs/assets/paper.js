@@ -69,6 +69,8 @@ function renderPaper(p) {
 
   const pdes = (p.pdes || []).join(", ");
   const tasks = (p.tasks || []).join(", ");
+  const pdesNote = p.pdes_auto ? " (auto)" : "";
+  const tasksNote = p.tasks_auto ? " (auto)" : "";
 
   const tldr = (p.tldr || "").trim();
   const problem = (p.problem || "").trim();
@@ -77,7 +79,7 @@ function renderPaper(p) {
     ? `<div class="note">This paper has a curated page. Redirecting…</div>`
     : `<div class="note">
          This is an <b>index placeholder</b>. Want a full summary here?
-         Edit <code>data/papers/*.yaml</code> and set <code>status: curated</code>.
+         Create <code>data/curations/&lt;slug&gt;.json</code> and set <code>status</code> to <code>curated</code>.
          See the <a href="../../contribute/">Contribute</a> tab.
        </div>`;
 
@@ -103,15 +105,15 @@ function renderPaper(p) {
 
       <h3>Tags</h3>
       <ul>
-        <li><b>PDEs:</b> ${escapeHtml(pdes || "(none)")}</li>
-        <li><b>Tasks:</b> ${escapeHtml(tasks || "(none)")}</li>
+        <li><b>PDEs:</b> ${escapeHtml((pdes || "(none)") + pdesNote)}</li>
+        <li><b>Tasks:</b> ${escapeHtml((tasks || "(none)") + tasksNote)}</li>
       </ul>
 
       <h3>TL;DR</h3>
-      <p>${escapeHtml(tldr || "No TL;DR yet (add tldr: to the YAML).")}</p>
+      <p>${escapeHtml(tldr || "No TL;DR yet (add <code>tldr</code> to the curation JSON).")}</p>
 
       <h3>Problem</h3>
-      <p>${escapeHtml(problem || "No problem statement yet (add problem: to the YAML).")}</p>
+      <p>${escapeHtml(problem || "No problem statement yet (add <code>problem</code> to the curation JSON).")}</p>
 
       <h3>Citation (BibTeX)</h3>
       <pre class="code"><code>${escapeHtml(bib)}</code></pre>

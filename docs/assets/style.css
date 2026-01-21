@@ -248,6 +248,10 @@ table {
   border-collapse: collapse;
 }
 
+/* Research index table: keep columns readable (horizontal scroll if needed) */
+table.papers { min-width: 1120px; }
+table.papers td.paper-col { min-width: 360px; }
+
 th, td {
   border: 1px solid var(--border);
   padding: 8px 10px;

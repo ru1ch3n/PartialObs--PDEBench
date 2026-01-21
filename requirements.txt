@@ -3,5 +3,4 @@
 # The website is pre-built under docs/, but contributors can regenerate it
 # with: python scripts/generate_research_site.py
 
-PyYAML>=6.0
 bibtexparser>=1.4.0

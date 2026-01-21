@@ -133,6 +133,7 @@ function createRow(p, selected) {
 
   // paper
   const tdPaper = document.createElement("td");
+  tdPaper.className = "paper-col";
   const a = document.createElement("a");
   a.href = paperInternalLink(p);
   a.textContent = (p.full_title || p.short_title || p.slug);
@@ -140,7 +141,8 @@ function createRow(p, selected) {
 
   const small = document.createElement("div");
   small.className = "muted small";
-  small.textContent = (p.authors || "");
+  const subtitle = (p.tldr || "").trim() || (p.authors || "").trim();
+  small.textContent = subtitle;
   tdPaper.appendChild(small);
 
   tr.appendChild(tdPaper);
@@ -160,11 +162,13 @@ function createRow(p, selected) {
   // PDEs
   const tdPde = document.createElement("td");
   tdPde.textContent = fmtList(p.pdes || []);
+  if (p.pdes_auto) tdPde.title = "Auto-tagged (needs verification)";
   tr.appendChild(tdPde);
 
   // tasks
   const tdTasks = document.createElement("td");
   tdTasks.textContent = fmtList(p.tasks || []);
+  if (p.tasks_auto) tdTasks.title = "Auto-tagged (needs verification)";
   tr.appendChild(tdTasks);
 
   // status

@@ -1,0 +1,67 @@
+{
+  "slug": "your-paper-slug",
+  "status": "curated",
+  "full_title": "Full paper title",
+  "short_title": "ShortName",
+  "authors": "Author1; Author2; ...",
+  "year": 2025,
+  "venue": "ICLR / NeurIPS / ICML / etc",
+  "method_class": "Operator learning / PINN / Diffusion / Graph / etc",
+  "links": {
+    "paper": "https://arxiv.org/abs/xxxx.xxxxx",
+    "code": "https://github.com/..."
+  },
+  "tldr": "2–4 sentences summary.",
+  "problem": "What problem does this paper solve?",
+  "contrib": [
+    "Contribution #1",
+    "Contribution #2"
+  ],
+  "benefits": [
+    "Benefit #1 vs prior work",
+    "Benefit #2"
+  ],
+  "core_math": [
+    "Key equation(s) in LaTeX (no $ wrappers)"
+  ],
+  "data_setting": [
+    "Dataset size, PDE, discretization, observation masks, noise, etc."
+  ],
+  "model_setting": [
+    "Architecture details, parameterization, hyperparameters that matter."
+  ],
+  "training_setting": [
+    "Optimizer, LR schedule, epochs/steps, hardware, runtime."
+  ],
+  "baselines": [
+    "Baseline A",
+    "Baseline B"
+  ],
+  "results_tables": [
+    {
+      "title": "Main quantitative results (copy numbers from the paper tables)",
+      "note": "Metric + what lower/higher means.",
+      "header": [
+        "Setting",
+        "Method",
+        "Metric"
+      ],
+      "rows": [
+        [
+          "...",
+          "YourPaper",
+          "0.012"
+        ],
+        [
+          "...",
+          "Baseline A",
+          "0.034"
+        ]
+      ]
+    }
+  ],
+  "interesting": [
+    "Any extra insights (ablations, theory notes, limitations)."
+  ],
+  "bibtex": "@inproceedings{...}"
+}

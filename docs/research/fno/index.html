@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FNO (2020) — Research — PartialObs-PDEBench</title>
   <link rel="stylesheet" href="../../assets/style.css" />
-  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
 </head>
 
 <body>
@@ -14,11 +14,9 @@
       <div class="hero-top">
         <div>
           <h1>FNO (2020)</h1>
-          <p class="subtitle"><b>Fourier Neural Operator for Parametric Partial Differential Equations</b><br/>Zongyi Li et al.</p>
-          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2010.08895" target="_blank" rel="noopener noreferrer">arXiv:2010.08895</a></div></div><div class="badges">
-<span class="badge">Fourier</span>
-<span class="badge">Operator learning</span>
-</div>
+          <p class="subtitle"><b>Fourier Neural Operator for Parametric Partial Differential Equations</b><br/>Zongyi Li; Nikola Kovachki; Kamyar Azizzadenesheli; Burigede Liu; Kaushik Bhattacharya; Andrew Stuart; Anima Anandkumar</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2010.08895" target="_blank" rel="noopener noreferrer">link</a></div>
+<div><b>Code:</b> <a class="meta-link" href="https://github.com/zongyi-li/fourier_neural_operator" target="_blank" rel="noopener noreferrer">repository</a></div></div>
         </div>
 
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: neural operator (Fourier)<br/>Resolution-invariant design<br/>Fast surrogate inference</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
@@ -29,49 +27,88 @@
   </header>
 
   <main class="container">
-    <section id="tldr"><h2>TL;DR</h2><p>FNO learns PDE solution operators using Fourier-domain global convolutions, achieving strong accuracy and mesh-independent generalization on standard benchmarks.</p></section>
-<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
-<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
-<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
-<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
-\[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
+    <section id="tldr"><h2>TL;DR</h2><p>A resolution-invariant neural operator that learns solution operators of PDEs by parameterizing integral kernels in Fourier space, enabling efficient training and strong cross-resolution generalization.</p></section>
+<section id="problem"><h2>Problem</h2><p>Learn the mapping (operator) from input functions (e.g., initial conditions, coefficients, forcing) to PDE solution fields, with an architecture that generalizes across discretizations/resolutions.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Resolution-invariant operator parameterization: the learned operator can be applied to meshes/grids different from those used during training.</li>
+<li>FFT-based evaluation makes the global kernel mixing computationally efficient compared to dense integral kernels.</li>
+<li>Strong accuracy and data-efficiency vs CNN baselines on Navier–Stokes (especially at low viscosity).</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>The Fourier-layer design provides global receptive field mixing in O(n log n) via FFT, avoiding quadratic cost of dense kernels.</li>
+<li>The reported cross-resolution tests highlight one key advantage of operator learning: deploying the same learned operator on finer grids without retraining.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[v_{t+1}(x) = \sigma\left( W v_t(x) + (\mathcal{K} v_t)(x) \right),\quad (\mathcal{K}v)(x) = \int_D k(x,y)\,v(y)\,dy\]
+\[(\mathcal{K}v_t)(x) = \mathcal{F}^{-1}\big( R\,\mathcal{F}(v_t) \big)(x)\]
+\[(\mathcal{K}v_t)(x) = \sum_{|k|\le k_{\max}} e^{2\pi i\langle x,k\rangle}\,R_k\,\hat v_{t,k}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in JSON.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
-<li>Introduces Fourier layers to parameterize integral kernels efficiently.</li>
-<li>Demonstrates discretization-invariant operator learning (train low-res, test high-res).</li>
-<li>Becomes a standard baseline for PDE surrogate modeling.</li>
+<li>Introduce the Fourier Neural Operator (FNO): a neural operator built from stacked Fourier integral operator layers where the integral kernel is represented in the Fourier domain and evaluated efficiently with FFTs.</li>
+<li>Demonstrate strong cross-resolution generalization (“super-resolution” evaluation) on Burgers (1D), Darcy flow (2D), and Navier–Stokes (2D) benchmarks; FNO maintains low error when testing at resolutions different from training.</li>
+<li>Provide practical training recipes and comparisons against common surrogates (CNN/UNet, ResNet) and other operator-learning baselines (GNO/LNO/MGNO, PCA-NN, etc.).</li>
 </ul></section>
 <section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
-<li>Burgers</li>
+<li>Burgers equation</li>
 <li>Darcy flow</li>
 <li>Navier–Stokes</li>
+<li>Fluid dynamics</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>
-<li>Forward operator learning</li>
-<li>Longer rollouts (fluids)</li>
+<li>Operator learning / surrogate modeling</li>
+<li>Super-resolution / cross-resolution generalization</li>
 </ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
 <li>Supervised learning on simulated PDE datasets.</li>
 <li>Often evaluated on resolution generalization and rollout stability.</li>
 </ul></div></section>
 <section id="baselines"><h2>Comparable baselines</h2><ul>
 <li>U-Net</li>
-<li>DeepONet</li>
-<li>Numerical solver</li>
+<li>TF-Net</li>
+<li>ResNet</li>
+<li>GCN</li>
+<li>FCN</li>
+<li>PCA-NN</li>
+<li>GNO</li>
+<li>LNO</li>
+<li>MGNO</li>
+<li>RBM (Darcy baseline in paper)</li>
 </ul></section>
 <section id="results"><h2>Main results</h2>
-<h3 class="subhead">Key results</h3>
-<div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Darcy</td><td>L2 error</td><td>Strong accuracy and resolution generalization vs CNN baselines.</td></tr>
-<tr><td>Navier–Stokes</td><td>Rollout error</td><td>Competitive long-time prediction compared to prior surrogates.</td></tr></tbody></table></div>
+<h3 class="subhead">Navier–Stokes (64×64): relative error at t=1 (avg over test set) + time/epoch</h3>
+<p class="muted">Lower is better. Time per epoch is seconds (as reported in the paper).</p>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>#Params</th><th>Time/epoch (s)</th><th>ν=1e−3 (N=1000)</th><th>ν=1e−4 (N=1000)</th><th>ν=1e−4 (N=10000)</th><th>ν=1e−5 (N=1000)</th></tr></thead><tbody><tr><td>U-Net</td><td>4.3M</td><td>119</td><td>1.0e-2</td><td>3.3e-2</td><td>1.0e-2</td><td>8.4e-2</td></tr>
+<tr><td>TF-Net</td><td>2.3M</td><td>100</td><td>7.0e-3</td><td>4.8e-2</td><td>7.2e-3</td><td>1.1e-1</td></tr>
+<tr><td>ResNet</td><td>2.6M</td><td>150</td><td>5.6e-3</td><td>4.5e-2</td><td>4.0e-3</td><td>1.1e-1</td></tr>
+<tr><td>FNO</td><td>0.5M</td><td>39</td><td>8.7e-4</td><td>6.9e-3</td><td>1.8e-3</td><td>1.5e-2</td></tr></tbody></table></div>
+<h3 class="subhead">Burgers (1D): cross-resolution generalization (train s=2048, test varying s)</h3>
+<p class="muted">Metric: relative L2 error. Lower is better.</p>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>s=256</th><th>s=512</th><th>s=1024</th><th>s=2048</th><th>s=4096</th><th>s=8192</th></tr></thead><tbody><tr><td>NN</td><td>1.6e-2</td><td>1.4e-2</td><td>1.2e-2</td><td>1.1e-2</td><td>1.0e-2</td><td>9.8e-3</td></tr>
+<tr><td>GCN</td><td>2.0e-2</td><td>1.8e-2</td><td>1.6e-2</td><td>1.6e-2</td><td>1.7e-2</td><td>1.8e-2</td></tr>
+<tr><td>FCN</td><td>1.5e-2</td><td>1.4e-2</td><td>1.3e-2</td><td>1.3e-2</td><td>1.3e-2</td><td>1.2e-2</td></tr>
+<tr><td>PCA-NN</td><td>2.6e-2</td><td>1.9e-2</td><td>1.7e-2</td><td>1.7e-2</td><td>1.6e-2</td><td>1.6e-2</td></tr>
+<tr><td>GNO</td><td>1.1e-1</td><td>5.8e-2</td><td>3.7e-2</td><td>2.5e-2</td><td>2.0e-2</td><td>1.8e-2</td></tr>
+<tr><td>LNO</td><td>1.2e-1</td><td>9.4e-2</td><td>7.8e-2</td><td>5.4e-2</td><td>4.2e-2</td><td>3.5e-2</td></tr>
+<tr><td>MGNO</td><td>8.8e-3</td><td>7.2e-3</td><td>5.9e-3</td><td>5.7e-3</td><td>5.3e-3</td><td>5.0e-3</td></tr>
+<tr><td>FNO</td><td>1.1e-3</td><td>7.3e-4</td><td>4.6e-4</td><td>3.4e-4</td><td>3.0e-4</td><td>2.7e-4</td></tr></tbody></table></div>
+<h3 class="subhead">Darcy (2D): cross-resolution generalization (train s=421, test varying s)</h3>
+<p class="muted">Metric: relative L2 error. Lower is better.</p>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>s=85</th><th>s=141</th><th>s=211</th><th>s=421</th></tr></thead><tbody><tr><td>NN</td><td>5.1e-2</td><td>4.9e-2</td><td>4.8e-2</td><td>4.7e-2</td></tr>
+<tr><td>FCN</td><td>8.9e-2</td><td>8.8e-2</td><td>8.5e-2</td><td>8.4e-2</td></tr>
+<tr><td>PCA-NN</td><td>3.2e-2</td><td>2.5e-2</td><td>2.4e-2</td><td>2.4e-2</td></tr>
+<tr><td>RBM</td><td>3.0e-2</td><td>2.0e-2</td><td>1.9e-2</td><td>1.5e-2</td></tr>
+<tr><td>GNO</td><td>1.1e-1</td><td>8.6e-2</td><td>7.8e-2</td><td>6.0e-2</td></tr>
+<tr><td>LNO</td><td>2.0e-1</td><td>1.8e-1</td><td>1.7e-1</td><td>—</td></tr>
+<tr><td>MGNO</td><td>3.2e-2</td><td>2.6e-2</td><td>2.4e-2</td><td>2.2e-2</td></tr>
+<tr><td>FNO</td><td>1.9e-2</td><td>1.3e-2</td><td>1.0e-2</td><td>8.8e-3</td></tr></tbody></table></div>
 </section>
-<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{fno,
-  title={ Fourier Neural Operator for Parametric Partial Differential Equations },
-  author={ Zongyi Li et al. },
-  year={ 2020 },
-  url={ https://arxiv.org/abs/2010.08895 }
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@inproceedings{li2021fno,
+  title={Fourier Neural Operator for Parametric Partial Differential Equations},
+  author={Li, Zongyi and Kovachki, Nikola and Azizzadenesheli, Kamyar and Liu, Burigede and Bhattacharya, Kaushik and Stuart, Andrew and Anandkumar, Anima},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2021}
 }</code></pre></section>
 
     <footer class="footer">
-      <div class="muted">Last generated: 2026-01-20</div>
+      <div class="muted">Last generated: 2026-01-21</div>
     </footer>
   </main>
 </body>

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>DeepONet (2021) — Research — PartialObs-PDEBench</title>
   <link rel="stylesheet" href="../../assets/style.css" />
-  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
 </head>
 
 <body>
@@ -14,10 +14,8 @@
       <div class="hero-top">
         <div>
           <h1>DeepONet (2021)</h1>
-          <p class="subtitle"><b>Learning nonlinear operators via DeepONet</b><br/>Lu Lu et al.</p>
-          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/1910.03193" target="_blank" rel="noopener noreferrer">arXiv:1910.03193</a></div></div><div class="badges">
-<span class="badge">Operator learning</span>
-</div>
+          <p class="subtitle"><b>Learning nonlinear operators via DeepONet based on the universal approximation theorem of operators</b><br/>Lu Lu; Pengzhan Jin; George Em Karniadakis</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://www.nature.com/articles/s42256-021-00302-5" target="_blank" rel="noopener noreferrer">link</a></div></div>
         </div>
 
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: operator network<br/>Universal approximation (operators)<br/>Used for PDEs + more</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
@@ -28,46 +26,58 @@
   </header>
 
   <main class="container">
-    <section id="tldr"><h2>TL;DR</h2><p>DeepONet introduces a branch–trunk architecture to learn nonlinear operators and becomes a foundational approach for operator learning in PDE problems.</p></section>
-<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
-<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
-<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
-<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
-\[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
+    <section id="tldr"><h2>TL;DR</h2><p>DeepONet learns nonlinear operators by combining a branch net (encoding the input function) and a trunk net (encoding the query location), enabling supervised operator learning with a universal approximation guarantee.</p></section>
+<section id="problem"><h2>Problem</h2><p>Approximate solution operators of differential equations: map an input function (IC/BC/forcing/coefficient) to a solution function, so that inference becomes a fast forward pass instead of running a numerical solver.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>General operator viewpoint: one model can answer many queries (many right-hand-sides / coefficients / boundary conditions) once trained.</li>
+<li>Efficient inference: after training, evaluation at new coordinates is cheap (trunk net) and re-usable for many y points.</li>
+<li>Theory-backed: universal approximation result for continuous operators motivates architecture.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>Because the trunk net depends only on y, it can be precomputed for a fixed output grid; then many inputs u can be evaluated cheaply by changing only the branch output.</li>
+<li>The dot-product form can be interpreted as learning a data-driven basis expansion for the solution operator.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta(u)(y) = \sum_{k=1}^{p} b_k(u)\, t_k(y)\quad\text{(branch outputs }b_k,\ \text{trunk outputs }t_k)\]
+\[\hat s(y) = \langle \mathbf{b}(u),\ \mathbf{t}(y) \rangle\ (+\ b_0)\quad\text{(dot-product readout)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>Universal approximation (operator version): for suitable compact sets of input functions and continuous operators G, there exist network parameters such that DeepONet approximates G uniformly to arbitrary accuracy.</li>
+</ul></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
-<li>Branch–trunk decomposition to represent input functions and evaluation locations.</li>
-<li>Connects to universal approximation of operators.</li>
-<li>Demonstrates operator learning on PDE-like benchmarks and functionals.</li>
+<li>Propose the Deep Operator Network (DeepONet) architecture: a branch network consumes samples of an input function u and outputs coefficients; a trunk network consumes query coordinates y and outputs basis values; the output is a dot product.</li>
+<li>Provide a universal approximation theorem for operators (under continuity assumptions), motivating DeepONet as a principled operator learner.</li>
+<li>Demonstrate DeepONet on challenging operator-learning tasks including implicit operators in a diffusion–reaction system and stochastic PDEs, achieving orders-of-magnitude lower test error than strong neural baselines in reported setups.</li>
 </ul></section>
 <section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
-<li>Burgers</li>
-<li>Advection</li>
-<li>Reaction–diffusion</li>
+<li>Diffusion–reaction system</li>
+<li>Stochastic PDEs</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>
-<li>Operator regression</li>
-<li>Fast evaluation of solution fields</li>
+<li>Operator learning / surrogate modeling</li>
+<li>Fast PDE surrogate inference</li>
 </ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
 <li>Learns mapping from an input function (IC/forcing) to output function values.</li>
 <li>Often evaluated with scattered sensor inputs and queried outputs.</li>
 </ul></div></section>
 <section id="baselines"><h2>Comparable baselines</h2><ul>
-<li>FNO</li>
+<li>FNN (fully-connected neural network baseline in paper)</li>
+<li>ResNet (baseline in paper)</li>
 </ul></section>
 <section id="results"><h2>Main results</h2>
-<h3 class="subhead">Key results</h3>
-<div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Operator learning tasks</td><td>L2 error</td><td>Accurate operator approximation with flexible sensor/query sets.</td></tr></tbody></table></div>
+<h3 class="subhead">Reported quantitative highlights (from the paper text; see Fig. 4 and Supplementary Sec. 6)</h3>
+<p class="muted">These numbers are quoted from the paper’s reported best results (not an exhaustive benchmark).</p>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>Metric</th><th>DeepONet</th><th>Baseline(s)</th></tr></thead><tbody><tr><td>Diffusion–reaction system (implicit operator)</td><td>Smallest test error</td><td>≈ 1e-5</td><td>ResNet ≈ 1e-1 (same setting)</td></tr>
+<tr><td>Stochastic PDE (multiplicative noise)</td><td>Best test MSE / rel. L2</td><td>MSE=1e-5; L2=1.1%</td><td>—</td></tr>
+<tr><td>Stochastic PDE (additive noise)</td><td>Best test MSE / rel. L2</td><td>MSE=9.4e-4; L2=0.03%</td><td>—</td></tr></tbody></table></div>
 </section>
-<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{deeponet,
-  title={ Learning nonlinear operators via DeepONet },
-  author={ Lu Lu et al. },
-  year={ 2021 },
-  url={ https://arxiv.org/abs/1910.03193 }
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{lu2021deeponet,
+  title={Learning nonlinear operators via {DeepONet} based on the universal approximation theorem of operators},
+  author={Lu, Lu and Jin, Pengzhan and Karniadakis, George Em},
+  journal={Nature Machine Intelligence},
+  year={2021}
 }</code></pre></section>
 
     <footer class="footer">
-      <div class="muted">Last generated: 2026-01-20</div>
+      <div class="muted">Last generated: 2026-01-21</div>
     </footer>
   </main>
 </body>

@@ -1,0 +1,93 @@
+{
+  "slug": "deeponet",
+  "status": "curated",
+  "full_title": "Learning nonlinear operators via DeepONet based on the universal approximation theorem of operators",
+  "short_title": "DeepONet",
+  "authors": "Lu Lu; Pengzhan Jin; George Em Karniadakis",
+  "year": 2021,
+  "venue": "Nature Machine Intelligence (2021)",
+  "method_class": "Operator learning",
+  "links": {
+    "paper": "https://www.nature.com/articles/s42256-021-00302-5",
+    "pdf": "https://aiichironakano.github.io/CSCI596/document/Lu-DeepONet-NMachineIntell21.pdf"
+  },
+  "tldr": "DeepONet learns nonlinear operators by combining a branch net (encoding the input function) and a trunk net (encoding the query location), enabling supervised operator learning with a universal approximation guarantee.",
+  "problem": "Approximate solution operators of differential equations: map an input function (IC/BC/forcing/coefficient) to a solution function, so that inference becomes a fast forward pass instead of running a numerical solver.",
+  "contrib": [
+    "Propose the Deep Operator Network (DeepONet) architecture: a branch network consumes samples of an input function u and outputs coefficients; a trunk network consumes query coordinates y and outputs basis values; the output is a dot product.",
+    "Provide a universal approximation theorem for operators (under continuity assumptions), motivating DeepONet as a principled operator learner.",
+    "Demonstrate DeepONet on challenging operator-learning tasks including implicit operators in a diffusion–reaction system and stochastic PDEs, achieving orders-of-magnitude lower test error than strong neural baselines in reported setups."
+  ],
+  "benefits": [
+    "General operator viewpoint: one model can answer many queries (many right-hand-sides / coefficients / boundary conditions) once trained.",
+    "Efficient inference: after training, evaluation at new coordinates is cheap (trunk net) and re-usable for many y points.",
+    "Theory-backed: universal approximation result for continuous operators motivates architecture."
+  ],
+  "core_math": [
+    "G_\\theta(u)(y) = \\sum_{k=1}^{p} b_k(u)\\, t_k(y)\\quad\\text{(branch outputs }b_k,\\ \\text{trunk outputs }t_k)",
+    "\\hat s(y) = \\langle \\mathbf{b}(u),\\ \\mathbf{t}(y) \\rangle\\ (+\\ b_0)\\quad\\text{(dot-product readout)}"
+  ],
+  "theory": [
+    "Universal approximation (operator version): for suitable compact sets of input functions and continuous operators G, there exist network parameters such that DeepONet approximates G uniformly to arbitrary accuracy."
+  ],
+  "data_setting": [
+    "Diffusion–reaction system example (Fig. 4): uses #u = 100 input functions and P = 100 sensor points for the branch input (reported).",
+    "Stochastic PDE example (Supplementary Sec. 6): evaluation reported on 10,000 sampling points; metrics include MSE and relative L2 error."
+  ],
+  "model_setting": [
+    "Two-network decomposition: (1) branch net ingests sampled values of the input function u(x_j); (2) trunk net ingests coordinates y where output is queried.",
+    "The output dimension p controls the number of learned basis functions / coefficients in the dot-product representation."
+  ],
+  "training_setting": [
+    "Reported in-paper comparison: for the diffusion–reaction example, DeepONet uses ~1M parameters and is reported to reach very low test error with substantially less training time than a ~0.8M-parameter ResNet baseline."
+  ],
+  "baselines": [
+    "FNN (fully-connected neural network baseline in paper)",
+    "ResNet (baseline in paper)"
+  ],
+  "results_tables": [
+    {
+      "title": "Reported quantitative highlights (from the paper text; see Fig. 4 and Supplementary Sec. 6)",
+      "note": "These numbers are quoted from the paper’s reported best results (not an exhaustive benchmark).",
+      "header": [
+        "Task",
+        "Metric",
+        "DeepONet",
+        "Baseline(s)"
+      ],
+      "rows": [
+        [
+          "Diffusion–reaction system (implicit operator)",
+          "Smallest test error",
+          "≈ 1e-5",
+          "ResNet ≈ 1e-1 (same setting)"
+        ],
+        [
+          "Stochastic PDE (multiplicative noise)",
+          "Best test MSE / rel. L2",
+          "MSE=1e-5; L2=1.1%",
+          "—"
+        ],
+        [
+          "Stochastic PDE (additive noise)",
+          "Best test MSE / rel. L2",
+          "MSE=9.4e-4; L2=0.03%",
+          "—"
+        ]
+      ]
+    }
+  ],
+  "interesting": [
+    "Because the trunk net depends only on y, it can be precomputed for a fixed output grid; then many inputs u can be evaluated cheaply by changing only the branch output.",
+    "The dot-product form can be interpreted as learning a data-driven basis expansion for the solution operator."
+  ],
+  "bibtex": "@article{lu2021deeponet,\n  title={Learning nonlinear operators via {DeepONet} based on the universal approximation theorem of operators},\n  author={Lu, Lu and Jin, Pengzhan and Karniadakis, George Em},\n  journal={Nature Machine Intelligence},\n  year={2021}\n}",
+  "pdes": [
+    "Diffusion–reaction system",
+    "Stochastic PDEs"
+  ],
+  "tasks": [
+    "Operator learning / surrogate modeling",
+    "Fast PDE surrogate inference"
+  ]
+}

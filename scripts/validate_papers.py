@@ -1,4 +1,4 @@
-"""Validate YAML paper files under data/papers/.
+"""Validate JSON curation files under data/curations/.
 
 This is a lightweight schema checker to catch common mistakes early
 (wrong types, missing required fields, etc.).
@@ -13,15 +13,13 @@ Exit code:
 
 from __future__ import annotations
 
-import sys
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-import yaml
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PAPERS_DIR = REPO_ROOT / "data" / "papers"
+CURATIONS_DIR = REPO_ROOT / "data" / "curations"
 
 
 def _as_list(v: Any) -> List[Any]:
@@ -38,14 +36,14 @@ def validate_one(path: Path) -> Tuple[List[str], List[str]]:
     warnings: List[str] = []
 
     try:
-        obj = yaml.safe_load(path.read_text(encoding="utf-8"))
+        obj = json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
-        return ([f"YAML parse error: {e}"], [])
+        return ([f"JSON parse error: {e}"], [])
 
     if obj is None:
-        return (["File is empty (YAML is None)."], [])
+        return (["File is empty (JSON is null)."], [])
     if not isinstance(obj, dict):
-        return ([f"Top-level YAML must be a mapping/dict, got {type(obj).__name__}."], [])
+        return ([f"Top-level JSON must be an object/dict, got {type(obj).__name__}."], [])
 
     slug_file = path.stem
     slug = str(obj.get("slug") or slug_file)
@@ -73,7 +71,7 @@ def validate_one(path: Path) -> Tuple[List[str], List[str]]:
         warnings.append("status should be 'index' or 'curated'.")
 
     # Lists
-    for key in ["pdes", "tasks", "setting", "baselines", "contrib", "theory", "core_math"]:
+    for key in ["pdes", "tasks", "setting", "baselines", "contrib", "theory", "core_math", "data_setting", "model_setting", "training_setting", "interesting", "benefits"]:
         if key in obj and obj[key] is not None and not isinstance(obj[key], list):
             errors.append(f"{key} must be a list, got {type(obj[key]).__name__}.")
 
@@ -107,13 +105,13 @@ def validate_one(path: Path) -> Tuple[List[str], List[str]]:
 
 
 def main() -> int:
-    if not PAPERS_DIR.exists():
-        print(f"No papers directory: {PAPERS_DIR}")
+    if not CURATIONS_DIR.exists():
+        print(f"No curations directory: {CURATIONS_DIR}")
         return 1
 
-    files = sorted([p for p in PAPERS_DIR.glob("*.y*ml") if not p.name.startswith("_")])
+    files = sorted([p for p in CURATIONS_DIR.glob("*.json") if not p.name.startswith("_")])
     if not files:
-        print(f"No YAML files found in {PAPERS_DIR}")
+        print(f"No JSON curation files found in {CURATIONS_DIR}")
         return 1
 
     n_err = 0
@@ -134,7 +132,7 @@ def main() -> int:
                 for w in warnings:
                     print(f"  - {w}")
 
-    print(f"\nChecked {len(files)} YAML files: {n_err} with errors, {n_warn} with warnings.")
+    print(f"\nChecked {len(files)} JSON files: {n_err} with errors, {n_warn} with warnings.")
     return 0 if n_err == 0 else 1
 
 

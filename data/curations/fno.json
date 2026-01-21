@@ -1,0 +1,282 @@
+{
+  "slug": "fno",
+  "status": "curated",
+  "full_title": "Fourier Neural Operator for Parametric Partial Differential Equations",
+  "short_title": "FNO",
+  "authors": "Zongyi Li; Nikola Kovachki; Kamyar Azizzadenesheli; Burigede Liu; Kaushik Bhattacharya; Andrew Stuart; Anima Anandkumar",
+  "year": 2020,
+  "venue": "ICLR 2021 (arXiv:2010.08895)",
+  "method_class": "Operator learning",
+  "links": {
+    "paper": "https://arxiv.org/abs/2010.08895",
+    "pdf": "https://arxiv.org/pdf/2010.08895.pdf",
+    "code": "https://github.com/zongyi-li/fourier_neural_operator"
+  },
+  "tldr": "A resolution-invariant neural operator that learns solution operators of PDEs by parameterizing integral kernels in Fourier space, enabling efficient training and strong cross-resolution generalization.",
+  "problem": "Learn the mapping (operator) from input functions (e.g., initial conditions, coefficients, forcing) to PDE solution fields, with an architecture that generalizes across discretizations/resolutions.",
+  "contrib": [
+    "Introduce the Fourier Neural Operator (FNO): a neural operator built from stacked Fourier integral operator layers where the integral kernel is represented in the Fourier domain and evaluated efficiently with FFTs.",
+    "Demonstrate strong cross-resolution generalization (“super-resolution” evaluation) on Burgers (1D), Darcy flow (2D), and Navier–Stokes (2D) benchmarks; FNO maintains low error when testing at resolutions different from training.",
+    "Provide practical training recipes and comparisons against common surrogates (CNN/UNet, ResNet) and other operator-learning baselines (GNO/LNO/MGNO, PCA-NN, etc.)."
+  ],
+  "benefits": [
+    "Resolution-invariant operator parameterization: the learned operator can be applied to meshes/grids different from those used during training.",
+    "FFT-based evaluation makes the global kernel mixing computationally efficient compared to dense integral kernels.",
+    "Strong accuracy and data-efficiency vs CNN baselines on Navier–Stokes (especially at low viscosity)."
+  ],
+  "core_math": [
+    "v_{t+1}(x) = \\sigma\\left( W v_t(x) + (\\mathcal{K} v_t)(x) \\right),\\quad (\\mathcal{K}v)(x) = \\int_D k(x,y)\\,v(y)\\,dy",
+    "(\\mathcal{K}v_t)(x) = \\mathcal{F}^{-1}\\big( R\\,\\mathcal{F}(v_t) \\big)(x)",
+    "(\\mathcal{K}v_t)(x) = \\sum_{|k|\\le k_{\\max}} e^{2\\pi i\\langle x,k\\rangle}\\,R_k\\,\\hat v_{t,k}"
+  ],
+  "data_setting": [
+    "Burgers (1D): train at resolution s=2048 and test across s∈{256,512,1024,2048,4096,8192}.",
+    "Darcy flow (2D): train at resolution s=421 and test across s∈{85,141,211,421}.",
+    "Navier–Stokes (2D): evaluate at fixed 64×64; compare across viscosities ν∈{1e−3,1e−4,1e−5} and dataset sizes N∈{1000,10000}."
+  ],
+  "model_setting": [
+    "Stack 4 Fourier integral operator layers with pointwise linear transforms and nonlinearity (ReLU) + batch normalization.",
+    "Truncate to a fixed number of Fourier modes (reported examples: k_max=16 with width d_v=64 for 1D; k_max=12 with d_v=32 for 2D).",
+    "Kernel mixing is implemented by multiplying learned complex weights R_k with Fourier coefficients \\hat v_k (FFT/IFFT)."
+  ],
+  "training_setting": [
+    "Optimizer: Adam; 500 epochs; initial LR 1e−3 halved every 100 epochs (reported setup).",
+    "Compute: reported training on NVIDIA V100 GPU; Navier–Stokes comparisons report seconds per epoch for each baseline."
+  ],
+  "baselines": [
+    "U-Net",
+    "TF-Net",
+    "ResNet",
+    "GCN",
+    "FCN",
+    "PCA-NN",
+    "GNO",
+    "LNO",
+    "MGNO",
+    "RBM (Darcy baseline in paper)"
+  ],
+  "results_tables": [
+    {
+      "title": "Navier–Stokes (64×64): relative error at t=1 (avg over test set) + time/epoch",
+      "note": "Lower is better. Time per epoch is seconds (as reported in the paper).",
+      "header": [
+        "Method",
+        "#Params",
+        "Time/epoch (s)",
+        "ν=1e−3 (N=1000)",
+        "ν=1e−4 (N=1000)",
+        "ν=1e−4 (N=10000)",
+        "ν=1e−5 (N=1000)"
+      ],
+      "rows": [
+        [
+          "U-Net",
+          "4.3M",
+          "119",
+          "1.0e-2",
+          "3.3e-2",
+          "1.0e-2",
+          "8.4e-2"
+        ],
+        [
+          "TF-Net",
+          "2.3M",
+          "100",
+          "7.0e-3",
+          "4.8e-2",
+          "7.2e-3",
+          "1.1e-1"
+        ],
+        [
+          "ResNet",
+          "2.6M",
+          "150",
+          "5.6e-3",
+          "4.5e-2",
+          "4.0e-3",
+          "1.1e-1"
+        ],
+        [
+          "FNO",
+          "0.5M",
+          "39",
+          "8.7e-4",
+          "6.9e-3",
+          "1.8e-3",
+          "1.5e-2"
+        ]
+      ]
+    },
+    {
+      "title": "Burgers (1D): cross-resolution generalization (train s=2048, test varying s)",
+      "note": "Metric: relative L2 error. Lower is better.",
+      "header": [
+        "Method",
+        "s=256",
+        "s=512",
+        "s=1024",
+        "s=2048",
+        "s=4096",
+        "s=8192"
+      ],
+      "rows": [
+        [
+          "NN",
+          "1.6e-2",
+          "1.4e-2",
+          "1.2e-2",
+          "1.1e-2",
+          "1.0e-2",
+          "9.8e-3"
+        ],
+        [
+          "GCN",
+          "2.0e-2",
+          "1.8e-2",
+          "1.6e-2",
+          "1.6e-2",
+          "1.7e-2",
+          "1.8e-2"
+        ],
+        [
+          "FCN",
+          "1.5e-2",
+          "1.4e-2",
+          "1.3e-2",
+          "1.3e-2",
+          "1.3e-2",
+          "1.2e-2"
+        ],
+        [
+          "PCA-NN",
+          "2.6e-2",
+          "1.9e-2",
+          "1.7e-2",
+          "1.7e-2",
+          "1.6e-2",
+          "1.6e-2"
+        ],
+        [
+          "GNO",
+          "1.1e-1",
+          "5.8e-2",
+          "3.7e-2",
+          "2.5e-2",
+          "2.0e-2",
+          "1.8e-2"
+        ],
+        [
+          "LNO",
+          "1.2e-1",
+          "9.4e-2",
+          "7.8e-2",
+          "5.4e-2",
+          "4.2e-2",
+          "3.5e-2"
+        ],
+        [
+          "MGNO",
+          "8.8e-3",
+          "7.2e-3",
+          "5.9e-3",
+          "5.7e-3",
+          "5.3e-3",
+          "5.0e-3"
+        ],
+        [
+          "FNO",
+          "1.1e-3",
+          "7.3e-4",
+          "4.6e-4",
+          "3.4e-4",
+          "3.0e-4",
+          "2.7e-4"
+        ]
+      ]
+    },
+    {
+      "title": "Darcy (2D): cross-resolution generalization (train s=421, test varying s)",
+      "note": "Metric: relative L2 error. Lower is better.",
+      "header": [
+        "Method",
+        "s=85",
+        "s=141",
+        "s=211",
+        "s=421"
+      ],
+      "rows": [
+        [
+          "NN",
+          "5.1e-2",
+          "4.9e-2",
+          "4.8e-2",
+          "4.7e-2"
+        ],
+        [
+          "FCN",
+          "8.9e-2",
+          "8.8e-2",
+          "8.5e-2",
+          "8.4e-2"
+        ],
+        [
+          "PCA-NN",
+          "3.2e-2",
+          "2.5e-2",
+          "2.4e-2",
+          "2.4e-2"
+        ],
+        [
+          "RBM",
+          "3.0e-2",
+          "2.0e-2",
+          "1.9e-2",
+          "1.5e-2"
+        ],
+        [
+          "GNO",
+          "1.1e-1",
+          "8.6e-2",
+          "7.8e-2",
+          "6.0e-2"
+        ],
+        [
+          "LNO",
+          "2.0e-1",
+          "1.8e-1",
+          "1.7e-1",
+          "—"
+        ],
+        [
+          "MGNO",
+          "3.2e-2",
+          "2.6e-2",
+          "2.4e-2",
+          "2.2e-2"
+        ],
+        [
+          "FNO",
+          "1.9e-2",
+          "1.3e-2",
+          "1.0e-2",
+          "8.8e-3"
+        ]
+      ]
+    }
+  ],
+  "interesting": [
+    "The Fourier-layer design provides global receptive field mixing in O(n log n) via FFT, avoiding quadratic cost of dense kernels.",
+    "The reported cross-resolution tests highlight one key advantage of operator learning: deploying the same learned operator on finer grids without retraining."
+  ],
+  "bibtex": "@inproceedings{li2021fno,\n  title={Fourier Neural Operator for Parametric Partial Differential Equations},\n  author={Li, Zongyi and Kovachki, Nikola and Azizzadenesheli, Kamyar and Liu, Burigede and Bhattacharya, Kaushik and Stuart, Andrew and Anandkumar, Anima},\n  booktitle={International Conference on Learning Representations (ICLR)},\n  year={2021}\n}",
+  "pdes": [
+    "Burgers equation",
+    "Darcy flow",
+    "Navier–Stokes",
+    "Fluid dynamics"
+  ],
+  "tasks": [
+    "Operator learning / surrogate modeling",
+    "Super-resolution / cross-resolution generalization"
+  ]
+}

@@ -101,22 +101,30 @@ It includes:
 - A **Baselines** tab that indexes commonly compared methods.
 - A **Benchmark** tab (work in progress).
 
-## Paper database (YAML source of truth)
+## Paper database (JSON / NDJSON source of truth)
 
-Paper metadata and summaries are stored as **one YAML per paper** in:
+Paper metadata and summaries are stored as:
 
-```
-data/papers/<slug>.yaml
-```
+- **Index list (metadata-only):** JSON Lines in:
+
+  ```
+  scripts/research_db.ndjson
+  ```
+
+- **Curations (rich content, one file per curated paper):**
+
+  ```
+  data/curations/<slug>.json
+  ```
+
 
 This is the recommended contribution workflow (easy to review in PRs):
-1) Add or edit a YAML file.
+1) Add or edit an index entry (NDJSON) or a curation JSON file.
 2) Rebuild the static site.
 3) Commit the regenerated `docs/` outputs.
 
 To rebuild:
 ```bash
-pip install pyyaml
 python scripts/generate_research_site.py
 ```
 

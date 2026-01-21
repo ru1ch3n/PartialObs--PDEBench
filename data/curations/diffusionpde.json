@@ -1,0 +1,365 @@
+{
+  "slug": "diffusionpde",
+  "status": "curated",
+  "full_title": "DiffusionPDE: Generative PDE-Solving Under Partial Observation",
+  "short_title": "DiffusionPDE",
+  "authors": "Wenlong Tang; Lingling Fan; Haoyu Sun; Yichi Zhang; Yixin Chen",
+  "year": 2024,
+  "venue": "arXiv:2406.17763 (submitted 2024)",
+  "method_class": "Diffusion",
+  "links": {
+    "paper": "https://arxiv.org/abs/2406.17763",
+    "html": "https://arxiv.org/html/2406.17763v1"
+  },
+  "tldr": "Train a diffusion model on joint fields (coefficients + solutions) and perform PDE reconstruction under sparse observations via guided sampling that combines observation consistency and PDE-residual guidance.",
+  "problem": "Given partial observations of a PDE solution (e.g., sparse sensors / masked pixels) and optionally unknown PDE coefficients, reconstruct the full field (and the hidden coefficient field) in a way that is consistent with both the observations and the governing PDE.",
+  "contrib": [
+    "Formulate partial-observation PDE solving as conditional generation: learn a prior over joint fields and condition on sparse observations via guidance at sampling time.",
+    "Introduce physics guidance via PDE residual loss and data guidance via observation loss, combined to steer diffusion sampling toward physically valid reconstructions.",
+    "Demonstrate strong performance across multiple PDEs and settings (forward/inverse; 1%–3% observations; random masks / row-column masks) compared to operator-learning and inpainting-style baselines."
+  ],
+  "benefits": [
+    "Handles severe sparsity (e.g., 1% observations) by leveraging a learned generative prior rather than purely supervised regression.",
+    "Physics guidance improves physical consistency (PDE residual) and can help stabilize reconstructions compared to observation-only guidance.",
+    "Unified framework supports both forward (known coefficient) and inverse (unknown coefficient) reconstruction under partial observation."
+  ],
+  "core_math": [
+    "q(x_t\\mid x_{t-1}) = \\mathcal{N}(\\sqrt{1-\\beta_t}\\,x_{t-1},\\ \\beta_t I),\\quad x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon",
+    "p_\\theta(x_{t-1}\\mid x_t) = \\mathcal{N}(\\mu_\\theta(x_t,t),\\ \\sigma_t^2 I)",
+    "\\mu_\\theta(x_t,t) = \\frac{1}{\\sqrt{1-\\beta_t}}\\left(x_t - \\frac{\\beta_t}{\\sqrt{1-\\bar\\alpha_t}}\\,\\epsilon_\\theta(x_t,t)\\right)",
+    "\\mathcal{L}_{\\text{obs}} = \\lVert M\\odot(u - y)\\rVert^2,\\quad \\mathcal{L}_{\\text{PDE}} = \\lVert \\mathcal{N}(u,a) \\rVert^2",
+    "x_{t-1} \\leftarrow x_{t-1} - \\eta\\,\\nabla_{x_t}\\big( \\lambda_{\\text{obs}}\\mathcal{L}_{\\text{obs}} + \\lambda_{\\text{PDE}}\\mathcal{L}_{\\text{PDE}} \\big)\\ \\text{(guided sampling)}"
+  ],
+  "data_setting": [
+    "Train diffusion priors on joint fields (solution u and coefficient a) for each PDE benchmark; paper reports generating 50,000 samples per PDE.",
+    "Partial observation masks: random masks at 1% and 3% observation ratios; also structured row-column masks with 1% ratio.",
+    "PDE suite includes Darcy flow, Poisson, Helmholtz, Burgers, and (bounded/unbounded) Navier–Stokes cases (per paper tables)."
+  ],
+  "model_setting": [
+    "Unconditional diffusion model (DDPM-style) used as a prior over joint fields; conditioning is done at sampling time via guidance rather than training a separate conditional model.",
+    "Guidance combines (a) observation consistency and (b) PDE residual computed from the reconstructed field (and coefficient, for inverse problems)."
+  ],
+  "training_setting": [
+    "Reported compute: trained on 3×NVIDIA A40 GPUs for ~4 hours per PDE (per paper appendix).",
+    "Sampling uses gradient-based guidance weights \\lambda_{\\text{obs}}, \\lambda_{\\text{PDE}}; an ablation table in the paper compares observation-only, PDE-only, and combined guidance."
+  ],
+  "baselines": [
+    "FNO",
+    "PINO",
+    "U-NO",
+    "U-WNO",
+    "Diffusion inpainting baseline (as described in paper)"
+  ],
+  "results_tables": [
+    {
+      "title": "Partial observation (random masks): 1% and 3% observation ratio",
+      "note": "Metric: relative error (lower is better). Values are copied from the paper’s Table 1 (forward and inverse settings).",
+      "header": [
+        "Setting",
+        "Method",
+        "Darcy (Fwd)",
+        "Poisson (Fwd)",
+        "Helmholtz (Fwd)",
+        "Burgers (Fwd)",
+        "Navier–Stokes bounded (Fwd)",
+        "Navier–Stokes unbounded (Fwd)",
+        "Darcy (Inv)",
+        "Poisson (Inv)",
+        "Helmholtz (Inv)",
+        "Navier–Stokes bounded (Inv)",
+        "Navier–Stokes unbounded (Inv)"
+      ],
+      "rows": [
+        [
+          "1% obs",
+          "DiffusionPDE",
+          "0.043",
+          "0.136",
+          "0.015",
+          "0.012",
+          "0.071",
+          "0.081",
+          "0.048",
+          "0.196",
+          "0.016",
+          "0.071",
+          "0.086"
+        ],
+        [
+          "1% obs",
+          "FNO",
+          "0.395",
+          "0.637",
+          "0.055",
+          "0.264",
+          "0.187",
+          "0.244",
+          "0.400",
+          "0.640",
+          "0.099",
+          "0.214",
+          "0.283"
+        ],
+        [
+          "1% obs",
+          "PINO",
+          "0.552",
+          "0.572",
+          "0.069",
+          "0.436",
+          "0.219",
+          "0.261",
+          "0.553",
+          "0.574",
+          "0.107",
+          "0.253",
+          "0.300"
+        ],
+        [
+          "1% obs",
+          "U-NO",
+          "0.204",
+          "0.816",
+          "0.022",
+          "0.072",
+          "0.290",
+          "0.183",
+          "0.206",
+          "0.818",
+          "0.026",
+          "0.329",
+          "0.207"
+        ],
+        [
+          "1% obs",
+          "U-WNO",
+          "0.287",
+          "0.367",
+          "0.044",
+          "0.059",
+          "0.111",
+          "0.154",
+          "0.288",
+          "0.370",
+          "0.076",
+          "0.128",
+          "0.182"
+        ],
+        [
+          "3% obs",
+          "DiffusionPDE",
+          "0.031",
+          "0.072",
+          "0.014",
+          "0.005",
+          "0.018",
+          "0.025",
+          "0.032",
+          "0.105",
+          "0.014",
+          "0.018",
+          "0.026"
+        ],
+        [
+          "3% obs",
+          "FNO",
+          "0.227",
+          "0.511",
+          "0.044",
+          "0.183",
+          "0.130",
+          "0.184",
+          "0.228",
+          "0.514",
+          "0.081",
+          "0.150",
+          "0.215"
+        ],
+        [
+          "3% obs",
+          "PINO",
+          "0.320",
+          "0.510",
+          "0.066",
+          "0.337",
+          "0.201",
+          "0.226",
+          "0.322",
+          "0.513",
+          "0.103",
+          "0.232",
+          "0.260"
+        ],
+        [
+          "3% obs",
+          "U-NO",
+          "0.072",
+          "0.411",
+          "0.020",
+          "0.026",
+          "0.028",
+          "0.030",
+          "0.076",
+          "0.413",
+          "0.023",
+          "0.031",
+          "0.033"
+        ],
+        [
+          "3% obs",
+          "U-WNO",
+          "0.060",
+          "0.238",
+          "0.033",
+          "0.033",
+          "0.027",
+          "0.030",
+          "0.063",
+          "0.241",
+          "0.057",
+          "0.032",
+          "0.036"
+        ]
+      ]
+    },
+    {
+      "title": "Full observation (no masks)",
+      "note": "Metric: relative error (lower is better). Values are copied from the paper’s Table 4 (forward and inverse settings).",
+      "header": [
+        "Setting",
+        "Method",
+        "Darcy (Fwd)",
+        "Poisson (Fwd)",
+        "Helmholtz (Fwd)",
+        "Burgers (Fwd)",
+        "Navier–Stokes bounded (Fwd)",
+        "Navier–Stokes unbounded (Fwd)",
+        "Darcy (Inv)",
+        "Poisson (Inv)",
+        "Helmholtz (Inv)",
+        "Navier–Stokes bounded (Inv)",
+        "Navier–Stokes unbounded (Inv)"
+      ],
+      "rows": [
+        [
+          "Full obs",
+          "DiffusionPDE",
+          "0.009",
+          "0.013",
+          "0.014",
+          "0.002",
+          "0.002",
+          "0.003",
+          "0.010",
+          "0.015",
+          "0.014",
+          "0.002",
+          "0.004"
+        ],
+        [
+          "Full obs",
+          "FNO",
+          "0.014",
+          "0.042",
+          "0.044",
+          "0.023",
+          "0.028",
+          "0.064",
+          "0.015",
+          "0.049",
+          "0.081",
+          "0.030",
+          "0.081"
+        ],
+        [
+          "Full obs",
+          "PINO",
+          "0.011",
+          "0.016",
+          "0.052",
+          "0.010",
+          "0.006",
+          "0.010",
+          "0.012",
+          "0.019",
+          "0.086",
+          "0.009",
+          "0.014"
+        ],
+        [
+          "Full obs",
+          "U-NO",
+          "0.009",
+          "0.016",
+          "0.014",
+          "0.002",
+          "0.004",
+          "0.009",
+          "0.010",
+          "0.020",
+          "0.014",
+          "0.005",
+          "0.011"
+        ],
+        [
+          "Full obs",
+          "U-WNO",
+          "0.010",
+          "0.015",
+          "0.030",
+          "0.002",
+          "0.002",
+          "0.004",
+          "0.011",
+          "0.020",
+          "0.064",
+          "0.002",
+          "0.007"
+        ]
+      ]
+    },
+    {
+      "title": "Guidance ablation (1% observation, random mask, Darcy)",
+      "note": "Metric: relative error (lower is better). Values are copied from the paper’s Table 3.",
+      "header": [
+        "Guidance",
+        "Darcy (Fwd)",
+        "Darcy (Inv)"
+      ],
+      "rows": [
+        [
+          "Observation loss only",
+          "0.065",
+          "0.073"
+        ],
+        [
+          "PDE loss only",
+          "0.124",
+          "0.141"
+        ],
+        [
+          "Observation + PDE loss",
+          "0.043",
+          "0.048"
+        ]
+      ]
+    }
+  ],
+  "interesting": [
+    "Because conditioning happens at sampling time, the same trained prior can be reused across different mask patterns (random vs structured) and potentially different noise levels.",
+    "The ablation suggests observation guidance is necessary for matching measurements, while PDE guidance improves physical plausibility and reduces error when combined."
+  ],
+  "bibtex": "@article{tang2024diffusionpde,\n  title={DiffusionPDE: Generative PDE-Solving Under Partial Observation},\n  author={Tang, Wenlong and Fan, Lingling and Sun, Haoyu and Zhang, Yichi and Chen, Yixin},\n  journal={arXiv preprint arXiv:2406.17763},\n  year={2024}\n}",
+  "pdes": [
+    "Darcy flow",
+    "Poisson equation",
+    "Helmholtz equation",
+    "Burgers equation",
+    "Navier–Stokes"
+  ],
+  "tasks": [
+    "Partial observation reconstruction",
+    "Inverse problems",
+    "Generative PDE inference"
+  ]
+}

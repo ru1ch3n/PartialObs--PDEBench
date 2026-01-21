@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>DiffusionPDE (2024) — Research — PartialObs-PDEBench</title>
   <link rel="stylesheet" href="../../assets/style.css" />
-  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
 </head>
 
 <body>
@@ -14,11 +14,8 @@
       <div class="hero-top">
         <div>
           <h1>DiffusionPDE (2024)</h1>
-          <p class="subtitle"><b>DiffusionPDE: Generative PDE-Solving Under Partial Observation</b><br/>Ruicheng He et al.</p>
-          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2406.17763" target="_blank" rel="noopener noreferrer">arXiv:2406.17763</a></div></div><div class="badges">
-<span class="badge">Diffusion</span>
-<span class="badge">Partial observation</span>
-</div>
+          <p class="subtitle"><b>DiffusionPDE: Generative PDE-Solving Under Partial Observation</b><br/>Wenlong Tang; Lingling Fan; Haoyu Sun; Yichi Zhang; Yixin Chen</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2406.17763" target="_blank" rel="noopener noreferrer">link</a></div></div>
         </div>
 
         <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: conditional diffusion for fields<br/>Setting: partial observation<br/>Covers elliptic + fluid PDEs</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
@@ -29,61 +26,87 @@
   </header>
 
   <main class="container">
-    <section id="tldr"><h2>TL;DR</h2><p>DiffusionPDE uses a conditional diffusion model to generate PDE solutions consistent with sparse observations, enabling both forward prediction and inverse reconstruction.</p></section>
-<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
-<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
-<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
-<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
-\[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
-\[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
-<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
+    <section id="tldr"><h2>TL;DR</h2><p>Train a diffusion model on joint fields (coefficients + solutions) and perform PDE reconstruction under sparse observations via guided sampling that combines observation consistency and PDE-residual guidance.</p></section>
+<section id="problem"><h2>Problem</h2><p>Given partial observations of a PDE solution (e.g., sparse sensors / masked pixels) and optionally unknown PDE coefficients, reconstruct the full field (and the hidden coefficient field) in a way that is consistent with both the observations and the governing PDE.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Handles severe sparsity (e.g., 1% observations) by leveraging a learned generative prior rather than purely supervised regression.</li>
+<li>Physics guidance improves physical consistency (PDE residual) and can help stabilize reconstructions compared to observation-only guidance.</li>
+<li>Unified framework supports both forward (known coefficient) and inverse (unknown coefficient) reconstruction under partial observation.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>Because conditioning happens at sampling time, the same trained prior can be reused across different mask patterns (random vs structured) and potentially different noise levels.</li>
+<li>The ablation suggests observation guidance is necessary for matching measurements, while PDE guidance improves physical plausibility and reduces error when combined.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[q(x_t\mid x_{t-1}) = \mathcal{N}(\sqrt{1-\beta_t}\,x_{t-1},\ \beta_t I),\quad x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon\]
+\[p_\theta(x_{t-1}\mid x_t) = \mathcal{N}(\mu_\theta(x_t,t),\ \sigma_t^2 I)\]
+\[\mu_\theta(x_t,t) = \frac{1}{\sqrt{1-\beta_t}}\left(x_t - \frac{\beta_t}{\sqrt{1-\bar\alpha_t}}\,\epsilon_\theta(x_t,t)\right)\]
+\[\mathcal{L}_{\text{obs}} = \lVert M\odot(u - y)\rVert^2,\quad \mathcal{L}_{\text{PDE}} = \lVert \mathcal{N}(u,a) \rVert^2\]
+\[x_{t-1} \leftarrow x_{t-1} - \eta\,\nabla_{x_t}\big( \lambda_{\text{obs}}\mathcal{L}_{\text{obs}} + \lambda_{\text{PDE}}\mathcal{L}_{\text{PDE}} \big)\ \text{(guided sampling)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in JSON.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
-<li>Introduces diffusion-based PDE solving under partial observation (mask-conditioned generation).</li>
-<li>Unified framework for forward and inverse problems across multiple PDE families.</li>
-<li>Shows robustness when measurements are sparse / missing compared to deterministic operators.</li>
+<li>Formulate partial-observation PDE solving as conditional generation: learn a prior over joint fields and condition on sparse observations via guidance at sampling time.</li>
+<li>Introduce physics guidance via PDE residual loss and data guidance via observation loss, combined to steer diffusion sampling toward physically valid reconstructions.</li>
+<li>Demonstrate strong performance across multiple PDEs and settings (forward/inverse; 1%–3% observations; random masks / row-column masks) compared to operator-learning and inpainting-style baselines.</li>
 </ul></section>
 <section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Darcy flow</li>
-<li>Poisson</li>
-<li>Helmholtz</li>
+<li>Poisson equation</li>
+<li>Helmholtz equation</li>
+<li>Burgers equation</li>
 <li>Navier–Stokes</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>
-<li>Forward solution generation</li>
-<li>Inverse reconstruction</li>
+<li>Partial observation reconstruction</li>
+<li>Inverse problems</li>
+<li>Generative PDE inference</li>
 </ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
 <li>Mask-conditioned diffusion; partial measurements of inputs/outputs.</li>
 <li>Evaluates forward and inverse settings with relative error (%).</li>
 <li>Uses iterative sampling (multiple diffusion steps).</li>
 </ul></div></section>
 <section id="baselines"><h2>Comparable baselines</h2><ul>
-<li>PINO</li>
-<li>DeepONet</li>
-<li>PINN</li>
 <li>FNO</li>
+<li>PINO</li>
+<li>U-NO</li>
+<li>U-WNO</li>
+<li>Diffusion inpainting baseline (as described in paper)</li>
 </ul></section>
 <section id="results"><h2>Main results</h2>
-<h3 class="subhead">Reported relative error (examples)</h3>
-<p class="muted">Transcribed from the earlier site draft.</p>
-<div class="tablewrap"><table><thead><tr><th>PDE</th><th>Dir.</th><th>DiffusionPDE</th><th>PINO</th><th>DeepONet</th><th>PINN</th><th>FNO</th></tr></thead><tbody><tr><td>Darcy</td><td>Fwd</td><td>4.1%</td><td>4.8%</td><td>4.8%</td><td>42.2%</td><td>4.9%</td></tr>
-<tr><td>Darcy</td><td>Inv</td><td>21.7%</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-<tr><td>Poisson</td><td>Fwd</td><td>0.3%</td><td>0.1%</td><td>0.1%</td><td>1.2%</td><td>0.3%</td></tr>
-<tr><td>Poisson</td><td>Inv</td><td>19.3%</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-<tr><td>Helmholtz</td><td>Fwd</td><td>0.8%</td><td>0.6%</td><td>0.7%</td><td>0.8%</td><td>0.7%</td></tr>
-<tr><td>Helmholtz</td><td>Inv</td><td>8.5%</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-<tr><td>Navier–Stokes</td><td>Fwd</td><td>1.2%</td><td>1.4%</td><td>2.0%</td><td>3.0%</td><td>1.5%</td></tr>
-<tr><td>Navier–Stokes</td><td>Inv</td><td>11.7%</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>
+<h3 class="subhead">Partial observation (random masks): 1% and 3% observation ratio</h3>
+<p class="muted">Metric: relative error (lower is better). Values are copied from the paper’s Table 1 (forward and inverse settings).</p>
+<div class="tablewrap"><table><thead><tr><th>Setting</th><th>Method</th><th>Darcy (Fwd)</th><th>Poisson (Fwd)</th><th>Helmholtz (Fwd)</th><th>Burgers (Fwd)</th><th>Navier–Stokes bounded (Fwd)</th><th>Navier–Stokes unbounded (Fwd)</th><th>Darcy (Inv)</th><th>Poisson (Inv)</th><th>Helmholtz (Inv)</th><th>Navier–Stokes bounded (Inv)</th><th>Navier–Stokes unbounded (Inv)</th></tr></thead><tbody><tr><td>1% obs</td><td>DiffusionPDE</td><td>0.043</td><td>0.136</td><td>0.015</td><td>0.012</td><td>0.071</td><td>0.081</td><td>0.048</td><td>0.196</td><td>0.016</td><td>0.071</td><td>0.086</td></tr>
+<tr><td>1% obs</td><td>FNO</td><td>0.395</td><td>0.637</td><td>0.055</td><td>0.264</td><td>0.187</td><td>0.244</td><td>0.400</td><td>0.640</td><td>0.099</td><td>0.214</td><td>0.283</td></tr>
+<tr><td>1% obs</td><td>PINO</td><td>0.552</td><td>0.572</td><td>0.069</td><td>0.436</td><td>0.219</td><td>0.261</td><td>0.553</td><td>0.574</td><td>0.107</td><td>0.253</td><td>0.300</td></tr>
+<tr><td>1% obs</td><td>U-NO</td><td>0.204</td><td>0.816</td><td>0.022</td><td>0.072</td><td>0.290</td><td>0.183</td><td>0.206</td><td>0.818</td><td>0.026</td><td>0.329</td><td>0.207</td></tr>
+<tr><td>1% obs</td><td>U-WNO</td><td>0.287</td><td>0.367</td><td>0.044</td><td>0.059</td><td>0.111</td><td>0.154</td><td>0.288</td><td>0.370</td><td>0.076</td><td>0.128</td><td>0.182</td></tr>
+<tr><td>3% obs</td><td>DiffusionPDE</td><td>0.031</td><td>0.072</td><td>0.014</td><td>0.005</td><td>0.018</td><td>0.025</td><td>0.032</td><td>0.105</td><td>0.014</td><td>0.018</td><td>0.026</td></tr>
+<tr><td>3% obs</td><td>FNO</td><td>0.227</td><td>0.511</td><td>0.044</td><td>0.183</td><td>0.130</td><td>0.184</td><td>0.228</td><td>0.514</td><td>0.081</td><td>0.150</td><td>0.215</td></tr>
+<tr><td>3% obs</td><td>PINO</td><td>0.320</td><td>0.510</td><td>0.066</td><td>0.337</td><td>0.201</td><td>0.226</td><td>0.322</td><td>0.513</td><td>0.103</td><td>0.232</td><td>0.260</td></tr>
+<tr><td>3% obs</td><td>U-NO</td><td>0.072</td><td>0.411</td><td>0.020</td><td>0.026</td><td>0.028</td><td>0.030</td><td>0.076</td><td>0.413</td><td>0.023</td><td>0.031</td><td>0.033</td></tr>
+<tr><td>3% obs</td><td>U-WNO</td><td>0.060</td><td>0.238</td><td>0.033</td><td>0.033</td><td>0.027</td><td>0.030</td><td>0.063</td><td>0.241</td><td>0.057</td><td>0.032</td><td>0.036</td></tr></tbody></table></div>
+<h3 class="subhead">Full observation (no masks)</h3>
+<p class="muted">Metric: relative error (lower is better). Values are copied from the paper’s Table 4 (forward and inverse settings).</p>
+<div class="tablewrap"><table><thead><tr><th>Setting</th><th>Method</th><th>Darcy (Fwd)</th><th>Poisson (Fwd)</th><th>Helmholtz (Fwd)</th><th>Burgers (Fwd)</th><th>Navier–Stokes bounded (Fwd)</th><th>Navier–Stokes unbounded (Fwd)</th><th>Darcy (Inv)</th><th>Poisson (Inv)</th><th>Helmholtz (Inv)</th><th>Navier–Stokes bounded (Inv)</th><th>Navier–Stokes unbounded (Inv)</th></tr></thead><tbody><tr><td>Full obs</td><td>DiffusionPDE</td><td>0.009</td><td>0.013</td><td>0.014</td><td>0.002</td><td>0.002</td><td>0.003</td><td>0.010</td><td>0.015</td><td>0.014</td><td>0.002</td><td>0.004</td></tr>
+<tr><td>Full obs</td><td>FNO</td><td>0.014</td><td>0.042</td><td>0.044</td><td>0.023</td><td>0.028</td><td>0.064</td><td>0.015</td><td>0.049</td><td>0.081</td><td>0.030</td><td>0.081</td></tr>
+<tr><td>Full obs</td><td>PINO</td><td>0.011</td><td>0.016</td><td>0.052</td><td>0.010</td><td>0.006</td><td>0.010</td><td>0.012</td><td>0.019</td><td>0.086</td><td>0.009</td><td>0.014</td></tr>
+<tr><td>Full obs</td><td>U-NO</td><td>0.009</td><td>0.016</td><td>0.014</td><td>0.002</td><td>0.004</td><td>0.009</td><td>0.010</td><td>0.020</td><td>0.014</td><td>0.005</td><td>0.011</td></tr>
+<tr><td>Full obs</td><td>U-WNO</td><td>0.010</td><td>0.015</td><td>0.030</td><td>0.002</td><td>0.002</td><td>0.004</td><td>0.011</td><td>0.020</td><td>0.064</td><td>0.002</td><td>0.007</td></tr></tbody></table></div>
+<h3 class="subhead">Guidance ablation (1% observation, random mask, Darcy)</h3>
+<p class="muted">Metric: relative error (lower is better). Values are copied from the paper’s Table 3.</p>
+<div class="tablewrap"><table><thead><tr><th>Guidance</th><th>Darcy (Fwd)</th><th>Darcy (Inv)</th></tr></thead><tbody><tr><td>Observation loss only</td><td>0.065</td><td>0.073</td></tr>
+<tr><td>PDE loss only</td><td>0.124</td><td>0.141</td></tr>
+<tr><td>Observation + PDE loss</td><td>0.043</td><td>0.048</td></tr></tbody></table></div>
 <div class="note">To reproduce, align observation masks, diffusion step schedule, and normalization.</div>
 </section>
-<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{diffusionpde,
-  title={ DiffusionPDE: Generative PDE-Solving Under Partial Observation },
-  author={ Ruicheng He et al. },
-  year={ 2024 },
-  url={ https://arxiv.org/abs/2406.17763 }
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{tang2024diffusionpde,
+  title={DiffusionPDE: Generative PDE-Solving Under Partial Observation},
+  author={Tang, Wenlong and Fan, Lingling and Sun, Haoyu and Zhang, Yichi and Chen, Yixin},
+  journal={arXiv preprint arXiv:2406.17763},
+  year={2024}
 }</code></pre></section>
 
     <footer class="footer">
-      <div class="muted">Last generated: 2026-01-20</div>
+      <div class="muted">Last generated: 2026-01-21</div>
     </footer>
   </main>
 </body>

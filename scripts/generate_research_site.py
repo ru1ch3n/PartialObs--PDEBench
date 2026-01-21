@@ -3,7 +3,7 @@
 
 Source of truth
 --------------
-The generator prefers per-paper YAML files under ``data/papers/*.yaml``.
+The generator prefers per-paper JSON files under ``data/curations/*.json``.
 If that folder is missing/empty, it falls back to the legacy
 ``scripts/research_db.ndjson`` file.
 
@@ -30,14 +30,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
 
-import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS = REPO_ROOT / "docs"
 
-# YAML paper database (preferred)
-PAPERS_YAML_DIR = REPO_ROOT / "data" / "papers"
+# JSON paper database (preferred)
+CURATIONS_JSON_DIR = REPO_ROOT / "data" / "curations"
 
 
 PAPER_TREE_ASCII = r"""
@@ -138,43 +137,43 @@ flowchart TD
   click Root "research/" "Open the research index" _self
 
   click PI "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click DeepRitz "research/deep-ritz/" "Deep Ritz (2018)" _self
-  click DGM "research/dgm/" "Deep Galerkin Method (2018)" _self
-  click DeepBSDE "research/deepbsde/" "DeepBSDE (2018)" _self
-  click PINN "research/pinn/" "PINNs (2019)" _self
-  click cPINN "research/cpinn/" "cPINNs (2020)" _self
-  click SAPINN "research/sa-pinn/" "SA-PINNs (2020)" _self
-  click XPINN "research/xpinn/" "XPINNs (2021)" _self
-  click gPINN "research/gpinn/" "gPINNs (2021)" _self
-  click FBPINN "research/fbpinns/" "FBPINNs (2021)" _self
+  click DeepRitz "research/paper/?slug=deep-ritz" "Deep Ritz (2018)" _self
+  click DGM "research/paper/?slug=dgm" "Deep Galerkin Method (2018)" _self
+  click DeepBSDE "research/paper/?slug=deepbsde" "DeepBSDE (2018)" _self
+  click PINN "research/paper/?slug=pinn" "PINNs (2019)" _self
+  click cPINN "research/paper/?slug=cpinn" "cPINNs (2020)" _self
+  click SAPINN "research/paper/?slug=sa-pinn" "SA-PINNs (2020)" _self
+  click XPINN "research/paper/?slug=xpinn" "XPINNs (2021)" _self
+  click gPINN "research/paper/?slug=gpinn" "gPINNs (2021)" _self
+  click FBPINN "research/paper/?slug=fbpinns" "FBPINNs (2021)" _self
 
   click OL "research/?method=Operator%20learning" "Filter: Operator learning" _self
-  click DeepONet "research/deeponet/" "DeepONet (2021)" _self
-  click FNO "research/fno/" "Fourier Neural Operator (2020)" _self
-  click PINO "research/pino/" "Physics-Informed Neural Operator (2021)" _self
-  click GalerkinT "research/galerkin-transformer/" "Galerkin Transformer (2021)" _self
-  click UNO "research/u-no/" "U-NO (2022)" _self
-  click WNO "research/wno/" "WNO (2022)" _self
-  click UWNO "research/u-wno/" "U-WNO (2024)" _self
-  click CNO "research/cno/" "CNO (2023)" _self
-  click GKN "research/gkn/" "Graph Kernel Network (2020)" _self
-  click MGNO "research/mgno/" "MGNO (2020)" _self
+  click DeepONet "research/paper/?slug=deeponet" "DeepONet (2021)" _self
+  click FNO "research/paper/?slug=fno" "Fourier Neural Operator (2020)" _self
+  click PINO "research/paper/?slug=pino" "Physics-Informed Neural Operator (2021)" _self
+  click GalerkinT "research/paper/?slug=galerkin-transformer" "Galerkin Transformer (2021)" _self
+  click UNO "research/paper/?slug=u-no" "U-NO (2022)" _self
+  click WNO "research/paper/?slug=wno" "WNO (2022)" _self
+  click UWNO "research/paper/?slug=u-wno" "U-WNO (2024)" _self
+  click CNO "research/paper/?slug=cno" "CNO (2023)" _self
+  click GKN "research/paper/?slug=gkn" "Graph Kernel Network (2020)" _self
+  click MGNO "research/paper/?slug=mgno" "MGNO (2020)" _self
 
   click DiffGen "research/?method=Diffusion" "Filter: Diffusion" _self
-  click DiffPDE "research/diffusionpde/" "DiffusionPDE (2024)" _self
-  click FunDPS "research/fundps/" "FunDPS (2025)" _self
-  click PRISMA "research/prisma/" "PRISMA (2025)" _self
-  click VideoPDE "research/videopde/" "VideoPDE (2025)" _self
+  click DiffPDE "research/paper/?slug=diffusionpde" "DiffusionPDE (2024)" _self
+  click FunDPS "research/paper/?slug=fundps" "FunDPS (2025)" _self
+  click PRISMA "research/paper/?slug=prisma" "PRISMA (2025)" _self
+  click VideoPDE "research/paper/?slug=videopde" "VideoPDE (2025)" _self
 
   click GraphSim "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
-  click GNS "research/gns/" "GNS (ICML 2020)" _self
-  click MGN "research/meshgraphnets/" "MeshGraphNets (ICLR 2021)" _self
+  click GNS "research/paper/?slug=gns" "GNS (ICML 2020)" _self
+  click MGN "research/paper/?slug=meshgraphnets" "MeshGraphNets (ICLR 2021)" _self
 
   click Bench "benchmark/" "Benchmark tab" _self
-  click PDEBench "research/pdebench/" "PDEBench (2022)" _self
-  click PDEArena "research/pdearena/" "PDEArena (2022)" _self
-  click FourCastNet "research/fourcastnet/" "FourCastNet (2022)" _self
-  click GraphCast "research/graphcast/" "GraphCast (2023)" _self
+  click PDEBench "research/paper/?slug=pdebench" "PDEBench (2022)" _self
+  click PDEArena "research/paper/?slug=pdearena" "PDEArena (2022)" _self
+  click FourCastNet "research/paper/?slug=fourcastnet" "FourCastNet (2022)" _self
+  click GraphCast "research/paper/?slug=graphcast" "GraphCast (2023)" _self
 """.strip("\n")
 
 
@@ -471,7 +470,7 @@ def infer_tasks(p: Dict[str, Any]) -> List[str]:
 def infer_method_class(p: Dict[str, Any]) -> str:
     """Best-effort method taxonomy label.
 
-    This is only a fallback when a paper YAML/DB entry does not specify
+    This is only a fallback when a paper JSON/DB entry does not specify
     ``method_class``.
     """
     title = str(p.get("full_title") or p.get("title") or "").lower()
@@ -518,72 +517,138 @@ def get_display_list(p: Dict[str, Any], key: str) -> Tuple[List[str], bool]:
     return auto, bool(auto)
 
 def load_db() -> List[Dict[str, Any]]:
-    """Load paper metadata.
+    """Load the paper database.
 
-    Preferred: YAML files under ``data/papers/*.yaml`` (one file per paper).
-    Fallback: NDJSON under ``scripts/research_db.ndjson`` (legacy).
+    **Index list (JSON Lines):**
+      - scripts/research_db.ndjson
+
+    **Curations (per-paper JSON overrides):**
+      - data/curations/<slug>.json
+
+    Notes
+    -----
+    - We treat every paper as an *index* entry by default.
+    - A paper becomes *curated* only if it has a corresponding curation JSON file
+      (or that JSON explicitly sets ``status`` to ``curated``).
     """
 
-    papers: List[Dict[str, Any]] = []
+    def _as_list(x: Any) -> List[Any]:
+        if x is None:
+            return []
+        if isinstance(x, list):
+            return x
+        return [x]
 
-    # 1) YAML DB (preferred)
-    if PAPERS_YAML_DIR.exists():
-        for path in sorted(PAPERS_YAML_DIR.rglob("*.y*ml")):
-            if path.name.startswith("_") or any(part.startswith("_") for part in path.parts):
-                continue
-            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-            if not isinstance(data, dict):
-                continue
-            data.setdefault("slug", path.stem)
-            data["_yaml_path"] = str(path.relative_to(REPO_ROOT))
+    def _normalize(p: Dict[str, Any], *, force_status: Optional[str] = None) -> Dict[str, Any]:
+        # Title aliases
+        if p.get("title") and not p.get("full_title"):
+            p["full_title"] = p["title"]
+        if p.get("full_title") and not p.get("title"):
+            p["title"] = p["full_title"]
 
-            # Allow a friendlier alias: `title:` instead of `full_title:`
-            if data.get("title") and not data.get("full_title"):
-                data["full_title"] = data["title"]
-            if data.get("full_title") and not data.get("title"):
-                data["title"] = data["full_title"]
+        # Required: slug
+        slug = (p.get("slug") or "").strip()
+        if not slug:
+            return {}
 
-            # Normalize common fields
-            if "year" in data and isinstance(data["year"], str) and data["year"].isdigit():
-                data["year"] = int(data["year"])
-            data.setdefault("authors", "")
-            data.setdefault("short_title", data.get("short_title") or data.get("full_title") or data["slug"])
-            data.setdefault("method_class", data.get("method_class") or "SciML")
-            data.setdefault("status", data.get("status") or "index")
-            data.setdefault("links", {})
-            data.setdefault("badges", [])
-            data.setdefault("quick_facts", [])
-            data.setdefault("contrib", [])
-            data.setdefault("theory", [])
-            data.setdefault("core_math", [])
-            data.setdefault("pdes", [])
-            data.setdefault("tasks", [])
-            data.setdefault("baselines", [])
-            data.setdefault("setting", [])
-            data.setdefault("results_tables", [])
-            data.setdefault("auto", {})
-            if not isinstance(data["auto"], dict):
-                data["auto"] = {}
-            data["auto"].setdefault("pdes", [])
-            data["auto"].setdefault("tasks", [])
+        p["slug"] = slug
 
-            papers.append(data)
+        # Defaults
+        p["links"] = p.get("links") or {}
+        p["badges"] = _as_list(p.get("badges"))
+        p["pdes"] = _as_list(p.get("pdes"))
+        p["tasks"] = _as_list(p.get("tasks"))
 
-    if papers:
-        return papers
+        # Ensure auto field exists for later inference
+        auto = p.get("auto") or {}
+        if not isinstance(auto, dict):
+            auto = {}
+        auto.setdefault("pdes", [])
+        auto.setdefault("tasks", [])
+        p["auto"] = auto
+        # Index entries are metadata-only; treat any provided pdes/tasks as *auto* tags.
+        if force_status == "index":
+            seed_pdes = list(p.get("pdes") or [])
+            seed_tasks = list(p.get("tasks") or [])
+            p["pdes"] = []
+            p["tasks"] = []
+            auto["pdes"] = seed_pdes + list(auto.get("pdes") or [])
+            auto["tasks"] = seed_tasks + list(auto.get("tasks") or [])
+            p["auto"] = auto
 
-    # 2) NDJSON DB (legacy)
-    path = REPO_ROOT / "scripts" / "research_db.ndjson"
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
+        # Normalize a few optional structured fields (curated only)
+        for key in ["contrib", "benefits", "theory", "setting", "data_setting", "model_setting", "training_setting", "interesting"]:
+            if key in p:
+                p[key] = _as_list(p.get(key))
+
+        if "results_tables" in p and p["results_tables"] is not None and not isinstance(p["results_tables"], list):
+            p["results_tables"] = _as_list(p["results_tables"])
+
+        # Year type
+        if isinstance(p.get("year"), str) and p["year"].strip().isdigit():
+            p["year"] = int(p["year"].strip())
+
+        # Status
+        if force_status is not None:
+            p["status"] = force_status
+        else:
+            p["status"] = p.get("status") or "index"
+
+        return p
+
+    # 1) Load base index list (NDJSON)
+    by_slug: Dict[str, Dict[str, Any]] = {}
+    ndjson_path = REPO_ROOT / "scripts" / "research_db.ndjson"
+    if ndjson_path.exists():
+        for line in ndjson_path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            obj = json.loads(line)
-            if isinstance(obj, dict):
-                papers.append(obj)
-    return papers
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if not isinstance(obj, dict):
+                continue
+            p = _normalize(obj, force_status="index")
+            if not p:
+                continue
+            by_slug[p["slug"]] = p
 
+    # 2) Apply curations (JSON)
+    if CURATIONS_JSON_DIR.exists():
+        for fp in sorted(CURATIONS_JSON_DIR.glob("*.json")):
+            if fp.name.startswith("_"):
+                continue
+            try:
+                cur = json.loads(fp.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if not isinstance(cur, dict):
+                continue
+
+            # Allow slug to be omitted if filename matches
+            cur_slug = (cur.get("slug") or fp.stem).strip()
+            if not cur_slug:
+                continue
+            cur["slug"] = cur_slug
+
+            # Attach path for contribution hints
+            try:
+                cur["_curation_path"] = str(fp.relative_to(REPO_ROOT)).replace("\\", "/")
+            except Exception:
+                cur["_curation_path"] = str(fp)
+
+            # Force curated status
+            cur = _normalize(cur, force_status="curated")
+            if not cur:
+                continue
+
+            base = by_slug.get(cur_slug, {"slug": cur_slug, "status": "index", "auto": {"pdes": [], "tasks": []}, "links": {}})
+            base.update(cur)
+            by_slug[cur_slug] = base
+
+    return list(by_slug.values())
 
 def html_escape(s: str) -> str:
     return (
@@ -744,20 +809,20 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     # Curation status + source path
     status = str(p.get("status", "index"))
-    yaml_path = p.get("_yaml_path") or f"data/papers/{p.get('slug','<slug>')}.yaml"
+    curation_path = p.get("_curation_path") or f"data/curations/{p.get('slug','<slug>')}.json"
     if status != "curated":
         sections.append(
             "<div class=\"note\">"
             "This page is currently an <b>index-only</b> placeholder. "
-            "To improve it, edit the YAML file: "
-            f"<code>{html_escape(str(yaml_path))}</code> "
+            "To improve it, edit the JSON file: "
+            f"<code>{html_escape(str(curation_path))}</code> "
             "(see the <b>Contribute</b> tab)."
             "</div>"
         )
 
     tldr = (p.get("tldr") or "").strip()
     if not tldr:
-        tldr_html = "<p class=\"muted\">Not curated yet. Add a 2–4 sentence TL;DR in the YAML file.</p>"
+        tldr_html = "<p class=\"muted\">Not curated yet. Add a 2–4 sentence TL;DR in the JSON file.</p>"
     else:
         tldr_html = f"<p>{html_escape(tldr)}</p>"
     sections.append(f"<section id=\"tldr\"><h2>TL;DR</h2>{tldr_html}</section>")
@@ -808,7 +873,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         "<section id=\"theory\"><h2>Main theoretical contribution</h2>"
         + ul_or_placeholder(
             p.get("theory", []),
-            "Not curated yet. Add bullet points under <code>theory</code> in YAML.",
+            "Not curated yet. Add bullet points under <code>theory</code> in JSON.",
         )
         + "</section>"
     )
@@ -817,7 +882,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         "<section id=\"contribution\"><h2>Main contribution</h2>"
         + ul_or_placeholder(
             p.get("contrib", []),
-            "Not curated yet. Add bullet points under <code>contrib</code> in YAML.",
+            "Not curated yet. Add bullet points under <code>contrib</code> in JSON.",
         )
         + "</section>"
     )
@@ -886,7 +951,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     sections.append(
         "<section id=\"baselines\"><h2>Comparable baselines</h2>"
-        + ul_or_placeholder(p.get("baselines", []), "Not curated yet. Add items under <code>baselines</code> in YAML.")
+        + ul_or_placeholder(p.get("baselines", []), "Not curated yet. Add items under <code>baselines</code> in JSON.")
         + "</section>"
     )
 
@@ -967,7 +1032,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
             "<script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
             "<script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>"
-            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>"
+            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>"
         ),
         body_html=body,
     )
@@ -983,7 +1048,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         "<div class=\"hero-card\">"
         "  <div class=\"smallcaps\">Contribute</div>"
         "  <p class=\"muted\" style=\"margin-top:8px;\">"
-        "    Add or improve paper pages by editing <code>data/papers/*.yaml</code>. "
+        "    Add or improve paper pages by editing <code>data/curations/*.json</code>. "
         "    See the <b>Contribute</b> tab for the step-by-step workflow and templates."
         "  </p>"
         "</div>"
@@ -1001,7 +1066,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
     <li><b>Benchmark:</b> benchmark spec (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
-    <li><b>Contribute:</b> how to add/curate papers via YAML.</li>
+    <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
 </section>
 
@@ -1053,7 +1118,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
             "<script>document.addEventListener('DOMContentLoaded',()=>{"
             "  if(!window.mermaid) return;"
             "  // Enable clickable nodes (mermaid `click` directives) on GitHub Pages."
-            "  mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose'});"
+            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});"
             "  mermaid.run({querySelector:'.mermaid'});"
             "});</script>"
         ),
@@ -1138,7 +1203,7 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
   </div>
 
   <div class="note" style="margin-top:16px;">
-    Tip: if you find an index placeholder you care about, click into it and use the <b>Contribute</b> tab to add a curated YAML summary.
+    Tip: if you find an index placeholder you care about, click into it and use the <b>Contribute</b> tab to add a curated JSON summary.
   </div>
 </section>
 """
@@ -1382,241 +1447,184 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
 
 
 def render_contribute(papers: List[Dict[str, Any]]) -> str:
-    root = "../"  # docs/contribute/index.html
     n_total = len(papers)
-    n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
+    n_curated = sum(1 for p in papers if p.get("status") == "curated")
 
-    example_yaml = """slug: my-paper-2025
-status: index   # or: curated
-category: AI4PDE
-method_class: NeuralOperator
+    example_json = """{
+  "slug": "my-paper-2025",
+  "status": "curated",
+  "full_title": "Full paper title goes here",
+  "short_title": "MyPaper",
+  "authors": "First Author; Second Author; ...",
+  "year": 2025,
+  "venue": "ICLR",
+  "method_class": "Operator learning",
+  "links": {
+    "paper": "https://arxiv.org/abs/xxxx.xxxxx",
+    "code": "https://github.com/user/repo"
+  },
 
-full_title: Full paper title goes here
-short_title: MyPaper
-authors: First Author; Second Author; ...
-year: 2025
-venue: ICLR
+  "tldr": "2–4 sentences: what the method does + why it matters.",
+  "problem": "What problem does the paper solve? (be concrete about partial observation / inverse / operator learning / etc.)",
 
-links:
-  paper: https://arxiv.org/abs/xxxx.xxxxx
-  code: https://github.com/user/repo
+  "contrib": [
+    "Main contribution #1 (method idea).",
+    "Main contribution #2 (training / inference trick).",
+    "Main contribution #3 (benchmark / dataset / analysis)."
+  ],
+  "benefits": [
+    "Why this is better than prior work (accuracy / speed / generalization / stability / data efficiency)."
+  ],
 
-tldr: >-
-  2–4 sentences: setting → method → key result (include dataset/metric if possible).
+  "core_math": [
+    "Put the key equations here in LaTeX (no $...$ wrappers).",
+    "Example: G_\\theta(u)(y) = \\sum_{k=1}^p b_k(u)\\,t_k(y)"
+  ],
 
-problem: >-
-  What problem does this paper solve? Be concrete (PDE, observation type, task).
+  "data_setting": [
+    "Dataset: size, how generated, train/val/test split.",
+    "PDE + domain + discretization / resolution.",
+    "Observation pattern (mask/sensors) + noise model."
+  ],
+  "model_setting": [
+    "Architecture (layers, width, latent dims, Fourier modes, etc.).",
+    "Inputs/outputs parameterization (what is u, what is a, what is y)."
+  ],
+  "training_setting": [
+    "Optimizer, learning rate schedule, epochs/steps, batch size, hardware."
+  ],
 
-contrib:
-  - Main contribution #1
-  - Main contribution #2
+  "baselines": [
+    "Baseline A",
+    "Baseline B"
+  ],
 
-benefits:
-  - What is better compared to common baselines?
+  "results_tables": [
+    {
+      "title": "Main quantitative results (copy numbers from the paper tables)",
+      "note": "Write the metric + what lower/higher means.",
+      "header": ["Setting", "Method", "Metric"],
+      "rows": [
+        ["...", "MyPaper", "0.012"],
+        ["...", "Baseline A", "0.034"]
+      ]
+    }
+  ],
 
-baselines:
-  - FNO
-  - PINO
+  "interesting": [
+    "Any extra insights that are useful for readers (failure modes, ablations, theory notes, etc.)."
+  ],
 
-main_results:
-  - metric: relative L2 error
-    value: 0.012
-    dataset: PDEBench Navier–Stokes
-    compared_to: FNO
-
-interesting: >-
-  Any notable detail (failure mode, trick, surprising ablation, limitation).
-
-bibkey: MyPaper2025
-bibtex: |
-  @inproceedings{MyPaper2025,
-    title={...},
-    author={...},
-    booktitle={ICLR},
-    year={2025},
-    url={https://...}
-  }
-"""
-
-    bulk_cmd = """# 1) Download a conference BibTeX file (ICLR/ICML/NeurIPS).
-# 2) Convert it into YAML stubs (status=index) under data/papers/import/...
-
-python scripts/import_bibtex_to_yaml.py \
-  --bib path/to/ICLR_2025.bib \
-  --venue ICLR \
-  --out data/papers/import/iclr2025 \
-  --status index
-
-# Optional: only keep likely AI4PDE/AI4SDE papers by title keywords
-python scripts/import_bibtex_to_yaml.py \
-  --bib path/to/ICLR_2025.bib \
-  --venue ICLR \
-  --out data/papers/import/iclr2025 \
-  --status index \
-  --keywords "pde,operator,neural operator,physics-informed,navier,burgers,sde,diffusion"
-"""
-
-    build_cmd = """# Validate YAML (fast)
-python scripts/validate_papers.py
-
-# Regenerate docs/ (GitHub Pages output)
-python scripts/generate_research_site.py
-"""
-
-    submit_cmd = """# After regenerating docs/, commit and push.
-
-git status
-git add -A
-git commit -m "Update papers and regenerate site"
-git push origin main
-
-# If Git complains about missing user identity:
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-"""
-
-    export_bib = """1) Go to the Research tab.
-2) Tick the “Pick” checkbox for the papers you want.
-3) Click “Download .bib” (or “Copy BibTeX”).
-"""
+  "bibtex": "@inproceedings{...}"
+}"""
 
     body = f"""
-<section class="section">
-  <h2>Contribute</h2>
-  <p>
-    The site is <b>YAML-first</b>: paper metadata + summaries live in <code>data/papers/</code>,
-    and the website under <code>docs/</code> is generated from those YAML files.
-  </p>
-  <ul>
-    <li><b>Index placeholders</b> (status=<code>index</code>) are quick to add: title/authors/venue/links.</li>
-    <li><b>Curated pages</b> (status=<code>curated</code>) include structured notes: contributions, baselines, results, etc.</li>
-  </ul>
-  <div class="note">
-    Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).
-  </div>
-</section>
+    <h1>Contribute</h1>
+    <p class=\"muted\">Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).</p>
 
-<section class="section">
-  <h2>Add a paper (one-by-one)</h2>
-  <ol>
-    <li>Copy <code>data/papers/_template.yaml</code> → create <code>data/papers/&lt;slug&gt;.yaml</code>.</li>
-    <li>Fill the required metadata: title, authors, year, venue, links.</li>
-    <li>Start with <code>status: index</code>. Later upgrade to <code>status: curated</code> with more fields.</li>
-    <li>Run validation + site generation:</li>
-  </ol>
-  <pre class="code"><code>{html_escape(build_cmd)}</code></pre>
-</section>
+    <div class=\"card\">
+      <h2>How the data is stored</h2>
+      <ul>
+        <li><b>Index list (metadata)</b>: <code>scripts/research_db.ndjson</code> (JSON Lines). Add new papers here (title/authors/year/links) when you want them searchable.</li>
+        <li><b>Curated summaries (rich content)</b>: <code>data/curations/&lt;slug&gt;.json</code>. Only add these for papers you want to curate deeply (tables, math, detailed settings).</li>
+      </ul>
+      <p class=\"muted\">Tip: keep most papers as <b>index-only</b>; curate a small set with high quality and lots of details.</p>
+    </div>
 
-<section class="section">
-  <h2>Submit to GitHub (so the website updates)</h2>
-  <p>
-    GitHub Pages serves this website from the <code>docs/</code> folder.
-    After you edit YAML files, make sure you regenerate the site, then commit + push.
-  </p>
-  <pre class="code"><code>{html_escape(submit_cmd)}</code></pre>
-  <div class="note">
-    Tip: if you are contributing via a pull request, do these steps on a feature branch and then open a PR.
-  </div>
-</section>
+    <div class=\"card\">
+      <h2>Add a new curated paper (step-by-step)</h2>
+      <ol>
+        <li>Find the paper in <a href=\"../research/\">Research</a>. Open its page (index view) and copy the <b>slug</b> from the URL (<code>?slug=...</code>).</li>
+        <li>Create <code>data/curations/&lt;slug&gt;.json</code> using the template below.</li>
+        <li>Fill in the fields. For <b>results_tables</b>, please copy the numbers from the paper’s tables (metrics, settings, baselines). For <b>core_math</b>, include the core idea + equations in LaTeX.</li>
+        <li>Rebuild the website: <code>python scripts/generate_research_site.py</code></li>
+        <li>Commit and push. GitHub Pages will serve <code>docs/</code>.</li>
+      </ol>
+    </div>
 
-<section class="section">
-  <h2>YAML format</h2>
-  <p>
-    Minimal fields are enough for an index entry. For curated pages, please also fill
-    <code>tldr</code>, <code>problem</code>, <code>contrib</code>, <code>baselines</code>, and <code>main_results</code>.
-  </p>
-  <pre class="code"><code>{html_escape(example_yaml)}</code></pre>
-</section>
+    <div class=\"card\">
+      <h2>Template (copy/paste)</h2>
+      <pre><code>{html_escape(example_json)}</code></pre>
+      <p class=\"muted\">You can add extra fields if useful; unknown fields are ignored by the site generator.</p>
+    </div>
 
-<section class="section">
-  <h2>Bulk import from conferences (ICLR / ICML / NeurIPS)</h2>
-  <p>
-    If you want to include <b>many papers</b> (e.g., all accepted papers for the last 5 years),
-    the recommended workflow is:
-  </p>
-  <ol>
-    <li>Get a <b>BibTeX</b> file for the conference/year.</li>
-    <li>Convert BibTeX → YAML stubs with <code>scripts/import_bibtex_to_yaml.py</code>.</li>
-    <li>Curate a subset (set <code>status: curated</code> + fill the summary fields) over time.</li>
-  </ol>
-  <pre class="code"><code>{html_escape(bulk_cmd)}</code></pre>
-  <div class="note">
-    Tip: importing <i>all</i> papers from top conferences can produce a very large DB.
-    For AI4PDE focus, start with keyword-filtered imports and gradually expand.
-  </div>
-</section>
+    <div class=\"card\">
+      <h2>Batch BibTeX export</h2>
+      <p>On the <a href=\"../research/\">Research</a> page you can use the <b>Pick</b> checkboxes to select many papers and export a BibTeX file (copy or download).</p>
+    </div>
 
-<section class="section">
-  <h2>Export BibTeX from the website</h2>
-  <p>
-    The Research page supports batch BibTeX export:
-  </p>
-  <pre class="code"><code>{html_escape(export_bib)}</code></pre>
-  <p class="muted">
-    If a paper YAML includes <code>bibtex:</code>, we export that. Otherwise we generate a minimal BibTeX entry from metadata.
-  </p>
-</section>
-
-<section class="section">
-  <h2>Quality bar for curated pages</h2>
-  <ul>
-    <li><b>Main contribution:</b> 2–5 bullets that are specific (not marketing language).</li>
-    <li><b>Problem & setting:</b> PDE(s), observation type (masked pixels / sparse sensors / partial trajectories), task (forecasting / inverse / reconstruction).</li>
-    <li><b>Baselines:</b> methods actually compared in the paper (FNO/PINO/UNet/etc.).</li>
-    <li><b>Main results:</b> include metric + dataset + comparison target (even 1–2 rows are useful).</li>
-  </ul>
-</section>
-"""
+    <div class=\"card\">
+      <h2>Bulk import (optional)</h2>
+      <p>If you have a BibTeX file and want to convert it into index entries (NDJSON), use:</p>
+      <pre><code>python scripts/import_bibtex_to_json.py path/to/papers.bib</code></pre>
+      <p class=\"muted\">This script is best-effort and produces metadata. Curations still require human-written JSON files.</p>
+    </div>
+    """
 
     return page(
         title="Contribute",
-        root=root,
-        current="contribute",
+        root="../",
+        current="contribute/",
         hero_h1="Contribute",
-        hero_subtitle_html="How to add and curate papers (YAML-first).",
+        hero_subtitle_html=f"Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).",
         hero_meta_html="",
         hero_card_html="",
         body_html=body,
     )
-
 
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
+
 def paper_public_record(p: Dict[str, Any]) -> Dict[str, Any]:
-    """Compact JSON record used by the client-side Research UI.
+    """Create the client-side (public) paper record written to docs/assets/papers_db.json."""
+    links = p.get("links") or {}
 
-    Keep this reasonably small: it will be shipped to browsers as papers_db.json.
-    """
-    links = p.get("links", {}) or {}
-    bib = ""
-    if isinstance(p.get("bib"), dict):
-        bib = (p.get("bib") or {}).get("entry", "") or ""
-    bib = (p.get("bibtex") or bib or "").strip()
-
-    return {
-        "slug": p.get("slug", ""),
-        "short_title": p.get("short_title", p.get("slug", "")),
-        "full_title": p.get("full_title", p.get("title", "")),
-        "authors": p.get("authors", ""),
-        "year": (int(p.get("year")) if str(p.get("year","")).isdigit() else 0),
-        "venue": p.get("venue", ""),
-        "category": p.get("category", "AI4PDE"),
-        "method_class": p.get("method_class", "SciML"),
-        "status": str(p.get("status") or "index"),
-        "badges": p.get("badges", []) or [],
-        "links": links,
-        "pdes": get_display_list(p, "pdes"),
-        "tasks": get_display_list(p, "tasks"),
-        "tldr": (p.get("tldr") or "").strip(),
-        "problem": (p.get("problem") or "").strip(),
-        "benefits": p.get("benefits", []) or [],
-        "bibkey": p.get("bibkey", ""),
-        "bibtex": bib,
+    # Normalize common link keys (prefer explicit keys if present)
+    link_pdf = links.get("pdf") or links.get("paper") or ""
+    link_code = links.get("code") or links.get("repo") or ""
+    link_arxiv = links.get("arxiv") or ""
+    link_doi = links.get("doi") or ""
+    link_openreview = links.get("openreview") or ""
+    link_project = links.get("project") or ""
+    links = {
+        "paper": links.get("paper") or link_pdf or link_arxiv or link_doi or link_openreview,
+        "pdf": link_pdf,
+        "arxiv": link_arxiv,
+        "doi": link_doi,
+        "openreview": link_openreview,
+        "code": link_code,
+        "project": link_project,
     }
 
+    pdes_list, pdes_is_auto = get_display_list(p, "pdes")
+    tasks_list, tasks_is_auto = get_display_list(p, "tasks")
+
+    is_curated = (p.get("status") == "curated")
+
+    return {
+        "slug": p.get("slug"),
+        "short_title": (p.get("short_title") or "").strip(),
+        "full_title": (p.get("full_title") or p.get("title") or "").strip(),
+        "authors": (p.get("authors") or "").strip(),
+        "year": p.get("year"),
+        "venue": (p.get("venue") or "").strip(),
+        "method_class": (p.get("method_class") or "").strip(),
+        "status": (p.get("status") or "index").strip(),
+        "badges": p.get("badges", []) or [],
+        "links": links,
+        "pdes": pdes_list,
+        "pdes_auto": bool(pdes_is_auto),
+        "tasks": tasks_list,
+        "tasks_auto": bool(tasks_is_auto),
+        # Keep rich text fields only for curated entries (index entries remain metadata-only)
+        "tldr": (p.get("tldr") or "").strip() if is_curated else "",
+        "problem": (p.get("problem") or "").strip() if is_curated else "",
+        "tagline": (p.get("tagline") or "").strip() if is_curated else "",
+        "bibtex": (p.get("bibtex") or "").strip(),
+    }
 
 def main() -> None:
     papers = load_db()
@@ -1637,9 +1645,9 @@ def main() -> None:
 
         # Only add suggestions if the human list is empty.
         if not p["pdes"]:
-            p["auto"]["pdes"] = infer_pdes(p)
+            p["auto"]["pdes"] = _dedup_keep_order((p.get("auto", {}).get("pdes") or []) + infer_pdes(p))
         if not p["tasks"]:
-            p["auto"]["tasks"] = infer_tasks(p)
+            p["auto"]["tasks"] = _dedup_keep_order((p.get("auto", {}).get("tasks") or []) + infer_tasks(p))
 
     # Write a compact JSON DB for client-side rendering
     papers_json = [paper_public_record(p) for p in papers]
