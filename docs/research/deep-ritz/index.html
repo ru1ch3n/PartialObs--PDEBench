@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>Deep Ritz solves variational (often elliptic) PDEs by minimizing the associated energy functional with a neural-network ansatz.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>PINN / physics-constrained</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
 \[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Avoids discretizing differential operators directly.</li>
 <li>Provides an early foundation for physics-informed variational training.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Poisson</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>
@@ -52,6 +56,12 @@
 <h3 class="subhead">Key results</h3>
 <div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Elliptic PDEs</td><td>Solution error</td><td>Competitive accuracy with mesh-free optimization in some regimes.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{deep-ritz,
+  title={ The Deep Ritz Method: A Deep Learning-Based Numerical Algorithm for Solving Variational Problems },
+  author={ Weinan E and Bing Yu },
+  year={ 2018 },
+  url={ https://arxiv.org/abs/1710.00211 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

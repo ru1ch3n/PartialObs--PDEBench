@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>PINO augments neural operators with physics-based constraints (PDE residuals), improving data efficiency and physical consistency for operator learning.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
 \[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Enables training with sparse/noisy data and improves generalization.</li>
 <li>Popular baseline for partially observed PDE inference.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Burgers</li>
 <li>Navier–Stokes</li>
@@ -59,6 +63,12 @@
 <div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Data efficiency</td><td>Error vs data</td><td>Physics loss reduces required labeled data for comparable accuracy.</td></tr>
 <tr><td>Physical consistency</td><td>Residual</td><td>Improves residual satisfaction compared to purely data-driven operators.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pino,
+  title={ Physics-Informed Neural Operator },
+  author={ Zongyi Li et al. },
+  year={ 2021 },
+  url={ https://arxiv.org/abs/2111.03794 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

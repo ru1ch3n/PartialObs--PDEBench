@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>WNO uses wavelet transforms to build neural operators that better capture localized, multi-scale features in PDE solution operators.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
 \[\min_\theta\ \sum_i \|G_\theta(a_i)-u_i\|^2\ \ \text{(+ optional physics / residual regularization)}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Better handles localized/multi-scale structures than purely Fourier operators on some tasks.</li>
 <li>Extends neural operator benchmarking to a broader PDE set.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Burgers</li>
 <li>Darcy flow</li>
@@ -60,6 +64,12 @@
 <h3 class="subhead">Key results</h3>
 <div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Multi-scale PDEs</td><td>L2 error</td><td>Wavelet representation can improve accuracy on PDEs with localized structure.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{wno,
+  title={ Wavelet Neural Operator for various PDEs },
+  author={ Chinmay Tripura and Souvik Chakraborty },
+  year={ 2022 },
+  url={ https://arxiv.org/abs/2205.02191 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

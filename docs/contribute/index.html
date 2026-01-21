@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Contribute — PartialObs–PDEBench</title>
+  <title>Contribute</title>
   <link rel="stylesheet" href="../assets/style.css" />
   
 </head>
@@ -14,12 +14,11 @@
       <div class="hero-top">
         <div>
           <h1>Contribute</h1>
-          <p class="subtitle">How to add new papers and curate high-quality one-page summaries.</p>
+          <p class="subtitle">How to add and curate papers (YAML-first).</p>
           
         </div>
 
-        <div class="hero-card">  <div class="smallcaps">Files to edit</div>  <p class="muted" style="margin-top:8px;">    <code>data/papers/&lt;slug&gt;.yaml</code> (source)
-    <br/><code>python scripts/generate_research_site.py</code> (build)  </p></div>
+        
       </div>
 
       <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../contribute/" aria-current="page">Contribute</a></nav>
@@ -27,93 +26,168 @@
   </header>
 
   <main class="container">
-    <section class="section">  <h2>How this site is built</h2>  <p>All paper metadata and summaries live as <b>YAML</b> under <code>data/papers/</code>. The Python generator reads YAML and writes the static website into <code>docs/</code> (GitHub Pages).</p>  <p class="muted">Current coverage: <b>46</b> curated pages out of <b>300</b> indexed papers.</p></section><section class="section">  <h2>Add a new paper (or curate an existing one)</h2>  <ol>    <li><b>Create / edit a YAML file</b> in <code>data/papers/</code>. One paper = one YAML file.         Use a short, URL-friendly filename (slug), e.g. <code>fno.yaml</code> or <code>diffusionpde.yaml</code>.</li>    <li><b>Fill the key fields</b>: title, year, method class, links, and (ideally) PDEs/tasks/experiments/baselines.</li>    <li><b>Regenerate the site</b>: run <code>python scripts/generate_research_site.py</code> from the repo root.</li>    <li><b>Preview locally</b> (optional): <code>python -m http.server -d docs 8000</code> and open the shown URL.</li>    <li><b>Commit + push</b> your changes (<code>data/papers/*.yaml</code> + regenerated <code>docs/</code>) and open a PR.</li>  </ol></section><section class="section">  <h2>YAML schema (human-friendly)</h2>  <p>Write plain text; the site will format it. You can include LaTeX in <code>core_math</code> and <code>theory</code> items.</p></section><pre><code># Paper summary template (YAML)
-#
-# Copy this file to: data/papers/&lt;slug>.yaml
-# Then fill in fields. The website generator reads *all* YAML files in
-# data/papers/ and builds docs/.
-#
-# Tips
-# - Keep lists short and specific.
-# - Put the most important equation(s) in core_math (LaTeX, no $...$ needed).
-# - If you don't know a field yet, leave it empty.
+    
+<section class="section">
+  <h2>Contribute</h2>
+  <p>
+    The site is <b>YAML-first</b>: paper metadata + summaries live in <code>data/papers/</code>,
+    and the website under <code>docs/</code> is generated from those YAML files.
+  </p>
+  <ul>
+    <li><b>Index placeholders</b> (status=<code>index</code>) are quick to add: title/authors/venue/links.</li>
+    <li><b>Curated pages</b> (status=<code>curated</code>) include structured notes: contributions, baselines, results, etc.</li>
+  </ul>
+  <div class="note">
+    Current DB: <b>300</b> papers (<b>46</b> curated).
+  </div>
+</section>
 
-slug: example-paper-slug  # file name without .yaml is used if omitted
+<section class="section">
+  <h2>Add a paper (one-by-one)</h2>
+  <ol>
+    <li>Copy <code>data/papers/_template.yaml</code> → create <code>data/papers/&lt;slug&gt;.yaml</code>.</li>
+    <li>Fill the required metadata: title, authors, year, venue, links.</li>
+    <li>Start with <code>status: index</code>. Later upgrade to <code>status: curated</code> with more fields.</li>
+    <li>Run validation + site generation:</li>
+  </ol>
+  <pre class="code"><code># Validate YAML (fast)
+python scripts/validate_papers.py
 
-# Bibliography
-short_title: ExampleMethod
+# Regenerate docs/ (GitHub Pages output)
+python scripts/generate_research_site.py
+</code></pre>
+</section>
+
+<section class="section">
+  <h2>Submit to GitHub (so the website updates)</h2>
+  <p>
+    GitHub Pages serves this website from the <code>docs/</code> folder.
+    After you edit YAML files, make sure you regenerate the site, then commit + push.
+  </p>
+  <pre class="code"><code># After regenerating docs/, commit and push.
+
+git status
+git add -A
+git commit -m &quot;Update papers and regenerate site&quot;
+git push origin main
+
+# If Git complains about missing user identity:
+git config --global user.name &quot;Your Name&quot;
+git config --global user.email &quot;you@example.com&quot;
+</code></pre>
+  <div class="note">
+    Tip: if you are contributing via a pull request, do these steps on a feature branch and then open a PR.
+  </div>
+</section>
+
+<section class="section">
+  <h2>YAML format</h2>
+  <p>
+    Minimal fields are enough for an index entry. For curated pages, please also fill
+    <code>tldr</code>, <code>problem</code>, <code>contrib</code>, <code>baselines</code>, and <code>main_results</code>.
+  </p>
+  <pre class="code"><code>slug: my-paper-2025
+status: index   # or: curated
+category: AI4PDE
+method_class: NeuralOperator
+
 full_title: Full paper title goes here
-authors: First Author, Second Author, …
+short_title: MyPaper
+authors: First Author; Second Author; ...
 year: 2025
-venue: arXiv / NeurIPS / ICLR / JCP / …
-
-# Optional: lightweight classification used in filters/tables
-category: Operator learning / PINN / Diffusion / Theory / Survey / …
-method_class: Operator learning  # Operator learning | Diffusion | PINN / physics-constrained | Graph / mesh | Transformers | Benchmark | SciML
-status: index  # index (placeholder) | curated (has full summary)
+venue: ICLR
 
 links:
-  paper: https://arxiv.org/abs/XXXX.XXXXX
-  paper_label: arXiv:XXXX.XXXXX
-  code: https://github.com/...
-  project: https://...
+  paper: https://arxiv.org/abs/xxxx.xxxxx
+  code: https://github.com/user/repo
 
-# Short site-level summary
-tldr: >-
-  1–3 sentences. What problem is solved, what method is introduced, and what is the headline result?
+tldr: &gt;-
+  2–4 sentences: setting → method → key result (include dataset/metric if possible).
 
-# “What is new?” bullets
+problem: &gt;-
+  What problem does this paper solve? Be concrete (PDE, observation type, task).
+
 contrib:
   - Main contribution #1
   - Main contribution #2
 
-# Optional: theoretical contributions (with assumptions/conditions)
-theory:
-  - Main theorem / guarantee / analysis result #1
-  - Main theorem / guarantee / analysis result #2
-
-# Core method in math (LaTeX). Keep it minimal and correct.
-core_math:
-  - "\\min_\\theta \\; \\mathbb{E}_{(x,y)}\\, \\|f_\\theta(x) - y\\|^2"
-  - "\\text{s.t. }\\; \\mathcal{N}(f_\\theta) = 0"
-
-# Experiments (fill what the paper *actually* runs)
-pdes:
-  - Burgers
-  - Navier–Stokes
-tasks:
-  - Forward surrogate / operator learning
-  - Inverse problem / partial observation reconstruction
-
-setting:
-  - Data: (dataset name) / simulation / PDEBench / custom
-  - Observation: sparse sensors / random mask / block mask / noisy
-  - Metrics: relative L2 / RMSE / NLL / CRPS / …
-  - Train/test: (split description)
+benefits:
+  - What is better compared to common baselines?
 
 baselines:
   - FNO
   - PINO
-  - DiffusionPDE
 
-# Optional: results tables (use for one or two key tables only)
-results_tables:
-  - title: Main table title
-    note: Optional short note (e.g., “lower is better”, “copied from Table 2”).
-    header: [Method, Metric1, Metric2]
-    rows:
-      - [Ours, "0.12", "0.08"]
-      - [Baseline, "0.20", "0.15"]
+main_results:
+  - metric: relative L2 error
+    value: 0.012
+    dataset: PDEBench Navier–Stokes
+    compared_to: FNO
 
-# Optional: any replication warning
-benchmark_note: ""</code></pre><section class="section">  <h2>Results tables</h2>  <p>To include a paper's main quantitative results, add <code>results_tables</code> entries in YAML:</p>  <pre><code>results_tables:
-  - title: Main table (as reported)
-    note: Optional short note / dataset / metric.
-    header: [Model, Error \u2193, Speed]  # columns
-    rows:
-      - [FNO, 0.012, 1\u00d7]
-      - [Your method, 0.008, 0.9\u00d7]
-</code></pre>  <div class="note">    Please copy numbers exactly from the paper (and mention the setting in <code>note</code>).  </div></section><section class="section">  <h2>Good curation checklist</h2>  <ul>    <li><b>Core method</b>: add 1–3 key equations in <code>core_math</code>.</li>    <li><b>Theory</b>: list theorems/guarantees/assumptions in <code>theory</code>.</li>    <li><b>PDEs & tasks</b>: name the PDEs used (Navier–Stokes, Burgers, Darcy, etc.) and the task type (forecasting, inverse, UQ...).</li>    <li><b>Partial observation</b>: describe the mask (sensors, missing pixels, sparse trajectories, etc.).</li>    <li><b>Baselines</b>: list compared methods and training setup differences.</li>  </ul></section>
+interesting: &gt;-
+  Any notable detail (failure mode, trick, surprising ablation, limitation).
+
+bibkey: MyPaper2025
+bibtex: |
+  @inproceedings{MyPaper2025,
+    title={...},
+    author={...},
+    booktitle={ICLR},
+    year={2025},
+    url={https://...}
+  }
+</code></pre>
+</section>
+
+<section class="section">
+  <h2>Bulk import from conferences (ICLR / ICML / NeurIPS)</h2>
+  <p>
+    If you want to include <b>many papers</b> (e.g., all accepted papers for the last 5 years),
+    the recommended workflow is:
+  </p>
+  <ol>
+    <li>Get a <b>BibTeX</b> file for the conference/year.</li>
+    <li>Convert BibTeX → YAML stubs with <code>scripts/import_bibtex_to_yaml.py</code>.</li>
+    <li>Curate a subset (set <code>status: curated</code> + fill the summary fields) over time.</li>
+  </ol>
+  <pre class="code"><code># 1) Download a conference BibTeX file (ICLR/ICML/NeurIPS).
+# 2) Convert it into YAML stubs (status=index) under data/papers/import/...
+
+python scripts/import_bibtex_to_yaml.py   --bib path/to/ICLR_2025.bib   --venue ICLR   --out data/papers/import/iclr2025   --status index
+
+# Optional: only keep likely AI4PDE/AI4SDE papers by title keywords
+python scripts/import_bibtex_to_yaml.py   --bib path/to/ICLR_2025.bib   --venue ICLR   --out data/papers/import/iclr2025   --status index   --keywords &quot;pde,operator,neural operator,physics-informed,navier,burgers,sde,diffusion&quot;
+</code></pre>
+  <div class="note">
+    Tip: importing <i>all</i> papers from top conferences can produce a very large DB.
+    For AI4PDE focus, start with keyword-filtered imports and gradually expand.
+  </div>
+</section>
+
+<section class="section">
+  <h2>Export BibTeX from the website</h2>
+  <p>
+    The Research page supports batch BibTeX export:
+  </p>
+  <pre class="code"><code>1) Go to the Research tab.
+2) Tick the “Pick” checkbox for the papers you want.
+3) Click “Download .bib” (or “Copy BibTeX”).
+</code></pre>
+  <p class="muted">
+    If a paper YAML includes <code>bibtex:</code>, we export that. Otherwise we generate a minimal BibTeX entry from metadata.
+  </p>
+</section>
+
+<section class="section">
+  <h2>Quality bar for curated pages</h2>
+  <ul>
+    <li><b>Main contribution:</b> 2–5 bullets that are specific (not marketing language).</li>
+    <li><b>Problem & setting:</b> PDE(s), observation type (masked pixels / sparse sensors / partial trajectories), task (forecasting / inverse / reconstruction).</li>
+    <li><b>Baselines:</b> methods actually compared in the paper (FNO/PINO/UNet/etc.).</li>
+    <li><b>Main results:</b> include metric + dataset + comparison target (even 1–2 rows are useful).</li>
+  </ul>
+</section>
+
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

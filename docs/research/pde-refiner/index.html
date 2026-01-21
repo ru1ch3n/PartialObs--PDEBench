@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>PDE-Refiner applies iterative refinement to improve long-horizon PDE rollouts, especially on chaotic systems where one-shot operators drift.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
 \[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
 \[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
@@ -39,6 +42,7 @@
 <li>Targets error accumulation in long rollouts (forecasting) and reconstruction.</li>
 <li>Demonstrates gains on chaotic PDE benchmarks.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Kuramoto–Sivashinsky</li>
 <li>Kolmogorov flow</li>
@@ -59,6 +63,12 @@
 <div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>KS long rollouts</td><td>Trajectory error</td><td>Refinement reduces drift vs one-shot operator baselines.</td></tr>
 <tr><td>Kolmogorov flow</td><td>Rollout stability</td><td>Improves long-horizon stability without retraining the base solver.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pde-refiner,
+  title={ PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction },
+  author={ (see paper) },
+  year={ 2023 },
+  url={ https://arxiv.org/abs/2308.05732 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

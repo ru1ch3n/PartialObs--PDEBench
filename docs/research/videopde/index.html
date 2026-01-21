@@ -31,6 +31,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>VideoPDE reformulates PDE solution generation as spatiotemporal video inpainting, letting a single diffusion model handle both forward prediction and inverse reconstruction.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
 \[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
 \[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
@@ -40,6 +43,7 @@
 <li>Handles both forward forecasting and inverse reconstruction in one unified framework.</li>
 <li>Demonstrates performance gains vs diffusion and operator baselines on several PDEs.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Wave equation</li>
 <li>Navier–Stokes</li>
@@ -75,6 +79,12 @@
 <tr><td>FNO</td><td>0.031</td><td>0.030</td></tr></tbody></table></div>
 <div class="note">VideoPDE results depend strongly on the exact masking schedule and diffusion step budget.</div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{videopde,
+  title={ Unified Generative PDE Solving via Video Inpainting Diffusion Models },
+  author={ Ruicheng He et al. },
+  year={ 2025 },
+  url={ https://arxiv.org/abs/2506.13754 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

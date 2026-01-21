@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>MeshGraphNets learn simulators on unstructured meshes using graph networks, enabling generalization across geometries and discretizations.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Graph / mesh</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[h_i^{(\ell+1)} = \phi\Big(h_i^{(\ell)},\ \sum_{j\in\mathcal{N}(i)} \psi(h_i^{(\ell)},h_j^{(\ell)},e_{ij})\Big)\]
 \[\min_\theta\ \sum_t\ \|u_{t+1}-\mathrm{GNN}_\theta(u_t,\text{mesh})\|^2\ \ \text{(rollout / one-step)}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Generalizes across resolutions and complex geometries.</li>
 <li>Applies to multiple physics domains including fluids.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Navier–Stokes</li>
 <li>Compressible flow</li>
@@ -54,6 +58,12 @@
 <h3 class="subhead">Key results</h3>
 <div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Generalization</td><td>Error on new meshes</td><td>Maintains accuracy when changing mesh resolution/geometry compared to grid-based baselines.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{meshgraphnets,
+  title={ Learning Mesh-Based Simulation with Graph Networks },
+  author={ Tobias Pfaff et al. },
+  year={ 2021 },
+  url={ https://arxiv.org/abs/2101.05555 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

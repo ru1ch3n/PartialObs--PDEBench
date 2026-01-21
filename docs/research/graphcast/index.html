@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>GraphCast is a graph neural network trained on reanalysis data to produce fast global weather forecasts, reported to outperform a leading numerical model on many evaluation metrics for medium-range horizons.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Graph / mesh</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[h_i^{(\ell+1)} = \phi\Big(h_i^{(\ell)},\ \sum_{j\in\mathcal{N}(i)} \psi(h_i^{(\ell)},h_j^{(\ell)},e_{ij})\Big)\]
 \[\min_\theta\ \sum_t\ \|u_{t+1}-\mathrm{GNN}_\theta(u_t,\text{mesh})\|^2\ \ \text{(rollout / one-step)}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Fast inference enabling rapid forecast generation.</li>
 <li>Strong reported skill compared to operational numerical weather prediction baselines.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Atmospheric dynamics (primitive equations)</li>
 </ul></div>  <div class="card"><h3>Tasks</h3><ul>
@@ -56,6 +60,12 @@
 <div class="tablewrap"><table><thead><tr><th>Comparison</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>vs ECMWF HRES</td><td>Forecast accuracy</td><td>Outperforms the operational system on a majority of evaluated metrics in the reported study.</td></tr>
 <tr><td>Runtime</td><td>Wall-clock</td><td>Produces global forecasts in minutes on accelerators, far faster than NWP.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{graphcast,
+  title={ GraphCast: Learning Skillful Medium-Range Global Weather Forecasting },
+  author={ Remi Lam et al. },
+  year={ 2023 },
+  url={ https://www.science.org/doi/10.1126/science.adi2336 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

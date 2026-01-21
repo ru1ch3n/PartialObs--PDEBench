@@ -4,3 +4,4 @@
 # with: python scripts/generate_research_site.py
 
 PyYAML>=6.0
+bibtexparser>=1.4.0

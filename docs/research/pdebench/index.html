@@ -31,6 +31,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>PDEBench provides a large, standardized benchmark of PDE datasets and evaluation protocols for scientific machine learning models.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Benchmark</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[\text{(No single method.) Benchmarks define datasets, masks, metrics, and protocols.}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
@@ -38,6 +41,7 @@
 <li>Provides baselines (FNO, U-Net, etc.) and reproducible evaluation.</li>
 <li>Widely used reference for comparing operator-learning methods.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Advection</li>
 <li>Burgers</li>
@@ -65,6 +69,12 @@
 <tr><td>Baselines</td><td>—</td><td>Reference implementations for common models.</td></tr>
 <tr><td>Metrics</td><td>L2 / rollout</td><td>Consistent evaluation across PDEs.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pdebench,
+  title={ PDEBench: An Extensive Benchmark for Scientific Machine Learning },
+  author={ Makoto Takamoto et al. },
+  year={ 2022 },
+  url={ https://arxiv.org/abs/2210.07182 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

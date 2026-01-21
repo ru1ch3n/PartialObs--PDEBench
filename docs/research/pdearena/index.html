@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>PDEArena proposes a benchmark for spatiotemporal PDE modeling, enabling consistent comparison between neural PDE solvers and operators.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Benchmark</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[\text{(No single method.) Benchmarks define datasets, masks, metrics, and protocols.}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
 <section id="contribution"><h2>Main contribution</h2><ul>
@@ -37,6 +40,7 @@
 <li>Focus on fluid-mechanics style PDE trajectories and generalization.</li>
 <li>Encourages standardized reporting and baselines.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Navier–Stokes</li>
 <li>Shallow water</li>
@@ -58,6 +62,12 @@
 <div class="tablewrap"><table><thead><tr><th>Item</th><th>Metric</th><th>Why it matters</th></tr></thead><tbody><tr><td>Rollout error</td><td>MSE / L2</td><td>Captures stability and long-horizon drift.</td></tr>
 <tr><td>Generalization</td><td>Error under shift</td><td>Measures robustness across parameter regimes.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pdearena,
+  title={ PDEArena: A Benchmark for Learning PDEs },
+  author={ Tariq et al. (see paper) },
+  year={ 2022 },
+  url={ https://arxiv.org/abs/2209.15616 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

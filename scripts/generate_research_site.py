@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import re
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -85,7 +86,9 @@ Scientific ML for PDEs (selected famous works)
 
 PAPER_TREE_MERMAID = r"""
 flowchart TD
-  Root["Scientific ML for PDEs"]
+  Root["AI4PDE / SciML (selected milestones)"]
+
+  %% Physics-informed optimization (PINN family)
   Root --> PI["Physics-informed optimization"]
   PI --> DeepRitz["Deep Ritz (2018)"]
   PI --> DGM["DGM / Deep Galerkin (2018)"]
@@ -96,31 +99,147 @@ flowchart TD
   PINN --> XPINN["XPINNs (2021)"]
   PINN --> gPINN["gPINNs (2021)"]
   PINN --> FBPINN["FBPINNs (2021)"]
+
+  %% Operator learning (neural operators)
   Root --> OL["Operator learning"]
   OL --> DeepONet["DeepONet (2021)"]
   OL --> FNO["FNO (2020)"]
   FNO --> PINO["PINO (2021)"]
   FNO --> GalerkinT["Galerkin Transformer (2021)"]
+  FNO --> UNO["U-NO (2022)"]
   FNO --> WNO["WNO (2022)"]
   WNO --> UWNO["U-WNO (2024)"]
-  FNO --> UNO["U-NO (2022)"]
   FNO --> CNO["CNO (2023)"]
   OL --> GKN["GKN (2020)"]
   OL --> MGNO["MGNO (2020)"]
+
+  %% Diffusion / generative inference
   Root --> DiffGen["Diffusion / generative PDE inference"]
   DiffGen --> DiffPDE["DiffusionPDE (2024)"]
   DiffPDE --> FunDPS["FunDPS (2025)"]
   FunDPS --> PRISMA["PRISMA (2025)"]
   DiffPDE --> VideoPDE["VideoPDE (2025)"]
-  Root --> GraphSim["Graph simulators"]
-  GraphSim --> GNS["Graph Networks for physics simulation (2020)"]
-  GraphSim --> MGN["MeshGraphNets (2021)"]
+
+  %% Graph simulators
+  Root --> GraphSim["Graph / mesh simulators"]
+  GraphSim --> GNS["GNS (ICML 2020)"]
+  GraphSim --> MGN["MeshGraphNets (ICLR 2021)"]
+
+  %% Benchmarks / datasets
   Root --> Bench["Benchmarks and datasets"]
   Bench --> PDEBench["PDEBench (2022)"]
   Bench --> PDEArena["PDEArena (2022)"]
   Bench --> FourCastNet["FourCastNet (2022)"]
   FourCastNet --> GraphCast["GraphCast (2023)"]
+
+  %% Clickable links (homepage)
+  %% - Paper nodes go to curated pages.
+  %% - Category nodes go to the Research tab with an initial filter.
+  click Root "research/" "Open the research index" _self
+
+  click PI "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
+  click DeepRitz "research/deep-ritz/" "Deep Ritz (2018)" _self
+  click DGM "research/dgm/" "Deep Galerkin Method (2018)" _self
+  click DeepBSDE "research/deepbsde/" "DeepBSDE (2018)" _self
+  click PINN "research/pinn/" "PINNs (2019)" _self
+  click cPINN "research/cpinn/" "cPINNs (2020)" _self
+  click SAPINN "research/sa-pinn/" "SA-PINNs (2020)" _self
+  click XPINN "research/xpinn/" "XPINNs (2021)" _self
+  click gPINN "research/gpinn/" "gPINNs (2021)" _self
+  click FBPINN "research/fbpinns/" "FBPINNs (2021)" _self
+
+  click OL "research/?method=Operator%20learning" "Filter: Operator learning" _self
+  click DeepONet "research/deeponet/" "DeepONet (2021)" _self
+  click FNO "research/fno/" "Fourier Neural Operator (2020)" _self
+  click PINO "research/pino/" "Physics-Informed Neural Operator (2021)" _self
+  click GalerkinT "research/galerkin-transformer/" "Galerkin Transformer (2021)" _self
+  click UNO "research/u-no/" "U-NO (2022)" _self
+  click WNO "research/wno/" "WNO (2022)" _self
+  click UWNO "research/u-wno/" "U-WNO (2024)" _self
+  click CNO "research/cno/" "CNO (2023)" _self
+  click GKN "research/gkn/" "Graph Kernel Network (2020)" _self
+  click MGNO "research/mgno/" "MGNO (2020)" _self
+
+  click DiffGen "research/?method=Diffusion" "Filter: Diffusion" _self
+  click DiffPDE "research/diffusionpde/" "DiffusionPDE (2024)" _self
+  click FunDPS "research/fundps/" "FunDPS (2025)" _self
+  click PRISMA "research/prisma/" "PRISMA (2025)" _self
+  click VideoPDE "research/videopde/" "VideoPDE (2025)" _self
+
+  click GraphSim "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
+  click GNS "research/gns/" "GNS (ICML 2020)" _self
+  click MGN "research/meshgraphnets/" "MeshGraphNets (ICLR 2021)" _self
+
+  click Bench "benchmark/" "Benchmark tab" _self
+  click PDEBench "research/pdebench/" "PDEBench (2022)" _self
+  click PDEArena "research/pdearena/" "PDEArena (2022)" _self
+  click FourCastNet "research/fourcastnet/" "FourCastNet (2022)" _self
+  click GraphCast "research/graphcast/" "GraphCast (2023)" _self
 """.strip("\n")
+
+
+AI4PDE_SDE_TREE_ASCII = r"""
+AI4PDE + AI4SDE (taxonomy)
+├─ Physics-informed optimization (PINN family)
+├─ Operator learning (neural operators)
+├─ Graph / mesh simulators
+├─ Generative inference (diffusion / SDE bridges)
+└─ Benchmarks and datasets
+""".strip("\n")
+
+AI4PDE_SDE_TREE_MERMAID = r"""
+flowchart TD
+  R["AI4PDE + AI4SDE: a taxonomy (high-level)"]
+
+  R --> Phys["Physics-constrained learning"]
+  Phys --> PINNfam["PINN-style residual minimization"]
+  Phys --> Hybrid["Hybrid: data + physics losses"]
+
+  R --> Op["Operator learning"]
+  Op --> NO["Neural operators (FNO/DeepONet/...)"]
+  Op --> ROM["Learned ROM / reduced models"]
+
+  R --> Graph["Graph / mesh simulators"]
+  Graph --> MP["Message passing / GNN solvers"]
+  Graph --> Mesh["Mesh-based neural fields"]
+
+  R --> Gen["Generative / probabilistic modeling"]
+  Gen --> Score["Score-based / diffusion models"]
+  Gen --> Bridge["Diffusion/SDE bridges (conditioning)"]
+  Gen --> UQ["Uncertainty quantification"]
+
+  R --> Theory["Theory & guarantees"]
+  Theory --> Approx["Approximation / expressivity"]
+  Theory --> Stability["Stability / generalization"]
+
+  R --> Bench["Benchmarks"]
+
+  %% Clickable links (homepage)
+  click R "research/" "Open the research index" _self
+  click Phys "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
+  click PINNfam "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
+  click Hybrid "research/?q=hybrid" "Search: hybrid" _self
+
+  click Op "research/?method=Operator%20learning" "Filter: Operator learning" _self
+  click NO "research/?q=neural%20operator" "Search: neural operator" _self
+  click ROM "research/?q=reduced%20order" "Search: reduced order" _self
+
+  click Graph "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
+  click MP "research/?q=message%20passing" "Search: message passing" _self
+  click Mesh "research/?q=mesh" "Search: mesh" _self
+
+  click Gen "research/?method=Diffusion" "Filter: Diffusion" _self
+  click Score "research/?method=Diffusion" "Filter: Diffusion" _self
+  click Bridge "research/?q=bridge" "Search: bridge" _self
+  click UQ "research/?q=uncertainty" "Search: uncertainty" _self
+
+  click Theory "research/?q=theory" "Search: theory" _self
+  click Approx "research/?q=approximation" "Search: approximation" _self
+  click Stability "research/?q=stability" "Search: stability" _self
+
+  click Bench "benchmark/" "Benchmark tab" _self
+""".strip("\n")
+
 
 
 # Class-level math templates. Used when a paper doesn't provide a manually curated
@@ -409,8 +528,8 @@ def load_db() -> List[Dict[str, Any]]:
 
     # 1) YAML DB (preferred)
     if PAPERS_YAML_DIR.exists():
-        for path in sorted(PAPERS_YAML_DIR.glob("*.y*ml")):
-            if path.name.startswith("_"):
+        for path in sorted(PAPERS_YAML_DIR.rglob("*.y*ml")):
+            if path.name.startswith("_") or any(part.startswith("_") for part in path.parts):
                 continue
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if not isinstance(data, dict):
@@ -579,7 +698,16 @@ def page(
 
 
 def paper_link(p: Dict[str, Any], root_to_docs: str) -> str:
-    return f"{root_to_docs}research/{p['slug']}/"
+    """Return an internal link for the paper.
+
+    - curated papers: /research/<slug>/
+    - index placeholders: /research/paper/?slug=<slug>  (single generic page)
+    """
+    status = str(p.get("status") or "index")
+    if status == "curated":
+        return f"{root_to_docs}research/{p['slug']}/"
+    return f"{root_to_docs}research/paper/?slug={p['slug']}"
+
 
 
 def render_paper_page(p: Dict[str, Any]) -> str:
@@ -634,6 +762,38 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         tldr_html = f"<p>{html_escape(tldr)}</p>"
     sections.append(f"<section id=\"tldr\"><h2>TL;DR</h2>{tldr_html}</section>")
 
+
+    # Problem statement (optional but strongly recommended for curated pages)
+    problem = (p.get("problem") or "").strip()
+    if not problem:
+        problem_html = "<p class=\"muted\">Add <code>problem:</code> to explain what the paper is trying to solve.</p>"
+    else:
+        problem_html = f"<p>{html_escape(problem)}</p>"
+    sections.append(f"<section id=\"problem\"><h2>Problem</h2>{problem_html}</section>")
+
+    # Benefits vs others (optional; use bullet points)
+    benefits = p.get("benefits") or p.get("advantages") or []
+    if isinstance(benefits, str):
+        benefits = [benefits]
+    sections.append(
+        "<section id=\"benefits\"><h2>Benefits vs others</h2>"
+        + ul_or_placeholder(
+            benefits,
+            "Add <code>benefits:</code> as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).",
+        )
+        + "</section>"
+    )
+
+    # Interesting notes (optional)
+    interesting = p.get("interesting") or p.get("notes") or ""
+    if isinstance(interesting, list):
+        interesting_html = ul_or_placeholder(interesting, "Add <code>interesting:</code> as bullet points.")
+    else:
+        interesting = str(interesting).strip()
+        interesting_html = f"<p>{html_escape(interesting)}</p>" if interesting else "<p class=\"muted\">(Optional) Add <code>interesting:</code>.</p>"
+    sections.append(f"<section id=\"interesting\"><h2>Interesting detail</h2>{interesting_html}</section>")
+
+
     # Core method (math) + theory
     method_class = p.get("method_class", "SciML")
     math_lines = p.get("core_math", []) or METHOD_MATH.get(method_class, []) or METHOD_MATH["SciML"]
@@ -659,6 +819,43 @@ def render_paper_page(p: Dict[str, Any]) -> str:
             p.get("contrib", []),
             "Not curated yet. Add bullet points under <code>contrib</code> in YAML.",
         )
+        + "</section>"
+    )
+
+
+    # Main results (optional: quick headline summary)
+    main_results = p.get("main_results") or []
+    if isinstance(main_results, str):
+        main_results = [main_results]
+
+    if isinstance(main_results, list) and main_results:
+        if all(isinstance(r, dict) for r in main_results):
+            rows = []
+            for r in main_results:
+                rows.append(
+                    "<tr>"
+                    f"<td>{html_escape(str(r.get('metric','')))}</td>"
+                    f"<td>{html_escape(str(r.get('value','')))}</td>"
+                    f"<td>{html_escape(str(r.get('dataset','')))}</td>"
+                    f"<td>{html_escape(str(r.get('compared_to','')))}</td>"
+                    "</tr>"
+                )
+            main_results_html = (
+                "<div class=\"tablewrap\"><table>"
+                "<thead><tr><th>Metric</th><th>Value</th><th>Dataset</th><th>Compared to</th></tr></thead>"
+                "<tbody>" + "".join(rows) + "</tbody></table></div>"
+            )
+        else:
+            main_results_html = ul_or_placeholder(
+                [str(x) for x in main_results],
+                "Add <code>main_results</code> as a list (either dict rows or strings).",
+            )
+    else:
+        main_results_html = "<p class=\"muted\">(Optional) Add <code>main_results</code> for a quick headline summary.</p>"
+
+    sections.append(
+        "<section id=\"main-results\"><h2>Main results (headline)</h2>"
+        + main_results_html
         + "</section>"
     )
 
@@ -720,6 +917,42 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         res_parts.append("</section>")
         sections.append("\n".join(res_parts))
 
+    # Citation (BibTeX)
+    links = p.get("links", {}) or {}
+    bib = ""
+    if isinstance(p.get("bib"), dict):
+        bib = (p.get("bib") or {}).get("entry", "") or ""
+    bib = (p.get("bibtex") or bib or "").strip()
+    if not bib:
+        key = (p.get("bibkey") or p.get("slug") or "paper").strip()
+        key = re.sub(r"[^A-Za-z0-9_:-]+", "", key) or "paper"
+        title = (p.get("full_title") or p.get("short_title") or "").strip()
+        authors = (p.get("authors") or "").strip()
+        year = str(p.get("year") or "").strip()
+        venue = (p.get("venue") or "").strip()
+        url = links.get("paper") or links.get("arxiv") or links.get("openreview") or links.get("code") or ""
+        entry_type = "inproceedings" if venue else "article"
+        fields = []
+        if title:
+            fields.append(f"  title={{ {title} }}")
+        if authors:
+            fields.append(f"  author={{ {authors} }}")
+        if year:
+            fields.append(f"  year={{ {year} }}")
+        if venue:
+            fields.append(f"  booktitle={{ {venue} }}")
+        if url:
+            fields.append(f"  url={{ {url} }}")
+        bib = f"@{entry_type}{{{key},\n" + ",\n".join(fields) + "\n}"
+
+    sections.append(
+        "<section id=\"citation\"><h2>Citation (BibTeX)</h2>"
+        + f"<pre class=\"code\"><code>{html_escape(bib)}</code></pre>"
+        + "</section>"
+    )
+
+
+
     body = "\n".join(sections)
 
     return page(
@@ -742,7 +975,8 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
 def render_home(papers: List[Dict[str, Any]]) -> str:
     root = ""  # docs/index.html
-    # Homepage stays compact: only website intro + a paper tree.
+    n_total = len(papers)
+    n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
 
     # The homepage should stay minimal (no long “get started” block).
     hero_card = (
@@ -756,30 +990,42 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     )
 
     body = f"""
-<section id=\"intro\" class=\"section\">
+<section id="intro" class="section">
   <h2>What is this website?</h2>
   <p>
     PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
-    (missing sensors, masked pixels, partial trajectories). The site is organized as:
+    (missing sensors, masked pixels, partial trajectories).
   </p>
   <ul>
-    <li><b>Research:</b> an index of ~300 AI4PDE papers with hyperlinks to one-page summaries (curated pages include structured experiment tables).</li>
+    <li><b>Research:</b> browse/search <b>{n_total}</b> AI4PDE/AI4SDE papers (<b>{n_curated}</b> curated pages + index placeholders).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> the benchmark specification (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
-    <li><b>Contribute:</b> how to add/curate papers via YAML (recommended if you want richer per-paper details).</li>
+    <li><b>Benchmark:</b> benchmark spec (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
+    <li><b>Contribute:</b> how to add/curate papers via YAML.</li>
   </ul>
 </section>
 
-<section id=\"tree\" class=\"section\">
+<section id="tree" class="section">
   <h2>Paper tree</h2>
-  <p class=\"muted\">A compact, conceptual lineage map for famous SciML-for-PDE works.</p>
-  <div class=\"card\" style=\"margin-top:12px;\">
-    <pre class=\"mermaid\">{html_escape_pre(PAPER_TREE_MERMAID)}</pre>
+  <p class="muted">A compact, conceptual lineage map (selected famous works).</p>
+  <div class="card" style="margin-top:12px;">
+    <pre class="mermaid">{html_escape_pre(PAPER_TREE_MERMAID)}</pre>
   </div>
-  <details style=\"margin-top:12px;\">
-    <summary class=\"muted\">Show ASCII fallback</summary>
-    <pre class=\"code\"><code>{html_escape(PAPER_TREE_ASCII)}</code></pre>
+  <details style="margin-top:12px;">
+    <summary class="muted">Show ASCII fallback</summary>
+    <pre class="code"><code>{html_escape(PAPER_TREE_ASCII)}</code></pre>
+  </details>
+</section>
+
+<section id="taxonomy" class="section">
+  <h2>AI4PDE + AI4SDE map</h2>
+  <p class="muted">A high-level taxonomy you can extend as new method families emerge.</p>
+  <div class="card" style="margin-top:12px;">
+    <pre class="mermaid">{html_escape_pre(AI4PDE_SDE_TREE_MERMAID)}</pre>
+  </div>
+  <details style="margin-top:12px;">
+    <summary class="muted">Show ASCII fallback</summary>
+    <pre class="code"><code>{html_escape(AI4PDE_SDE_TREE_ASCII)}</code></pre>
   </details>
 </section>
 """
@@ -791,11 +1037,11 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         hero_h1="PartialObs–PDEBench",
         hero_subtitle_html=(
             "A benchmark + research map for <b>PDE inference under partial observation</b>. "
-            "Homepage = summary + tree; details live in the other tabs."
+            "Homepage = summary + trees; details live in the other tabs."
         ),
         hero_meta_html=(
             "<div class=\"meta\">"
-            "  <div><b>Project:</b> <a class=\"meta-link\" href=\"https://ru1ch3n.github.io/PartialObs--PDEBench/\" target=\"_blank\" rel=\"noopener noreferrer\">ru1ch3n.github.io/PartialObs--PDEBench</a></div>"
+            "  <div><b>Project:</b> <a class=\"meta-link\" href=\"https://ru1ch3n.github.io/PartialObs--PDEBench\" target=\"_blank\" rel=\"noopener noreferrer\">ru1ch3n.github.io/PartialObs--PDEBench</a></div>"
             "  <div><b>Repo:</b> <a class=\"meta-link\" href=\"https://github.com/ru1ch3n/PartialObs--PDEBench\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub</a></div>"
             "</div>"
         ),
@@ -804,142 +1050,141 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
             "<script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
             "<script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>"
-            "<script>document.addEventListener('DOMContentLoaded',()=>{if(window.mermaid){mermaid.initialize({startOnLoad:true,theme:'dark'});}});</script>"
+            "<script>document.addEventListener('DOMContentLoaded',()=>{"
+            "  if(!window.mermaid) return;"
+            "  // Enable clickable nodes (mermaid `click` directives) on GitHub Pages."
+            "  mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose'});"
+            "  mermaid.run({querySelector:'.mermaid'});"
+            "});</script>"
         ),
         body_html=body,
     )
 
 
 def render_research_index(papers: List[Dict[str, Any]]) -> str:
+    """Research hub page.
+
+    IMPORTANT: this page is rendered client-side from docs/assets/papers_db.json
+    to keep the HTML small and scalable (thousands of papers).
+    """
     root = "../"  # from docs/research/index.html
-    # Filters
-    method_classes = sorted({p.get("method_class", "SciML") for p in papers})
-    pde_tags = sorted({pde for p in papers for pde in (get_display_list(p, "pdes")[0] or [])})
-    statuses = sorted({p.get("status", "curated") for p in papers})
+    n_total = len(papers)
+    n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
 
-    def opt(value: str) -> str:
-        return f"<option value=\"{html_escape(value)}\">{html_escape(value)}</option>"
+    body = f"""
+<section class="section">
+  <h2>Research index</h2>
+  <p class="muted">
+    Browse/search <b>{n_total}</b> papers. Curated pages include structured experiment + baseline notes;
+    index pages are bibliographic placeholders.
+  </p>
 
-    method_opts = "".join([opt(m) for m in method_classes])
-    pde_opts = "".join([opt(p) for p in pde_tags])
-    status_opts = "".join([opt(s) for s in statuses])
+  <div class="card" style="margin-top:16px;">
+    <div class="grid">
+      <div>
+        <div class="smallcaps">Search</div>
+        <input id="q" class="input" placeholder="Search title / authors / venue..." />
+      </div>
 
-    # Table rows
-    rows = []
-    for p in sorted(papers, key=lambda x: (-(x.get("year", 0)), x.get("short_title", ""))):
-        title = html_escape(p.get("short_title", ""))
-        full = html_escape(p.get("full_title", ""))
-        year = int(p.get("year", 0) or 0)
-        method = html_escape(p.get("method_class", "SciML"))
-        status = html_escape(p.get("status", "curated"))
-        pdes, _ = get_display_list(p, "pdes")
-        pde_str = ", ".join(html_escape(x) for x in pdes[:3]) + ("…" if len(pdes) > 3 else "")
-        tasks, _ = get_display_list(p, "tasks")
-        task_str = ", ".join(html_escape(x) for x in tasks[:2]) + ("…" if len(tasks) > 2 else "")
-        rows.append(
-            f"<tr class=\"paper-row\" "
-            f"data-title=\"{full.lower()}\" "
-            f"data-method=\"{method.lower()}\" "
-            f"data-pdes=\"{','.join([x.lower() for x in pdes])}\" "
-            f"data-status=\"{status.lower()}\">"
-            f"<td>{year}</td>"
-            f"<td><a href=\"{p['slug']}/\"><b>{title}</b></a><div class=\"muted\" style=\"font-size:12px;\">{full}</div></td>"
-            f"<td>{method}</td>"
-            f"<td class=\"muted\">{pde_str or 'Unspecified'}</td>"
-            f"<td class=\"muted\">{task_str or 'Unspecified'}</td>"
-            f"<td>{status}</td>"
-            "</tr>"
-        )
+      <div>
+        <div class="smallcaps">Filters</div>
+        <div class="row">
+          <select id="f_method" class="select"><option value="">All methods</option></select>
+          <select id="f_venue" class="select"><option value="">All venues</option></select>
+          <select id="f_pde" class="select"><option value="">All PDEs</option></select>
+          <select id="f_status" class="select">
+            <option value="">All statuses</option>
+            <option value="curated">curated</option>
+            <option value="index">index</option>
+          </select>
+        </div>
+        <div class="muted" style="margin-top:8px;">
+          Showing <span id="shownCount">0</span> / <span id="totalCount">{n_total}</span>
+          (<b>{n_curated}</b> curated)
+        </div>
+      </div>
+    </div>
+  </div>
 
-    table_html = (
-        "<div class=\"tablewrap\">"
-        "<table id=\"papers\"><thead><tr>"
-        "<th>Year</th><th>Paper</th><th>Method</th><th>PDEs</th><th>Tasks</th><th>Status</th>"
-        "</tr></thead><tbody>"
-        + "\n".join(rows)
-        + "</tbody></table></div>"
-    )
+  <div class="card" style="margin-top:16px;">
+    <div class="row" style="align-items:center; justify-content:space-between;">
+      <div class="muted">
+        Selected: <b><span id="selCount">0</span></b>
+      </div>
+      <div class="row">
+        <button id="btnCopyBib" class="btn">Copy BibTeX</button>
+        <button id="btnDownloadBib" class="btn primary">Download .bib</button>
+        <button id="btnClearSel" class="btn">Clear</button>
+      </div>
+    </div>
+  </div>
 
-    body = (
-        "<section class=\"section\">"
-        "  <h2>Research index</h2>"
-        "  <p>Browse and search ~300 recent AI4PDE papers. <b>Curated</b> pages include structured experiment + baseline notes; <b>index</b> pages are bibliographic placeholders.</p>"
-        "  <div class=\"card\" style=\"margin-top:14px;\">"
-        "    <div class=\"grid2\">"
-        "      <div>"
-        "        <label class=\"smallcaps\">Search</label><br/>"
-        "        <input id=\"q\" class=\"input\" placeholder=\"Search title…\" />"
-        "      </div>"
-        "      <div>"
-        "        <label class=\"smallcaps\">Filters</label><br/>"
-        "        <div class=\"filters\">"
-        f"          <select id=\"method\" class=\"select\"><option value=\"\">All methods</option>{method_opts}</select>"
-        f"          <select id=\"pde\" class=\"select\"><option value=\"\">All PDEs</option>{pde_opts}</select>"
-        f"          <select id=\"status\" class=\"select\"><option value=\"\">All statuses</option>{status_opts}</select>"
-        "        </div>"
-        "      </div>"
-        "    </div>"
-        "    <div class=\"muted\" style=\"margin-top:10px;\"><span id=\"count\"></span></div>"
-        "  </div>"
-        "</section>"
-        + table_html
-    )
+  <div class="tablewrap" style="margin-top:16px;">
+    <table class="papers">
+      <thead>
+        <tr>
+          <th style="width:60px;">Pick</th>
+          <th style="width:80px;">Year</th>
+          <th>Paper</th>
+          <th style="width:140px;">Venue</th>
+          <th style="width:170px;">Method</th>
+          <th style="width:220px;">PDEs</th>
+          <th style="width:220px;">Tasks</th>
+          <th style="width:90px;">Status</th>
+        </tr>
+      </thead>
+      <tbody id="paperRows"></tbody>
+    </table>
+  </div>
 
-    extra_head = (
-        "<style>.filters{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}.input,.select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(15,21,34,.6);color:var(--fg)}.select{width:auto}</style>"
-        "<script>\n"
-        "function applyFilters(){\n"
-        "  const q=(document.getElementById('q').value||'').toLowerCase();\n"
-        "  const m=(document.getElementById('method').value||'').toLowerCase();\n"
-        "  const p=(document.getElementById('pde').value||'').toLowerCase();\n"
-        "  const s=(document.getElementById('status').value||'').toLowerCase();\n"
-        "  let shown=0;\n"
-        "  document.querySelectorAll('tr.paper-row').forEach(tr=>{\n"
-        "    const okQ=!q || tr.dataset.title.includes(q);\n"
-        "    const okM=!m || tr.dataset.method===m;\n"
-        "    const okP=!p || (tr.dataset.pdes||'').includes(p);\n"
-        "    const okS=!s || tr.dataset.status===s;\n"
-        "    const show=okQ && okM && okP && okS;\n"
-        "    tr.style.display=show?'':'none';\n"
-        "    if(show) shown++;\n"
-        "  });\n"
-        "  document.getElementById('count').textContent = `Showing ${shown} / ${document.querySelectorAll('tr.paper-row').length}`;\n"
-        "}\n"
-        "document.addEventListener('DOMContentLoaded',()=>{\n"
-        "  const params=new URLSearchParams(window.location.search);\n"
-        "  if(params.get('q')) document.getElementById('q').value=params.get('q');\n"
-        "  if(params.get('method')) document.getElementById('method').value=params.get('method');\n"
-        "  if(params.get('pde')) document.getElementById('pde').value=params.get('pde');\n"
-        "  if(params.get('status')) document.getElementById('status').value=params.get('status');\n"
-        "  ['q','method','pde','status'].forEach(id=>document.getElementById(id).addEventListener('input',applyFilters));\n"
-        "  ['method','pde','status'].forEach(id=>document.getElementById(id).addEventListener('change',applyFilters));\n"
-        "  applyFilters();\n"
-        "});\n"
-        "</script>"
-    )
-
-    hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">At a glance</div>"
-        f"  <p class=\"muted\" style=\"margin-top:8px;\">\n"
-        f"    <b>Total papers:</b> {len(papers)}<br/>\n"
-        "    <b>Tip:</b> use filters; or jump in via PDE problems / Baselines tabs.\n"
-        "  </p>"
-        "  <p style=\"margin: 10px 0 0;\"><a href=\"../index.html\">← Home</a></p>"
-        "</div>"
-    )
+  <div class="note" style="margin-top:16px;">
+    Tip: if you find an index placeholder you care about, click into it and use the <b>Contribute</b> tab to add a curated YAML summary.
+  </div>
+</section>
+"""
 
     return page(
-        title="Research — PartialObs–PDEBench",
+        title="Research index",
         root=root,
         current="research",
-        hero_h1="Research",
-        hero_subtitle_html="A searchable index of AI4PDE papers with one-page summaries.",
-        hero_meta_html=(
-            "<div class=\"meta\"><div><b>Legend:</b> <b>curated</b> = structured experiments/tables; <b>index</b> = bibliographic placeholder awaiting curation.</div></div>"
+        hero_h1="Research index",
+        hero_subtitle_html="Browse and search AI4PDE/AI4SDE papers.",
+        hero_meta_html="",
+        hero_card_html="",
+        extra_head=(
+            "<script>window.PAPERS_DB_URL='../assets/papers_db.json';</script>"
+            "<script defer src=\"../assets/research.js\"></script>"
         ),
-        hero_card_html=hero_card,
-        extra_head=extra_head,
+        body_html=body,
+    )
+
+
+def render_paper_placeholder() -> str:
+    """Generic paper page for index placeholders.
+
+    This avoids generating thousands of per-paper HTML files. The page loads
+    docs/assets/papers_db.json and renders the requested paper by `?slug=...`.
+    """
+    root = "../../"  # docs/research/paper/index.html
+
+    body = """
+<section class="section">
+  <div id="paperMount"></div>
+</section>
+"""
+
+    return page(
+        title="Paper",
+        root=root,
+        current="research",
+        hero_h1="Paper",
+        hero_subtitle_html="<span class='muted' id='paperSubtitle'>Loading…</span>",
+        hero_meta_html="",
+        hero_card_html="",
+        extra_head=(
+            "<script>window.PAPERS_DB_URL='../../assets/papers_db.json';</script>"
+            "<script defer src=\"../../assets/paper.js\"></script>"
+        ),
         body_html=body,
     )
 
@@ -1137,90 +1382,200 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
 
 
 def render_contribute(papers: List[Dict[str, Any]]) -> str:
-    """Contribution guide (website page)."""
     root = "../"  # docs/contribute/index.html
-
     n_total = len(papers)
-    n_curated = sum(1 for p in papers if str(p.get("status", "index")) == "curated")
+    n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
 
-    template_path = REPO_ROOT / "data" / "papers" / "_template.yaml"
-    template_text = ""
-    if template_path.exists():
-        template_text = template_path.read_text(encoding="utf-8")
+    example_yaml = """slug: my-paper-2025
+status: index   # or: curated
+category: AI4PDE
+method_class: NeuralOperator
 
-    template_block = (
-        f"<pre><code>{html_escape_pre(template_text.strip() or '# (template missing)')}</code></pre>"
-        if template_text
-        else "<div class=\"note\">Template file not found: <code>data/papers/_template.yaml</code></div>"
-    )
+full_title: Full paper title goes here
+short_title: MyPaper
+authors: First Author; Second Author; ...
+year: 2025
+venue: ICLR
 
-    body = (
-        "<section class=\"section\">"
-        "  <h2>How this site is built</h2>"
-        "  <p>All paper metadata and summaries live as <b>YAML</b> under <code>data/papers/</code>. "
-        "The Python generator reads YAML and writes the static website into <code>docs/</code> (GitHub Pages).</p>"
-        f"  <p class=\"muted\">Current coverage: <b>{n_curated}</b> curated pages out of <b>{n_total}</b> indexed papers.</p>"
-        "</section>"
-        "<section class=\"section\">"
-        "  <h2>Add a new paper (or curate an existing one)</h2>"
-        "  <ol>"
-        "    <li><b>Create / edit a YAML file</b> in <code>data/papers/</code>. One paper = one YAML file. "
-        "        Use a short, URL-friendly filename (slug), e.g. <code>fno.yaml</code> or <code>diffusionpde.yaml</code>.</li>"
-        "    <li><b>Fill the key fields</b>: title, year, method class, links, and (ideally) PDEs/tasks/experiments/baselines.</li>"
-        "    <li><b>Regenerate the site</b>: run <code>python scripts/generate_research_site.py</code> from the repo root.</li>"
-        "    <li><b>Preview locally</b> (optional): <code>python -m http.server -d docs 8000</code> and open the shown URL.</li>"
-        "    <li><b>Commit + push</b> your changes (<code>data/papers/*.yaml</code> + regenerated <code>docs/</code>) and open a PR.</li>"
-        "  </ol>"
-        "</section>"
-        "<section class=\"section\">"
-        "  <h2>YAML schema (human-friendly)</h2>"
-        "  <p>Write plain text; the site will format it. You can include LaTeX in <code>core_math</code> and <code>theory</code> items.</p>"
-        "</section>"
-        + template_block
-        + "<section class=\"section\">"
-        "  <h2>Results tables</h2>"
-        "  <p>To include a paper's main quantitative results, add <code>results_tables</code> entries in YAML:</p>"
-        "  <pre><code>results_tables:\n"
-        "  - title: Main table (as reported)\n"
-        "    note: Optional short note / dataset / metric.\n"
-        "    header: [Model, Error \\u2193, Speed]  # columns\n"
-        "    rows:\n"
-        "      - [FNO, 0.012, 1\\u00d7]\n"
-        "      - [Your method, 0.008, 0.9\\u00d7]\n"
-        "</code></pre>"
-        "  <div class=\"note\">"
-        "    Please copy numbers exactly from the paper (and mention the setting in <code>note</code>)."
-        "  </div>"
-        "</section>"
-        "<section class=\"section\">"
-        "  <h2>Good curation checklist</h2>"
-        "  <ul>"
-        "    <li><b>Core method</b>: add 1\u20133 key equations in <code>core_math</code>.</li>"
-        "    <li><b>Theory</b>: list theorems/guarantees/assumptions in <code>theory</code>.</li>"
-        "    <li><b>PDEs & tasks</b>: name the PDEs used (Navier\u2013Stokes, Burgers, Darcy, etc.) and the task type (forecasting, inverse, UQ...).</li>"
-        "    <li><b>Partial observation</b>: describe the mask (sensors, missing pixels, sparse trajectories, etc.).</li>"
-        "    <li><b>Baselines</b>: list compared methods and training setup differences.</li>"
-        "  </ul>"
-        "</section>"
-    )
+links:
+  paper: https://arxiv.org/abs/xxxx.xxxxx
+  code: https://github.com/user/repo
 
-    hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Files to edit</div>"
-        "  <p class=\"muted\" style=\"margin-top:8px;\">"
-        "    <code>data/papers/&lt;slug&gt;.yaml</code> (source)\n"
-        "    <br/><code>python scripts/generate_research_site.py</code> (build)"
-        "  </p>"
-        "</div>"
-    )
+tldr: >-
+  2–4 sentences: setting → method → key result (include dataset/metric if possible).
+
+problem: >-
+  What problem does this paper solve? Be concrete (PDE, observation type, task).
+
+contrib:
+  - Main contribution #1
+  - Main contribution #2
+
+benefits:
+  - What is better compared to common baselines?
+
+baselines:
+  - FNO
+  - PINO
+
+main_results:
+  - metric: relative L2 error
+    value: 0.012
+    dataset: PDEBench Navier–Stokes
+    compared_to: FNO
+
+interesting: >-
+  Any notable detail (failure mode, trick, surprising ablation, limitation).
+
+bibkey: MyPaper2025
+bibtex: |
+  @inproceedings{MyPaper2025,
+    title={...},
+    author={...},
+    booktitle={ICLR},
+    year={2025},
+    url={https://...}
+  }
+"""
+
+    bulk_cmd = """# 1) Download a conference BibTeX file (ICLR/ICML/NeurIPS).
+# 2) Convert it into YAML stubs (status=index) under data/papers/import/...
+
+python scripts/import_bibtex_to_yaml.py \
+  --bib path/to/ICLR_2025.bib \
+  --venue ICLR \
+  --out data/papers/import/iclr2025 \
+  --status index
+
+# Optional: only keep likely AI4PDE/AI4SDE papers by title keywords
+python scripts/import_bibtex_to_yaml.py \
+  --bib path/to/ICLR_2025.bib \
+  --venue ICLR \
+  --out data/papers/import/iclr2025 \
+  --status index \
+  --keywords "pde,operator,neural operator,physics-informed,navier,burgers,sde,diffusion"
+"""
+
+    build_cmd = """# Validate YAML (fast)
+python scripts/validate_papers.py
+
+# Regenerate docs/ (GitHub Pages output)
+python scripts/generate_research_site.py
+"""
+
+    submit_cmd = """# After regenerating docs/, commit and push.
+
+git status
+git add -A
+git commit -m "Update papers and regenerate site"
+git push origin main
+
+# If Git complains about missing user identity:
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+"""
+
+    export_bib = """1) Go to the Research tab.
+2) Tick the “Pick” checkbox for the papers you want.
+3) Click “Download .bib” (or “Copy BibTeX”).
+"""
+
+    body = f"""
+<section class="section">
+  <h2>Contribute</h2>
+  <p>
+    The site is <b>YAML-first</b>: paper metadata + summaries live in <code>data/papers/</code>,
+    and the website under <code>docs/</code> is generated from those YAML files.
+  </p>
+  <ul>
+    <li><b>Index placeholders</b> (status=<code>index</code>) are quick to add: title/authors/venue/links.</li>
+    <li><b>Curated pages</b> (status=<code>curated</code>) include structured notes: contributions, baselines, results, etc.</li>
+  </ul>
+  <div class="note">
+    Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).
+  </div>
+</section>
+
+<section class="section">
+  <h2>Add a paper (one-by-one)</h2>
+  <ol>
+    <li>Copy <code>data/papers/_template.yaml</code> → create <code>data/papers/&lt;slug&gt;.yaml</code>.</li>
+    <li>Fill the required metadata: title, authors, year, venue, links.</li>
+    <li>Start with <code>status: index</code>. Later upgrade to <code>status: curated</code> with more fields.</li>
+    <li>Run validation + site generation:</li>
+  </ol>
+  <pre class="code"><code>{html_escape(build_cmd)}</code></pre>
+</section>
+
+<section class="section">
+  <h2>Submit to GitHub (so the website updates)</h2>
+  <p>
+    GitHub Pages serves this website from the <code>docs/</code> folder.
+    After you edit YAML files, make sure you regenerate the site, then commit + push.
+  </p>
+  <pre class="code"><code>{html_escape(submit_cmd)}</code></pre>
+  <div class="note">
+    Tip: if you are contributing via a pull request, do these steps on a feature branch and then open a PR.
+  </div>
+</section>
+
+<section class="section">
+  <h2>YAML format</h2>
+  <p>
+    Minimal fields are enough for an index entry. For curated pages, please also fill
+    <code>tldr</code>, <code>problem</code>, <code>contrib</code>, <code>baselines</code>, and <code>main_results</code>.
+  </p>
+  <pre class="code"><code>{html_escape(example_yaml)}</code></pre>
+</section>
+
+<section class="section">
+  <h2>Bulk import from conferences (ICLR / ICML / NeurIPS)</h2>
+  <p>
+    If you want to include <b>many papers</b> (e.g., all accepted papers for the last 5 years),
+    the recommended workflow is:
+  </p>
+  <ol>
+    <li>Get a <b>BibTeX</b> file for the conference/year.</li>
+    <li>Convert BibTeX → YAML stubs with <code>scripts/import_bibtex_to_yaml.py</code>.</li>
+    <li>Curate a subset (set <code>status: curated</code> + fill the summary fields) over time.</li>
+  </ol>
+  <pre class="code"><code>{html_escape(bulk_cmd)}</code></pre>
+  <div class="note">
+    Tip: importing <i>all</i> papers from top conferences can produce a very large DB.
+    For AI4PDE focus, start with keyword-filtered imports and gradually expand.
+  </div>
+</section>
+
+<section class="section">
+  <h2>Export BibTeX from the website</h2>
+  <p>
+    The Research page supports batch BibTeX export:
+  </p>
+  <pre class="code"><code>{html_escape(export_bib)}</code></pre>
+  <p class="muted">
+    If a paper YAML includes <code>bibtex:</code>, we export that. Otherwise we generate a minimal BibTeX entry from metadata.
+  </p>
+</section>
+
+<section class="section">
+  <h2>Quality bar for curated pages</h2>
+  <ul>
+    <li><b>Main contribution:</b> 2–5 bullets that are specific (not marketing language).</li>
+    <li><b>Problem & setting:</b> PDE(s), observation type (masked pixels / sparse sensors / partial trajectories), task (forecasting / inverse / reconstruction).</li>
+    <li><b>Baselines:</b> methods actually compared in the paper (FNO/PINO/UNet/etc.).</li>
+    <li><b>Main results:</b> include metric + dataset + comparison target (even 1–2 rows are useful).</li>
+  </ul>
+</section>
+"""
 
     return page(
-        title="Contribute — PartialObs–PDEBench",
+        title="Contribute",
         root=root,
         current="contribute",
         hero_h1="Contribute",
-        hero_subtitle_html="How to add new papers and curate high-quality one-page summaries.",
-        hero_card_html=hero_card,
+        hero_subtitle_html="How to add and curate papers (YAML-first).",
+        hero_meta_html="",
+        hero_card_html="",
         body_html=body,
     )
 
@@ -1228,6 +1583,39 @@ def render_contribute(papers: List[Dict[str, Any]]) -> str:
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def paper_public_record(p: Dict[str, Any]) -> Dict[str, Any]:
+    """Compact JSON record used by the client-side Research UI.
+
+    Keep this reasonably small: it will be shipped to browsers as papers_db.json.
+    """
+    links = p.get("links", {}) or {}
+    bib = ""
+    if isinstance(p.get("bib"), dict):
+        bib = (p.get("bib") or {}).get("entry", "") or ""
+    bib = (p.get("bibtex") or bib or "").strip()
+
+    return {
+        "slug": p.get("slug", ""),
+        "short_title": p.get("short_title", p.get("slug", "")),
+        "full_title": p.get("full_title", p.get("title", "")),
+        "authors": p.get("authors", ""),
+        "year": (int(p.get("year")) if str(p.get("year","")).isdigit() else 0),
+        "venue": p.get("venue", ""),
+        "category": p.get("category", "AI4PDE"),
+        "method_class": p.get("method_class", "SciML"),
+        "status": str(p.get("status") or "index"),
+        "badges": p.get("badges", []) or [],
+        "links": links,
+        "pdes": get_display_list(p, "pdes"),
+        "tasks": get_display_list(p, "tasks"),
+        "tldr": (p.get("tldr") or "").strip(),
+        "problem": (p.get("problem") or "").strip(),
+        "benefits": p.get("benefits", []) or [],
+        "bibkey": p.get("bibkey", ""),
+        "bibtex": bib,
+    }
 
 
 def main() -> None:
@@ -1246,37 +1634,42 @@ def main() -> None:
             p["auto"] = {}
         p["auto"].setdefault("pdes", [])
         p["auto"].setdefault("tasks", [])
-        p["auto"]["pdes"] = _dedup_keep_order(
-            [normalize_pde_tag(x) for x in (p["auto"].get("pdes") or [])]
-        )
-        p["auto"]["tasks"] = _dedup_keep_order(
-            [x.strip() for x in (p["auto"].get("tasks") or []) if x and x.strip()]
-        )
 
-        # If nothing is curated yet, fill auto suggestions from lightweight heuristics.
-        if not p["pdes"] and not p["auto"]["pdes"]:
+        # Only add suggestions if the human list is empty.
+        if not p["pdes"]:
             p["auto"]["pdes"] = infer_pdes(p)
-        if not p["tasks"] and not p["auto"]["tasks"]:
+        if not p["tasks"]:
             p["auto"]["tasks"] = infer_tasks(p)
 
-    # Home
+    # Write a compact JSON DB for client-side rendering
+    papers_json = [paper_public_record(p) for p in papers]
+    write(DOCS / "assets" / "papers_db.json", json.dumps(papers_json, ensure_ascii=False, indent=2))
+
+    # Core pages
     write(DOCS / "index.html", render_home(papers))
-
-    # Research index
     write(DOCS / "research" / "index.html", render_research_index(papers))
-
-    # Contribute page
     write(DOCS / "contribute" / "index.html", render_contribute(papers))
 
-    # Per-paper pages
-    for p in papers:
+    # Single generic placeholder page for non-curated papers
+    write(DOCS / "research" / "paper" / "index.html", render_paper_placeholder())
+
+    # Clean per-paper directories (avoid stale pages when switching between curated/index)
+    research_dir = DOCS / "research"
+    if research_dir.exists():
+        for child in research_dir.iterdir():
+            if child.is_dir() and child.name not in {"paper"}:
+                shutil.rmtree(child)
+
+    # Curated per-paper pages only
+    curated = [p for p in papers if str(p.get("status") or "index") == "curated"]
+    for p in curated:
         write(DOCS / "research" / p["slug"] / "index.html", render_paper_page(p))
 
     # PDE problems and baselines index pages
     write(DOCS / "pde-problems" / "index.html", render_pde_problems(papers))
     write(DOCS / "baselines" / "index.html", render_baselines(papers))
 
-    print(f"Generated {len(papers)} paper pages.")
+    print(f"Generated: {len(curated)} curated paper pages + {len(papers)} index entries (papers_db.json).")
 
 
 if __name__ == "__main__":

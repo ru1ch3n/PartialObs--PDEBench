@@ -33,6 +33,29 @@ links:
 tldr: >-
   1–3 sentences. What problem is solved, what method is introduced, and what is the headline result?
 
+# What problem does this paper solve? (optional but recommended for curated pages)
+problem: >-
+  One paragraph describing the exact problem setting and why partial observation makes it hard.
+
+# Benefits compared to others (optional; bullet list)
+benefits:
+  - Why is this better than common baselines?
+
+# Interesting extra note (optional)
+interesting: >-
+  Any detail you personally found notable (training trick, ablation insight, limitation, etc.).
+
+# BibTeX citation (optional; enables “Download .bib” from the Research page)
+bibkey: Example2024MyPaper
+bibtex: |
+  @inproceedings{Example2024MyPaper,
+    title={Replace with the paper title},
+    author={Author1 and Author2 and ...},
+    booktitle={Conference},
+    year={2024},
+    url={https://...}
+  }
+
 # “What is new?” bullets
 contrib:
   - Main contribution #1

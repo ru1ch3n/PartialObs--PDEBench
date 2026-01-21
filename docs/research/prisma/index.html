@@ -31,6 +31,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>PRISMA turns PDE residuals into a frequency-aware attention signal inside a diffusion neural operator, aiming to preserve accuracy while cutting sampling steps.</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha(t)\,x_0 + \sigma(t)\,\epsilon\ ,\ \epsilon\sim\mathcal{N}(0,I)\]
 \[\min_\theta\ \mathbb{E}_{t,x_0,\epsilon}\ \|\epsilon-\epsilon_\theta(x_t,t,c)\|^2\ \ \text{(conditioning }c: \text{measurements/masks)}\]
 \[\text{Sampling: iterate a reverse process so }x_0\sim p_\theta(\cdot\mid c)\ \text{matches observations + physics}\]</div></section>
@@ -40,6 +43,7 @@
 <li>Targets the speed–accuracy tradeoff in diffusion-based PDE inference under sparse measurements.</li>
 <li>Shows improved quality vs prior diffusion guidance at low step counts on several PDE tasks.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Darcy flow</li>
 <li>Poisson</li>
@@ -70,6 +74,12 @@
 <tr><td>Navier–Stokes</td><td>Inv</td><td>13.1%</td><td>6.3%</td><td>5.6%</td><td>11.2%</td><td>11.7%</td><td>11.7%</td></tr></tbody></table></div>
 <div class="note">If you replicate, make sure to match the observation masks and the normalization used in the paper.</div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{prisma,
+  title={ Beyond Loss Guidance: Using PDE Residuals as Spectral Attention in Diffusion Neural Operators },
+  author={ Ilyes Batatia et al. },
+  year={ 2025 },
+  url={ https://arxiv.org/abs/2512.01370 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>

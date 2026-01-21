@@ -258,3 +258,52 @@ th {
   background: rgba(18,24,38,.65);
   text-align: left;
 }
+
+/* --- Research UI controls (inputs/buttons) --- */
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+.input, .select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--fg);
+  outline: none;
+}
+.input { width: 100%; }
+.select { min-width: 160px; }
+
+.btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: var(--fg);
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn:hover { background: rgba(255,255,255,0.10); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary {
+  background: rgba(120,170,255,0.18);
+  border-color: rgba(120,170,255,0.35);
+}
+.btn.primary:hover { background: rgba(120,170,255,0.26); }
+
+.papers .muted.small { font-size: 12px; margin-top: 6px; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge-curated { background: rgba(70, 200, 140, 0.12); border-color: rgba(70, 200, 140, 0.35); }
+.badge-index { background: rgba(255, 200, 120, 0.10); border-color: rgba(255, 200, 120, 0.28); }
+
+.nowrap { white-space: nowrap; }
+.center { text-align: center; }

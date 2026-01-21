@@ -30,6 +30,9 @@
 
   <main class="container">
     <section id="tldr"><h2>TL;DR</h2><p>This paper analyzes gradient pathologies in PINNs and proposes mitigation strategies (e.g., adaptive weighting, curriculum, rescaling).</p></section>
+<section id="problem"><h2>Problem</h2><p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><p class="muted">Add &lt;code&gt;benefits:&lt;/code&gt; as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).</p></section>
+<section id="interesting"><h2>Interesting detail</h2><p class="muted">(Optional) Add <code>interesting:</code>.</p></section>
 <section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>PINN / physics-constrained</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
 \[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></section>
 <section id="theory"><h2>Main theoretical contribution</h2><p class="muted">Not curated yet. Add bullet points under &lt;code&gt;theory&lt;/code&gt; in YAML.</p></section>
@@ -38,6 +41,7 @@
 <li>Proposes practical remedies that improve convergence.</li>
 <li>Influences many follow-up PINN stabilization methods.</li>
 </ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
 <section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
 <li>Burgers</li>
 <li>Poisson</li>
@@ -56,6 +60,12 @@
 <div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Convergence</td><td>Training error</td><td>Mitigations significantly improve training robustness on benchmark PDEs.</td></tr>
 <tr><td>Generalization</td><td>Solution accuracy</td><td>Better balance between data/physics terms can improve solution quality.</td></tr></tbody></table></div>
 </section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pinn-grad-pathologies,
+  title={ Understanding and mitigating gradient flow pathologies in physics-informed neural networks },
+  author={ Sifan Wang et al. },
+  year={ 2021 },
+  url={ https://arxiv.org/abs/2107.07933 }
+}</code></pre></section>
 
     <footer class="footer">
       <div class="muted">Last generated: 2026-01-20</div>
