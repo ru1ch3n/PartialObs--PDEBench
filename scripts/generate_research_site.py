@@ -40,7 +40,7 @@ CURATIONS_JSON_DIR = REPO_ROOT / "data" / "curations"
 
 
 PAPER_TREE_ASCII = r"""
-Scientific ML for PDEs (selected famous works)
+AI4PDE / SciML (selected milestones)
 ├─ Physics-informed optimization
 │  ├─ Deep Ritz (2018)
 │  ├─ DGM / Deep Galerkin (2018)
@@ -50,37 +50,71 @@ Scientific ML for PDEs (selected famous works)
 │     ├─ SA-PINNs (2020)
 │     ├─ XPINNs (2021)
 │     ├─ gPINNs (2021)
-│     ├─ FBPINNs (2021)
-│     └─ Gradient pathology analysis (2021)
+│     └─ FBPINNs (2021)
 ├─ Operator learning
-│  ├─ DeepONet (2021)
-│  ├─ Neural Operators (Kovachki et al.)
-│  │  ├─ Graph Kernel Network (GKN) (2020)
-│  │  └─ MGNO (2020)
 │  ├─ FNO (2020)
-│  │  ├─ PINO (2021)
-│  │  ├─ Galerkin Transformer (2021)
-│  │  ├─ WNO (2022)
-│  │  │  └─ U-WNO (2024)
-│  │  ├─ U-NO (2022)
-│  │  └─ CNO (2023)
-│  └─ Foundation / scaling
-│     └─ Poseidon (2024)
+│  ├─ GKN (2020)
+│  ├─ MGNO (2020)
+│  ├─ DeepONet (2021)
+│  ├─ PINO (2021)
+│  ├─ Galerkin Transformer (2021)
+│  ├─ U-NO (2022)
+│  ├─ WNO (2022)
+│  ├─ CNO (2023)
+│  └─ U-WNO (2024)
 ├─ Diffusion / generative PDE inference
+│  ├─ Conditional diffusion protocols (2024)
 │  ├─ DiffusionPDE (2024)
-│  │  ├─ FunDPS (2025)
-│  │  │  └─ PRISMA (2025)
-│  │  ├─ VideoPDE (2025)
-│  │  └─ Conditional diffusion protocols (2024)
-│  └─ Weather diffusion
-│     └─ GenCast (2025)
-├─ Graph simulators
-│  ├─ Graph Networks for physics simulation (2020)
-│  └─ MeshGraphNets (2021)
+│  ├─ FunDPS (2025)
+│  ├─ PRISMA (2025)
+│  └─ VideoPDE (2025)
+├─ Graph / mesh simulators
+│  ├─ GNS (ICML 2020)
+│  └─ MeshGraphNets (ICLR 2021)
 └─ Benchmarks and datasets
    ├─ PDEBench (2022)
    ├─ PDEArena (2022)
-   └─ Weather: FourCastNet (2022) → Pangu-Weather (2022) → GraphCast (2023) → NeuralGCM (2023) → FengWu (2023)
+   ├─ FourCastNet (2022)
+   └─ GraphCast (2023)
+""".strip("\n")
+
+PAPER_TREE_ASCII_LINKED = r"""
+AI4PDE / SciML (selected milestones)
+├─ <a href="research/?q=physics">Physics-informed optimization</a>
+│  ├─ <a href="research/paper/?slug=deep-ritz">Deep Ritz (2018)</a>
+│  ├─ <a href="research/paper/?slug=dgm">DGM / Deep Galerkin (2018)</a>
+│  ├─ <a href="research/paper/?slug=deepbsde">DeepBSDE (2018)</a>
+│  └─ <a href="research/paper/?slug=pinn">PINNs (2019)</a>
+│     ├─ <a href="research/paper/?slug=cpinn">cPINNs (2020)</a>
+│     ├─ <a href="research/paper/?slug=sa-pinn">SA-PINNs (2020)</a>
+│     ├─ <a href="research/paper/?slug=xpinn">XPINNs (2021)</a>
+│     ├─ <a href="research/paper/?slug=gpinn">gPINNs (2021)</a>
+│     └─ <a href="research/paper/?slug=fbpinns">FBPINNs (2021)</a>
+├─ <a href="research/?method=Operator%20learning">Operator learning</a>
+│  ├─ <a href="research/paper/?slug=fno">FNO (2020)</a>
+│  ├─ <a href="research/paper/?slug=gkn">GKN (2020)</a>
+│  ├─ <a href="research/paper/?slug=mgno">MGNO (2020)</a>
+│  ├─ <a href="research/paper/?slug=deeponet">DeepONet (2021)</a>
+│  ├─ <a href="research/paper/?slug=pino">PINO (2021)</a>
+│  ├─ <a href="research/paper/?slug=galerkin-transformer">Galerkin Transformer (2021)</a>
+│  ├─ <a href="research/paper/?slug=u-no">U-NO (2022)</a>
+│  ├─ <a href="research/paper/?slug=wno">WNO (2022)</a>
+│  ├─ <a href="research/paper/?slug=cno">CNO (2023)</a>
+│  └─ <a href="research/paper/?slug=u-wno">U-WNO (2024)</a>
+├─ <a href="research/?method=Diffusion">Diffusion / generative PDE inference</a>
+│  ├─ <a href="research/paper/?slug=conditional-diffusion-pde">Conditional diffusion protocols (2024)</a>
+│  ├─ <a href="research/paper/?slug=diffusionpde">DiffusionPDE (2024)</a>
+│  ├─ <a href="research/paper/?slug=fundps">FunDPS (2025)</a>
+│  ├─ <a href="research/paper/?slug=prisma">PRISMA (2025)</a>
+│  └─ <a href="research/paper/?slug=videopde">VideoPDE (2025)</a>
+├─ <a href="research/?method=Graph%20%2F%20mesh">Graph / mesh simulators</a>
+│  ├─ <a href="research/paper/?slug=gns">GNS (ICML 2020)</a>
+│  └─ <a href="research/paper/?slug=meshgraphnets">MeshGraphNets (ICLR 2021)</a>
+└─ <a href="research/?method=Benchmark">Benchmarks and datasets</a>
+   ├─ <a href="research/paper/?slug=pdebench">PDEBench (2022)</a>
+   ├─ <a href="research/paper/?slug=pdearena">PDEArena (2022)</a>
+   ├─ <a href="research/paper/?slug=fourcastnet">FourCastNet (2022)</a>
+   └─ <a href="research/paper/?slug=graphcast">GraphCast (2023)</a>
 """.strip("\n")
 
 PAPER_TREE_MERMAID = r"""
@@ -114,7 +148,8 @@ flowchart TD
 
   %% Diffusion / generative inference
   Root --> DiffGen["Diffusion / generative PDE inference"]
-  DiffGen --> DiffPDE["DiffusionPDE (2024)"]
+  DiffGen --> CondDiff["Conditional diffusion protocols (2024)"]
+  CondDiff --> DiffPDE["DiffusionPDE (2024)"]
   DiffPDE --> FunDPS["FunDPS (2025)"]
   FunDPS --> PRISMA["PRISMA (2025)"]
   DiffPDE --> VideoPDE["VideoPDE (2025)"]
@@ -174,6 +209,14 @@ flowchart TD
   click PDEArena "research/paper/?slug=pdearena" "PDEArena (2022)" _self
   click FourCastNet "research/paper/?slug=fourcastnet" "FourCastNet (2022)" _self
   click GraphCast "research/paper/?slug=graphcast" "GraphCast (2023)" _self
+
+  click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
+
+  %% Theme tweaks (dark)
+  classDef cat fill:#121826,stroke:#223047,color:#e7edf5;
+  classDef node fill:#0f1522,stroke:#223047,color:#e7edf5;
+  class Root,PI,OL,DiffGen,GraphSim,Bench cat;
+  class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;
 """.strip("\n")
 
 
@@ -1073,14 +1116,18 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
 <section id="tree" class="section">
   <h2>Paper tree</h2>
   <p class="muted">A compact, conceptual lineage map (selected famous works).</p>
-  <div class="card" style="margin-top:12px;">
+
+  <p class="muted" style="margin-top:12px;">ASCII (clickable)</p>
+  <div class="card" style="margin-top:8px;">
+    <pre class="code ascii-tree">{PAPER_TREE_ASCII_LINKED}</pre>
+  </div>
+
+  <p class="muted" style="margin-top:12px;">Mermaid (clickable)</p>
+  <div class="card" style="margin-top:8px;">
     <pre class="mermaid">{html_escape_pre(PAPER_TREE_MERMAID)}</pre>
   </div>
-  <details style="margin-top:12px;">
-    <summary class="muted">Show ASCII fallback</summary>
-    <pre class="code"><code>{html_escape(PAPER_TREE_ASCII)}</code></pre>
-  </details>
 </section>
+
 
 <section id="taxonomy" class="section">
   <h2>AI4PDE + AI4SDE map</h2>

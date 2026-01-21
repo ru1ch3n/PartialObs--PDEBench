@@ -1,0 +1,88 @@
+{
+  "slug": "pino",
+  "short_title": "PINO",
+  "full_title": "Physics-Informed Neural Operator",
+  "authors": "Zongyi Li et al.",
+  "year": 2021,
+  "venue": "arXiv",
+  "category": "Operator learning",
+  "method_class": "Operator learning",
+  "badges": [
+    "Operator learning",
+    "Physics regularization"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2111.03794",
+    "paper_label": "arXiv:2111.03794"
+  },
+  "tagline": "Combine neural operators (e.g., FNO) with **physics-informed residual losses** for better generalization and data efficiency.",
+  "tldr": "Physics-Informed Neural Operators (PINO) regularize operator learning with PDE residual constraints. Compared to pure data-driven neural operators, PINO aims to reduce data requirements and improve robustness/extrapolation by enforcing physics either during training or through additional residual terms.",
+  "problem": "Neural operators learn mappings between function spaces (e.g., coefficients → solutions), but may require large datasets and can generalize poorly out of distribution. PINO addresses this by integrating PDE knowledge: the learned operator should produce outputs that satisfy the governing equation.",
+  "benefits": [
+    "More **data-efficient** than purely supervised operator learning when labels are limited.",
+    "Improves physical consistency (lower residual), which can help generalization and stability.",
+    "Works as a drop-in regularizer for fast operator backbones such as FNO."
+  ],
+  "core_math": [
+    "u = \\mathcal{G}_\\theta(a)\\quad\\text{(operator mapping input field }a\\text{ to solution }u\\text{)}",
+    "\\mathcal{L}_{\\text{data}} = \\|u - u^{\\*}\\|^2",
+    "\\mathcal{L}_{\\text{phys}} = \\|F(u,a)\\|^2\\quad\\text{(PDE residual)}",
+    "\\mathcal{L} = \\mathcal{L}_{\\text{data}} + \\lambda\\,\\mathcal{L}_{\\text{phys}}",
+    "\\text{(Example FNO layer)}\\;\\; v_{l+1}(x)=W_lv_l(x)+\\mathcal{F}^{-1}\\!\\big(R_l\\cdot \\mathcal{F}[v_l]\\big)(x)"
+  ],
+  "theory": [
+    "Physics regularization biases the hypothesis class toward operators consistent with the PDE, reducing overfitting to finite training sets.",
+    "Residual constraints can act like implicit data augmentation over collocation points."
+  ],
+  "contrib": [
+    "Combines operator learning with physics residual regularization.",
+    "Enables training with sparse/noisy data and improves generalization.",
+    "Popular baseline for partially observed PDE inference."
+  ],
+  "pdes": [
+    "Burgers",
+    "Navier–Stokes",
+    "Kolmogorov flow"
+  ],
+  "tasks": [
+    "Forward operator learning",
+    "Partial-observation reconstruction (community use)"
+  ],
+  "setting": [
+    "Adds PDE residual loss on collocation points.",
+    "Often used when full-field supervision is limited."
+  ],
+  "baselines": [
+    "FNO",
+    "PINN",
+    "DeepONet"
+  ],
+  "results_tables": [
+    {
+      "title": "Key results",
+      "header": [
+        "Aspect",
+        "Metric",
+        "Reported takeaway"
+      ],
+      "rows": [
+        [
+          "Data efficiency",
+          "Error vs data",
+          "Physics loss reduces required labeled data for comparable accuracy."
+        ],
+        [
+          "Physical consistency",
+          "Residual",
+          "Improves residual satisfaction compared to purely data-driven operators."
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "",
+  "interesting": [
+    "PINO sits between classical PINNs (solve a single instance) and operator learning (learn a family): it brings physics constraints to the operator level.",
+    "It motivated many later \"physics-guided\" operator learners and diffusion operator hybrids."
+  ],
+  "bibtex": "@article{pino2021,\n  title={Physics-Informed Neural Operator for Learning Partial Differential Equations},\n  author={Li, Zongyi and others},\n  journal={arXiv preprint arXiv:2111.03794},\n  year={2021}\n}"
+}

@@ -1,0 +1,148 @@
+{
+  "slug": "videopde",
+  "short_title": "VideoPDE",
+  "full_title": "Unified Generative PDE Solving via Video Inpainting Diffusion Models",
+  "authors": "Ruicheng He et al.",
+  "year": 2025,
+  "venue": "arXiv",
+  "category": "Diffusion models for PDEs",
+  "method_class": "Diffusion",
+  "badges": [
+    "Diffusion",
+    "Spatiotemporal",
+    "Partial observation"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2506.13754",
+    "paper_label": "arXiv:2506.13754"
+  },
+  "tagline": "Treat PDE trajectories as **videos** and solve masked reconstruction / forecasting via conditional video diffusion.",
+  "tldr": "VideoPDE casts a spatiotemporal PDE solution u(x,t) as a video tensor and applies conditional diffusion (inpainting/forecasting) to reconstruct missing observations. The framing naturally supports irregular spatiotemporal masks and emphasizes coherent long-horizon generation.",
+  "problem": "Many PDE inference settings provide only partial observations over space/time (missing sensors, masked pixels, intermittent trajectories). Classical operator learners struggle when supervision is sparse or the task changes (new masks). VideoPDE uses a diffusion prior over trajectories to reconstruct/forecast in a mask-conditional way.",
+  "benefits": [
+    "Unified interface for **inpainting + forecasting**: different masks correspond to different conditioning inputs.",
+    "Video diffusion backbones can model strong temporal coherence, helping long-horizon rollouts.",
+    "Mask conditioning makes it easy to add new observation patterns without redesigning the model."
+  ],
+  "core_math": [
+    "x_t = \\alpha_t\\,x_0 + \\sigma_t\\,\\varepsilon,\\quad x_0 \\in \\mathbb{R}^{T\\times H\\times W\\times C}",
+    "\\mathcal{L} = \\mathbb{E}\\big[\\|\\varepsilon - \\varepsilon_\\theta(x_t,t,\\mathrm{cond})\\|_2^2\\big]",
+    "\\mathrm{cond} = (M\\odot y,\\; M)\\quad\\text{(masked observations + mask)}",
+    "x_t \\leftarrow M\\odot y + (1-M)\\odot x_t\\quad\\text{(inpainting consistency trick during sampling)}"
+  ],
+  "theory": [
+    "Mask-conditioning is equivalent to learning p(x_0 | M⊙x_0) for a family of observation operators parameterized by M.",
+    "Replacing observed entries during sampling enforces hard constraints and stabilizes reconstructions."
+  ],
+  "contrib": [
+    "Introduces a **video-diffusion framing** for PDE trajectories under partial observation.",
+    "Demonstrates reconstructions/forecasts across PDE datasets with diverse masking (see tables).",
+    "Provides ablations on mask patterns and temporal context."
+  ],
+  "pdes": [
+    "Wave equation",
+    "Navier–Stokes",
+    "Kolmogorov flow"
+  ],
+  "tasks": [
+    "Forward prediction",
+    "Inverse reconstruction from sparse observations"
+  ],
+  "setting": [
+    "Spatiotemporal masking patterns (video inpainting).",
+    "Reports both forward and inverse scenarios with MSE.",
+    "Uses diffusion sampling at multiple step budgets."
+  ],
+  "baselines": [
+    "DiffusionPDE",
+    "FNO",
+    "PINO",
+    "DeepONet"
+  ],
+  "results_tables": [
+    {
+      "title": "Forward scenario (MSE)",
+      "note": "Transcribed from the earlier site draft.",
+      "header": [
+        "Method",
+        "Wave-Layer",
+        "Navier–Stokes",
+        "Kolmogorov"
+      ],
+      "rows": [
+        [
+          "VideoPDE",
+          "0.023",
+          "0.026",
+          "0.125"
+        ],
+        [
+          "DiffusionPDE",
+          "0.102",
+          "0.051",
+          "0.140"
+        ],
+        [
+          "PINO",
+          "0.261",
+          "0.078",
+          "0.424"
+        ],
+        [
+          "DeepONet",
+          "0.254",
+          "0.083",
+          "0.421"
+        ],
+        [
+          "FNO",
+          "0.260",
+          "0.071",
+          "0.421"
+        ]
+      ]
+    },
+    {
+      "title": "Inverse scenario (MSE)",
+      "note": "Transcribed from the earlier site draft.",
+      "header": [
+        "Method",
+        "Wave-Layer (inv)",
+        "Navier–Stokes (inv)"
+      ],
+      "rows": [
+        [
+          "VideoPDE",
+          "0.009",
+          "0.024"
+        ],
+        [
+          "DiffusionPDE",
+          "0.077",
+          "0.026"
+        ],
+        [
+          "PINO",
+          "0.034",
+          "0.044"
+        ],
+        [
+          "DeepONet",
+          "0.036",
+          "0.031"
+        ],
+        [
+          "FNO",
+          "0.031",
+          "0.030"
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "VideoPDE results depend strongly on the exact masking schedule and diffusion step budget.",
+  "interesting": [
+    "The video perspective suggests plug-and-play reuse of large generative video models for scientific spatiotemporal data.",
+    "Future extensions: conditioning on PDE coefficients, boundary geometry, or control signals."
+  ],
+  "bibtex": "@article{videopde2025,\n  title={VideoPDE: Masked Video Diffusion for Partial-Observation PDE Inference},\n  author={He, Ruicheng and others},\n  journal={arXiv preprint arXiv:2506.13754},\n  year={2025}\n}"
+}

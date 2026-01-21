@@ -1,0 +1,88 @@
+{
+  "slug": "pinn",
+  "short_title": "PINN",
+  "full_title": "Physics-informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear PDEs",
+  "authors": "Maziar Raissi, Paris Perdikaris, and George Karniadakis",
+  "year": 2019,
+  "venue": "Journal of Computational Physics",
+  "category": "Physics-informed learning",
+  "method_class": "PINN / physics-constrained",
+  "badges": [
+    "PINN",
+    "Forward & inverse problems",
+    "Automatic differentiation"
+  ],
+  "links": {
+    "paper": "https://www.sciencedirect.com/science/article/pii/S0021999118307125",
+    "paper_label": "JCP 2019"
+  },
+  "tagline": "Represent the solution with a neural network and train it by minimizing **data + PDE residual** losses.",
+  "tldr": "Physics-Informed Neural Networks (PINNs) solve PDE forward and inverse problems by parameterizing the solution u(x,t) with a neural network and enforcing the governing equation via automatic differentiation at collocation points. The framework supports sparse/noisy data and can identify unknown PDE parameters alongside the solution.",
+  "problem": "Traditional solvers require meshes and are expensive to couple with parameter inference. PINNs aim to solve (and calibrate) PDE models directly from sparse observations by embedding the PDE as a soft constraint in the training objective.",
+  "benefits": [
+    "Mesh-free training using collocation points; handles irregular sensor locations naturally.",
+    "Unified treatment of forward simulation and inverse parameter identification.",
+    "Automatic differentiation provides exact derivatives of the neural solution (up to machine precision)."
+  ],
+  "core_math": [
+    "u_\\theta(x,t)\\approx u(x,t)\\quad\\text{(neural approximation)}",
+    "f_\\theta(x,t) = \\partial_t u_\\theta(x,t) + \\mathcal{N}[u_\\theta(x,t);\\lambda]\\quad\\text{(PDE residual)}",
+    "\\mathcal{L} = \\mathcal{L}_{\\text{data}} + w_r\\,\\mathcal{L}_{\\text{res}} + w_b\\,\\mathcal{L}_{\\text{BC/IC}}",
+    "\\mathcal{L}_{\\text{res}} = \\frac{1}{N_r}\\sum_{i=1}^{N_r}\\big\\|f_\\theta(x_i,t_i)\\big\\|_2^2"
+  ],
+  "theory": [
+    "PINNs can be seen as constrained function approximation where the constraint is enforced in expectation over collocation points.",
+    "Inverse problems treat unknown PDE parameters λ as trainable variables optimized jointly with θ."
+  ],
+  "contrib": [
+    "Unified forward + inverse PDE solving with a single differentiable model.",
+    "Leverages AD for PDE residuals.",
+    "Catalyzed a large body of physics-informed learning research."
+  ],
+  "pdes": [
+    "Burgers",
+    "Navier–Stokes",
+    "Schrödinger",
+    "Wave equation"
+  ],
+  "tasks": [
+    "Forward PDE solve",
+    "Inverse parameter estimation"
+  ],
+  "setting": [
+    "Collocation points for residual; boundary/initial data; possibly sparse observations."
+  ],
+  "baselines": [
+    "Numerical solver",
+    "DGM",
+    "Deep Ritz"
+  ],
+  "results_tables": [
+    {
+      "title": "Key results",
+      "header": [
+        "Task",
+        "Metric",
+        "Reported takeaway"
+      ],
+      "rows": [
+        [
+          "Inverse problems",
+          "Parameter error",
+          "Recovers PDE parameters from sparse/noisy data in reported cases."
+        ],
+        [
+          "Forward solve",
+          "Solution error",
+          "Produces accurate solutions when optimization is well-conditioned."
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "",
+  "interesting": [
+    "PINNs popularized the idea that PDE constraints can regularize learning from scarce data; later work improved sampling, optimization, and constraints.",
+    "In partial observation settings, PINNs often need careful weighting and adaptive sampling to avoid local minima."
+  ],
+  "bibtex": "@article{raissi2019pinns,\n  title={Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations},\n  author={Raissi, Maziar and Perdikaris, Paris and Karniadakis, George E.},\n  journal={Journal of Computational Physics},\n  volume={378},\n  pages={686--707},\n  year={2019},\n  publisher={Elsevier}\n}"
+}

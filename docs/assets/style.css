@@ -276,6 +276,11 @@ th {
   color: var(--fg);
   outline: none;
 }
+
+/* Improve native select dropdown visibility in dark theme */
+.select{color-scheme:dark;}
+.select option{background-color:var(--code);color:var(--fg);}
+.select option:disabled{color:var(--muted);}
 .input { width: 100%; }
 .select { min-width: 160px; }
 
@@ -311,3 +316,8 @@ th {
 
 .nowrap { white-space: nowrap; }
 .center { text-align: center; }
+
+
+/* Clickable ASCII tree */
+pre.ascii-tree a{color:#93c5fd;text-decoration:none;}
+pre.ascii-tree a:hover{color:#bfdbfe;text-decoration:underline;}

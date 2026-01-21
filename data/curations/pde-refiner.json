@@ -1,0 +1,88 @@
+{
+  "slug": "pde-refiner",
+  "short_title": "PDE-Refiner",
+  "full_title": "PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction",
+  "authors": "(see paper)",
+  "year": 2023,
+  "venue": "arXiv",
+  "category": "Error correction / refinement",
+  "method_class": "SciML",
+  "badges": [
+    "Refinement",
+    "Residual correction",
+    "Rollout stability"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2308.05732",
+    "paper_label": "arXiv:2308.05732"
+  },
+  "tagline": "Iteratively refine a coarse neural PDE prediction using a learned **residual/correction** module.",
+  "tldr": "PDE-Refiner wraps an existing neural PDE solver with an iterative correction mechanism. Given an initial prediction, a refiner network predicts corrections based on the current state and (optionally) PDE residual/constraints, improving accuracy and long-horizon stability.",
+  "problem": "Neural PDE solvers often accumulate error during rollouts or when asked to reconstruct missing data. Training a single forward pass model can be insufficient for high accuracy across many steps. PDE-Refiner targets this by explicitly learning a correction step that can be applied repeatedly.",
+  "benefits": [
+    "Turns many solvers into **iterative** solvers: accuracy can improve with more refinement steps.",
+    "Can incorporate PDE residual signals, making corrections physically meaningful.",
+    "Often improves long-horizon stability without dramatically increasing base model size."
+  ],
+  "core_math": [
+    "u^{(0)} = G_\\theta(\\text{input})\\quad\\text{(base predictor)}",
+    "r^{(k)} = F(u^{(k)})\\quad\\text{(PDE residual)}",
+    "\\Delta u^{(k)} = R_\\phi\\big(u^{(k)}, r^{(k)}, c\\big)",
+    "u^{(k+1)} = u^{(k)} + \\Delta u^{(k)}\\quad\\text{(iterative refinement)}",
+    "\\mathcal{L} = \\sum_{k=0}^{K-1} \\|u^{(k)}-u^\\*\\|^2 + \\lambda\\|F(u^{(k)})\\|^2\\quad\\text{(unrolled training, example)}"
+  ],
+  "theory": [
+    "Refinement can be interpreted as learning a data-driven preconditioned fixed-point iteration for PDE constraints.",
+    "Unrolled refinement aligns training-time objectives with test-time iterative use."
+  ],
+  "contrib": [
+    "Introduces an iterative refinement loop for PDE trajectory prediction.",
+    "Targets error accumulation in long rollouts (forecasting) and reconstruction.",
+    "Demonstrates gains on chaotic PDE benchmarks."
+  ],
+  "pdes": [
+    "Kuramoto–Sivashinsky",
+    "Kolmogorov flow"
+  ],
+  "tasks": [
+    "Long-horizon rollout forecasting",
+    "Partial reconstruction"
+  ],
+  "setting": [
+    "Iterative refine steps at inference; can be paired with neural operators.",
+    "Evaluates stability/accuracy for long rollouts on chaotic PDEs."
+  ],
+  "baselines": [
+    "FNO",
+    "U-Net",
+    "ResNet"
+  ],
+  "results_tables": [
+    {
+      "title": "Key results",
+      "header": [
+        "Benchmark",
+        "Metric",
+        "Reported takeaway"
+      ],
+      "rows": [
+        [
+          "KS long rollouts",
+          "Trajectory error",
+          "Refinement reduces drift vs one-shot operator baselines."
+        ],
+        [
+          "Kolmogorov flow",
+          "Rollout stability",
+          "Improves long-horizon stability without retraining the base solver."
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "",
+  "interesting": [
+    "Refinement is a useful *bolt-on* strategy: you can apply it to existing operator learners (FNO/PINO) or CNN baselines.",
+    "Connects to classical numerical ideas (fixed-point iteration, multigrid) but learned from data."
+  ],
+  "bibtex": "@article{pderefiner2023,\n  title={PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction},\n  author={...},\n  journal={arXiv preprint arXiv:2308.05732},\n  year={2023}\n}"
+}

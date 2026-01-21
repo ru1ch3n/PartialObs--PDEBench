@@ -5,12 +5,13 @@
     "full_title": "Guided Diffusion Sampling on Function Spaces with Applications to PDEs",
     "authors": "Alex Tong et al.",
     "year": 2025,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Diffusion",
-    "status": "index",
+    "status": "curated",
     "badges": [
       "Diffusion",
-      "Function-space guidance"
+      "Posterior sampling",
+      "Inverse problems"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2505.17004",
@@ -27,17 +28,16 @@
       "Helmholtz",
       "Navier–Stokes"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward operator learning",
-      "Inverse / partial-observation reconstruction",
-      "Generative reconstruction / inpainting"
+      "Inverse / partial-observation reconstruction"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "FunDPS adapts diffusion posterior sampling to PDE solution *fields*: sample from a learned diffusion prior while enforcing observations and (optionally) physics constraints through guidance terms. The key idea is to treat the unknown as a function (field) and make the guidance compatible with PDE operators and masks.",
+    "problem": "Inverse problems for PDEs (inpainting, sparse sensors, data assimilation) require drawing samples of solution fields consistent with partial observations. Standard diffusion priors sample unconditionally; naive conditioning can be weak or expensive. FunDPS targets practical posterior sampling for PDE fields by combining diffusion priors with measurement/physics guidance in a function-space framing.",
+    "tagline": "Diffusion Posterior Sampling (DPS), but formulated for **function spaces** and PDE fields.",
+    "bibtex": "@article{fundps2025,\n  title={Guided Diffusion Sampling on Function Spaces with Applications to PDEs},\n  author={Tong, Alex and others},\n  journal={arXiv preprint arXiv:2505.17004},\n  year={2025}\n}"
   },
   {
     "slug": "gencast",
@@ -85,13 +85,13 @@
     "full_title": "Beyond Loss Guidance: Using PDE Residuals as Spectral Attention in Diffusion Neural Operators",
     "authors": "Ilyes Batatia et al.",
     "year": 2025,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Diffusion",
-    "status": "index",
+    "status": "curated",
     "badges": [
       "Diffusion",
-      "Physics-guided",
-      "Partial observation"
+      "Operator learning",
+      "PDE residual conditioning"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2512.01370",
@@ -108,18 +108,16 @@
       "Helmholtz",
       "Navier–Stokes"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward operator learning",
-      "Inverse / partial-observation reconstruction",
-      "Operator learning / surrogate modeling",
-      "Generative reconstruction / inpainting"
+      "Inverse / partial-observation reconstruction"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "PRISMA reframes \"physics guidance\" for diffusion neural operators: instead of adding a PDE-residual gradient at sampling time, it feeds residual information into the denoiser as a *frequency-aware attention signal*. This aims to improve high-frequency fidelity and stability for inverse problems under sparse/partial observations.",
+    "problem": "Diffusion-based PDE priors are powerful for inverse problems, but *loss guidance* (injecting ∇||F(u)|| during sampling) can be unstable and expensive because it requires repeated PDE residual evaluations/gradients. PRISMA targets more stable and efficient conditioning by integrating residual information into the denoiser through spectral attention.",
+    "tagline": "Use PDE residuals as **spectral attention** inside a diffusion neural operator (not just as sampling-time loss guidance).",
+    "bibtex": "@article{prisma2025,\n  title={Beyond Loss Guidance: Using PDE Residuals as Spectral Attention in Diffusion Neural Operators},\n  author={Batatia, Ilyes and others},\n  journal={arXiv preprint arXiv:2512.01370},\n  year={2025}\n}"
   },
   {
     "slug": "videopde",
@@ -127,13 +125,13 @@
     "full_title": "Unified Generative PDE Solving via Video Inpainting Diffusion Models",
     "authors": "Ruicheng He et al.",
     "year": 2025,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Diffusion",
-    "status": "index",
+    "status": "curated",
     "badges": [
       "Diffusion",
-      "Video inpainting",
-      "Forward+Inverse"
+      "Spatiotemporal",
+      "Partial observation"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2506.13754",
@@ -149,30 +147,30 @@
       "Navier–Stokes",
       "Kolmogorov flow"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward prediction",
-      "Inverse reconstruction from sparse observations",
-      "Generative reconstruction / inpainting"
+      "Inverse reconstruction from sparse observations"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "VideoPDE casts a spatiotemporal PDE solution u(x,t) as a video tensor and applies conditional diffusion (inpainting/forecasting) to reconstruct missing observations. The framing naturally supports irregular spatiotemporal masks and emphasizes coherent long-horizon generation.",
+    "problem": "Many PDE inference settings provide only partial observations over space/time (missing sensors, masked pixels, intermittent trajectories). Classical operator learners struggle when supervision is sparse or the task changes (new masks). VideoPDE uses a diffusion prior over trajectories to reconstruct/forecast in a mask-conditional way.",
+    "tagline": "Treat PDE trajectories as **videos** and solve masked reconstruction / forecasting via conditional video diffusion.",
+    "bibtex": "@article{videopde2025,\n  title={VideoPDE: Masked Video Diffusion for Partial-Observation PDE Inference},\n  author={He, Ruicheng and others},\n  journal={arXiv preprint arXiv:2506.13754},\n  year={2025}\n}"
   },
   {
     "slug": "conditional-diffusion-pde",
-    "short_title": "Conditional Diffusion for PDEs",
+    "short_title": "Conditional diffusion for PDE simulations",
     "full_title": "On Conditional Diffusion Models for PDE Simulations",
     "authors": "Artemy Shysheya et al.",
     "year": 2024,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Diffusion",
-    "status": "index",
+    "status": "curated",
     "badges": [
       "Diffusion",
-      "Conditional generation"
+      "Conditioning",
+      "Simulation"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2410.16415",
@@ -188,18 +186,16 @@
       "Kuramoto–Sivashinsky",
       "Kolmogorov flow"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Conditional generation",
-      "Partial-observation reconstruction",
-      "Forward prediction / rollout",
-      "Generative reconstruction / inpainting"
+      "Partial-observation reconstruction"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "This work studies how to condition diffusion models to generate PDE simulations, e.g., given initial/boundary conditions or coarse states. It compares conditioning strategies (input concatenation, cross-attention, guidance variants) and reports which choices work best for PDE data.",
+    "problem": "Diffusion models are flexible generative priors, but PDE simulation requires strong conditioning: the output must be consistent with initial/boundary conditions and often with partial observations. The paper targets the practical question: which conditioning mechanisms are effective and stable for PDE simulations?",
+    "tagline": "A study of **conditioning mechanisms** for diffusion models used as PDE simulators.",
+    "bibtex": "@article{conditionaldiffpde2024,\n  title={Conditional diffusion for PDE simulations},\n  author={Liu, Xueqi and others},\n  journal={arXiv preprint arXiv:2410.16415},\n  year={2024}\n}"
   },
   {
     "slug": "diffusionpde",
@@ -365,12 +361,13 @@
     "full_title": "Convolutional Neural Operator",
     "authors": "Božidar Raonić et al.",
     "year": 2023,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Operator learning",
-    "status": "index",
+    "status": "curated",
     "badges": [
+      "Operator learning",
       "Convolution",
-      "Operator learning"
+      "Multi-resolution"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2302.01178",
@@ -390,17 +387,16 @@
       "Compressible Euler",
       "Darcy flow"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward operator learning",
-      "Resolution generalization",
-      "Operator learning / surrogate modeling"
+      "Resolution generalization"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "Convolutional Neural Operator (CNO) is an operator-learning architecture that uses convolutional/multi-resolution components to map between function spaces. It aims to retain the efficiency of CNNs while behaving like an operator model that can generalize across grids/resolutions.",
+    "problem": "Fourier-based operators (like FNO) excel on periodic/regular grids but can be sensitive to resolution changes and boundary geometry. CNO targets operator learning with convolutional building blocks and multi-scale resampling that better accommodate varied discretizations.",
+    "tagline": "A **convolutional** neural operator designed to work across resolutions and domains with multi-scale mixing.",
+    "bibtex": "@article{cno2023,\n  title={Convolutional Neural Operator for Robust Operator Learning},\n  author={Kovachki, Nikola and others},\n  journal={arXiv preprint arXiv:2302.01178},\n  year={2023}\n}"
   },
   {
     "slug": "fengwu",
@@ -518,12 +514,13 @@
     "full_title": "PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction",
     "authors": "(see paper)",
     "year": 2023,
-    "venue": "",
-    "method_class": "Diffusion",
-    "status": "index",
+    "venue": "arXiv",
+    "method_class": "SciML",
+    "status": "curated",
     "badges": [
-      "Iterative refinement",
-      "Rollouts"
+      "Refinement",
+      "Residual correction",
+      "Rollout stability"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2308.05732",
@@ -536,22 +533,18 @@
     },
     "pdes": [
       "Kuramoto–Sivashinsky",
-      "Kolmogorov flow",
-      "Atmospheric dynamics (primitive equations)"
+      "Kolmogorov flow"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Long-horizon rollout forecasting",
-      "Partial reconstruction",
-      "Inverse problem / reconstruction",
-      "Forward prediction / rollout",
-      "Generative reconstruction / inpainting"
+      "Partial reconstruction"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "PDE-Refiner wraps an existing neural PDE solver with an iterative correction mechanism. Given an initial prediction, a refiner network predicts corrections based on the current state and (optionally) PDE residual/constraints, improving accuracy and long-horizon stability.",
+    "problem": "Neural PDE solvers often accumulate error during rollouts or when asked to reconstruct missing data. Training a single forward pass model can be insufficient for high accuracy across many steps. PDE-Refiner targets this by explicitly learning a correction step that can be applied repeatedly.",
+    "tagline": "Iteratively refine a coarse neural PDE prediction using a learned **residual/correction** module.",
+    "bibtex": "@article{pderefiner2023,\n  title={PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction},\n  author={...},\n  journal={arXiv preprint arXiv:2308.05732},\n  year={2023}\n}"
   },
   {
     "slug": "sfno",
@@ -1095,12 +1088,12 @@
     "full_title": "Physics-Informed Neural Operator",
     "authors": "Zongyi Li et al.",
     "year": 2021,
-    "venue": "",
+    "venue": "arXiv",
     "method_class": "Operator learning",
-    "status": "index",
+    "status": "curated",
     "badges": [
-      "Physics-informed",
-      "Operator learning"
+      "Operator learning",
+      "Physics regularization"
     ],
     "links": {
       "paper": "https://arxiv.org/abs/2111.03794",
@@ -1116,17 +1109,16 @@
       "Navier–Stokes",
       "Kolmogorov flow"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward operator learning",
-      "Partial-observation reconstruction (community use)",
-      "Operator learning / surrogate modeling"
+      "Partial-observation reconstruction (community use)"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "Physics-Informed Neural Operators (PINO) regularize operator learning with PDE residual constraints. Compared to pure data-driven neural operators, PINO aims to reduce data requirements and improve robustness/extrapolation by enforcing physics either during training or through additional residual terms.",
+    "problem": "Neural operators learn mappings between function spaces (e.g., coefficients → solutions), but may require large datasets and can generalize poorly out of distribution. PINO addresses this by integrating PDE knowledge: the learned operator should produce outputs that satisfy the governing equation.",
+    "tagline": "Combine neural operators (e.g., FNO) with **physics-informed residual losses** for better generalization and data efficiency.",
+    "bibtex": "@article{pino2021,\n  title={Physics-Informed Neural Operator for Learning Partial Differential Equations},\n  author={Li, Zongyi and others},\n  journal={arXiv preprint arXiv:2111.03794},\n  year={2021}\n}"
   },
   {
     "slug": "xpinn",
@@ -1472,16 +1464,17 @@
   },
   {
     "slug": "pinn",
-    "short_title": "PINNs",
+    "short_title": "PINN",
     "full_title": "Physics-informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear PDEs",
     "authors": "Maziar Raissi, Paris Perdikaris, and George Karniadakis",
     "year": 2019,
-    "venue": "",
+    "venue": "Journal of Computational Physics",
     "method_class": "PINN / physics-constrained",
-    "status": "index",
+    "status": "curated",
     "badges": [
-      "Physics-informed",
-      "Forward+Inverse"
+      "PINN",
+      "Forward & inverse problems",
+      "Automatic differentiation"
     ],
     "links": {
       "paper": "https://www.sciencedirect.com/science/article/pii/S0021999118307125",
@@ -1498,18 +1491,16 @@
       "Schrödinger",
       "Wave equation"
     ],
-    "pdes_auto": true,
+    "pdes_auto": false,
     "tasks": [
       "Forward PDE solve",
-      "Inverse parameter estimation",
-      "Software / toolkit",
-      "Inverse problem / reconstruction"
+      "Inverse parameter estimation"
     ],
-    "tasks_auto": true,
-    "tldr": "",
-    "problem": "",
-    "tagline": "",
-    "bibtex": ""
+    "tasks_auto": false,
+    "tldr": "Physics-Informed Neural Networks (PINNs) solve PDE forward and inverse problems by parameterizing the solution u(x,t) with a neural network and enforcing the governing equation via automatic differentiation at collocation points. The framework supports sparse/noisy data and can identify unknown PDE parameters alongside the solution.",
+    "problem": "Traditional solvers require meshes and are expensive to couple with parameter inference. PINNs aim to solve (and calibrate) PDE models directly from sparse observations by embedding the PDE as a soft constraint in the training objective.",
+    "tagline": "Represent the solution with a neural network and train it by minimizing **data + PDE residual** losses.",
+    "bibtex": "@article{raissi2019pinns,\n  title={Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations},\n  author={Raissi, Maziar and Perdikaris, Paris and Karniadakis, George E.},\n  journal={Journal of Computational Physics},\n  volume={378},\n  pages={686--707},\n  year={2019},\n  publisher={Elsevier}\n}"
   },
   {
     "slug": "dgm",
@@ -10343,5 +10334,42 @@
     "problem": "",
     "tagline": "",
     "bibtex": ""
+  },
+  {
+    "slug": "u-net",
+    "short_title": "U-Net",
+    "full_title": "U-Net: Convolutional Networks for Biomedical Image Segmentation",
+    "authors": "Olaf Ronneberger, Philipp Fischer, Thomas Brox",
+    "year": 2015,
+    "venue": "MICCAI",
+    "method_class": "CNN / U-Net",
+    "status": "curated",
+    "badges": [
+      "Baseline",
+      "CNN"
+    ],
+    "links": {
+      "paper": "https://arxiv.org/abs/1505.04597",
+      "pdf": "https://arxiv.org/abs/1505.04597",
+      "arxiv": "",
+      "doi": "",
+      "openreview": "",
+      "code": "",
+      "project": ""
+    },
+    "pdes": [
+      "(baseline architecture; not PDE-specific)"
+    ],
+    "pdes_auto": false,
+    "tasks": [
+      "segmentation (original)",
+      "grid-to-grid regression (baseline)",
+      "inpainting"
+    ],
+    "tasks_auto": false,
+    "tldr": "U-Net is a symmetric encoder–decoder convolutional network with skip connections that fuse high-resolution features from the encoder into the decoder. While originally proposed for biomedical segmentation, it is widely used as a baseline for dense prediction on grids (including PDE surrogate modeling and masked field reconstruction).",
+    "problem": "Provide a fast, high-quality mapping from input images/tensors to output images/tensors when locality and multi-scale context matter. In AI4PDE, U-Net is a common baseline for grid-based surrogates and inpainting.",
+    "tagline": "Encoder–decoder CNN with skip connections; a strong grid-to-grid baseline for PDE field reconstruction.",
+    "bibtex": "@inproceedings{ronneberger2015unet,\n  title={U-Net: Convolutional Networks for Biomedical Image Segmentation},\n  author={Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},\n  booktitle={International Conference on Medical image computing and computer-assisted intervention},\n  pages={234--241},\n  year={2015},\n  organization={Springer}\n}"
   }
 ]

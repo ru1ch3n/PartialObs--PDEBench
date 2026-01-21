@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PINO (2021) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>PINO (2021)</h1>
+          <p class="subtitle"><b>Physics-Informed Neural Operator</b><br/>Zongyi Li et al.</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2111.03794" target="_blank" rel="noopener noreferrer">arXiv:2111.03794</a></div></div><div class="badges">
+<span class="badge">Operator learning</span>
+<span class="badge">Physics regularization</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: neural operator + PDE loss<br/>Works with scarce/supervision<br/>Better physical consistency</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>Physics-Informed Neural Operators (PINO) regularize operator learning with PDE residual constraints. Compared to pure data-driven neural operators, PINO aims to reduce data requirements and improve robustness/extrapolation by enforcing physics either during training or through additional residual terms.</p></section>
+<section id="problem"><h2>Problem</h2><p>Neural operators learn mappings between function spaces (e.g., coefficients → solutions), but may require large datasets and can generalize poorly out of distribution. PINO addresses this by integrating PDE knowledge: the learned operator should produce outputs that satisfy the governing equation.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>More **data-efficient** than purely supervised operator learning when labels are limited.</li>
+<li>Improves physical consistency (lower residual), which can help generalization and stability.</li>
+<li>Works as a drop-in regularizer for fast operator backbones such as FNO.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>PINO sits between classical PINNs (solve a single instance) and operator learning (learn a family): it brings physics constraints to the operator level.</li>
+<li>It motivated many later "physics-guided" operator learners and diffusion operator hybrids.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u = \mathcal{G}_\theta(a)\quad\text{(operator mapping input field }a\text{ to solution }u\text{)}\]
+\[\mathcal{L}_{\text{data}} = \|u - u^{\*}\|^2\]
+\[\mathcal{L}_{\text{phys}} = \|F(u,a)\|^2\quad\text{(PDE residual)}\]
+\[\mathcal{L} = \mathcal{L}_{\text{data}} + \lambda\,\mathcal{L}_{\text{phys}}\]
+\[\text{(Example FNO layer)}\;\; v_{l+1}(x)=W_lv_l(x)+\mathcal{F}^{-1}\!\big(R_l\cdot \mathcal{F}[v_l]\big)(x)\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>Physics regularization biases the hypothesis class toward operators consistent with the PDE, reducing overfitting to finite training sets.</li>
+<li>Residual constraints can act like implicit data augmentation over collocation points.</li>
+</ul></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Combines operator learning with physics residual regularization.</li>
+<li>Enables training with sparse/noisy data and improves generalization.</li>
+<li>Popular baseline for partially observed PDE inference.</li>
+</ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
+<li>Burgers</li>
+<li>Navier–Stokes</li>
+<li>Kolmogorov flow</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Forward operator learning</li>
+<li>Partial-observation reconstruction (community use)</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Adds PDE residual loss on collocation points.</li>
+<li>Often used when full-field supervision is limited.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>FNO</li>
+<li>PINN</li>
+<li>DeepONet</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key results</h3>
+<div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Data efficiency</td><td>Error vs data</td><td>Physics loss reduces required labeled data for comparable accuracy.</td></tr>
+<tr><td>Physical consistency</td><td>Residual</td><td>Improves residual satisfaction compared to purely data-driven operators.</td></tr></tbody></table></div>
+</section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pino2021,
+  title={Physics-Informed Neural Operator for Learning Partial Differential Equations},
+  author={Li, Zongyi and others},
+  journal={arXiv preprint arXiv:2111.03794},
+  year={2021}
+}</code></pre></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-21</div>
+    </footer>
+  </main>
+</body>
+</html>

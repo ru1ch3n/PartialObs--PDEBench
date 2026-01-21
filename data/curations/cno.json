@@ -1,0 +1,88 @@
+{
+  "slug": "cno",
+  "short_title": "CNO",
+  "full_title": "Convolutional Neural Operator",
+  "authors": "Božidar Raonić et al.",
+  "year": 2023,
+  "venue": "arXiv",
+  "category": "Operator learning",
+  "method_class": "Operator learning",
+  "badges": [
+    "Operator learning",
+    "Convolution",
+    "Multi-resolution"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2302.01178",
+    "paper_label": "arXiv:2302.01178",
+    "code": "https://github.com/camlab-ethz/ConvolutionalNeuralOperator"
+  },
+  "tagline": "A **convolutional** neural operator designed to work across resolutions and domains with multi-scale mixing.",
+  "tldr": "Convolutional Neural Operator (CNO) is an operator-learning architecture that uses convolutional/multi-resolution components to map between function spaces. It aims to retain the efficiency of CNNs while behaving like an operator model that can generalize across grids/resolutions.",
+  "problem": "Fourier-based operators (like FNO) excel on periodic/regular grids but can be sensitive to resolution changes and boundary geometry. CNO targets operator learning with convolutional building blocks and multi-scale resampling that better accommodate varied discretizations.",
+  "benefits": [
+    "Convolutional inductive bias can be strong for local PDE structure; multi-scale mixing helps capture long-range effects.",
+    "Often easier to deploy on image-like PDE grids and potentially more memory-friendly than attention-based models.",
+    "Can be used as a competitive operator-learning baseline alongside FNO/DeepONet."
+  ],
+  "core_math": [
+    "u = \\mathcal{G}_\\theta(a)\\quad\\text{(learn an operator mapping input field }a\\text{ to output field }u\\text{)}",
+    "\\text{(Convolutional operator block)}\\;\\; v_{l+1} = \\sigma\\!\\left(W_lv_l + (K_l * v_l)\\right)",
+    "\\text{(Multi-resolution mixing)}\\;\\; v \\xrightarrow{\\downarrow} v^{(s)} \\xrightarrow{\\text{conv}} \\xrightarrow{\\uparrow} v"
+  ],
+  "theory": [
+    "CNO approximates integral operators via learned convolutional kernels and multi-scale aggregation.",
+    "Resolution robustness is pursued through explicit resampling pathways (down/up operators)."
+  ],
+  "contrib": [
+    "Defines an operator-learning architecture using only convolutions (no global Fourier mixing).",
+    "Benchmarks across a broad PDE suite (Poisson, Wave, Navier–Stokes, etc.).",
+    "Provides strong baseline performance with simple operations and good scaling."
+  ],
+  "pdes": [
+    "Poisson",
+    "Wave equation",
+    "Navier–Stokes",
+    "Allen–Cahn",
+    "Transport",
+    "Compressible Euler",
+    "Darcy flow"
+  ],
+  "tasks": [
+    "Forward operator learning",
+    "Resolution generalization"
+  ],
+  "setting": [
+    "Evaluated on Representative PDE Benchmarks (RPB) and related datasets.",
+    "Reports accuracy and efficiency across PDE types."
+  ],
+  "baselines": [
+    "FNO",
+    "U-NO",
+    "WNO",
+    "U-Net"
+  ],
+  "results_tables": [
+    {
+      "title": "Key results",
+      "header": [
+        "PDE suite",
+        "Metric",
+        "Reported takeaway"
+      ],
+      "rows": [
+        [
+          "Multiple PDEs",
+          "L2 / rollout error",
+          "Competitive accuracy across a wide PDE set with convolution-only design."
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "",
+  "interesting": [
+    "CNO is useful when Fourier assumptions are questionable (non-periodic boundaries, irregular sampling) or when you want CNN tooling.",
+    "It provides a clean operator-learning baseline for PDEBench-style datasets."
+  ],
+  "bibtex": "@article{cno2023,\n  title={Convolutional Neural Operator for Robust Operator Learning},\n  author={Kovachki, Nikola and others},\n  journal={arXiv preprint arXiv:2302.01178},\n  year={2023}\n}"
+}

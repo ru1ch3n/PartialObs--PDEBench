@@ -1,0 +1,139 @@
+{
+  "slug": "prisma",
+  "short_title": "PRISMA",
+  "full_title": "Beyond Loss Guidance: Using PDE Residuals as Spectral Attention in Diffusion Neural Operators",
+  "authors": "Ilyes Batatia et al.",
+  "year": 2025,
+  "venue": "arXiv",
+  "category": "Diffusion models for PDEs",
+  "method_class": "Diffusion",
+  "badges": [
+    "Diffusion",
+    "Operator learning",
+    "PDE residual conditioning"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2512.01370",
+    "paper_label": "arXiv:2512.01370"
+  },
+  "tagline": "Use PDE residuals as **spectral attention** inside a diffusion neural operator (not just as sampling-time loss guidance).",
+  "tldr": "PRISMA reframes \"physics guidance\" for diffusion neural operators: instead of adding a PDE-residual gradient at sampling time, it feeds residual information into the denoiser as a *frequency-aware attention signal*. This aims to improve high-frequency fidelity and stability for inverse problems under sparse/partial observations.",
+  "problem": "Diffusion-based PDE priors are powerful for inverse problems, but *loss guidance* (injecting ∇||F(u)|| during sampling) can be unstable and expensive because it requires repeated PDE residual evaluations/gradients. PRISMA targets more stable and efficient conditioning by integrating residual information into the denoiser through spectral attention.",
+  "benefits": [
+    "Physics enters the **model** (conditioning/attention), reducing reliance on heavy sampling-time guidance loops.",
+    "Residual-driven spectral attention emphasizes frequencies where the PDE constraint is violated, improving sharpness/high-frequency detail.",
+    "Compatible with operator-learning backbones and inverse tasks (masking, sparse sensors)."
+  ],
+  "core_math": [
+    "u_t = \\alpha_t\\,u_0 + \\sigma_t\\,\\varepsilon,\\quad \\varepsilon\\sim\\mathcal{N}(0,I)",
+    "r(u) = F(u)\\quad\\text{(PDE residual / constraint operator)}",
+    "\\widehat r(k) = \\mathcal{F}[r(u)](k),\\quad w_k = \\mathrm{softmax}\\big(\\phi(|\\widehat r(k)|)\\big)",
+    "\\widehat u'(k) = w_k \\odot \\widehat u(k)\\quad\\text{(residual-driven spectral reweighting)}",
+    "\\mathcal{L}_{\\text{DM}} = \\mathbb{E}\\big[\\|\\varepsilon - \\varepsilon_\\theta(u_t,t,c,\\{w_k\\})\\|_2^2\\big]"
+  ],
+  "theory": [
+    "Residual features act like a learned, frequency-dependent preconditioner for denoising steps (focus where constraints are violated).",
+    "Compared to classical guidance, residual conditioning pushes constraint awareness into training, potentially lowering sampling-time compute."
+  ],
+  "contrib": [
+    "Introduces **residual-as-spectral-attention**: use Fourier features of PDE residuals to modulate denoising (instead of only guidance).",
+    "Shows how to plug the mechanism into diffusion neural operators for **inverse problems under partial observations**.",
+    "Provides empirical comparisons against guidance-based diffusion baselines and operator-learning baselines (e.g., FNO/PINO)."
+  ],
+  "pdes": [
+    "Darcy flow",
+    "Poisson",
+    "Helmholtz",
+    "Navier–Stokes"
+  ],
+  "tasks": [
+    "Forward operator learning",
+    "Inverse / partial-observation reconstruction"
+  ],
+  "setting": [
+    "Partial observation (masked measurements) with diffusion sampling.",
+    "Reports results across different step counts (1–200).",
+    "Emphasis on fast sampling with minimal quality degradation."
+  ],
+  "baselines": [
+    "FunDPS",
+    "DiffusionPDE",
+    "FNO",
+    "PINO",
+    "DeepONet"
+  ],
+  "results_tables": [
+    {
+      "title": "Reported relative error (examples)",
+      "note": "Numbers transcribed from the paper page previously added to this repo; please consult the paper for the complete experimental protocol.",
+      "header": [
+        "PDE",
+        "Dir.",
+        "PRISMA (200)",
+        "PRISMA (8)",
+        "PRISMA (1)",
+        "FunDPS (8)",
+        "DiffusionPDE (8)",
+        "DiffusionPDE (1)"
+      ],
+      "rows": [
+        [
+          "Darcy",
+          "Fwd",
+          "4.2%",
+          "4.1%",
+          "4.0%",
+          "4.0%",
+          "4.1%",
+          "7.8%"
+        ],
+        [
+          "Darcy",
+          "Inv",
+          "17.5%",
+          "13.5%",
+          "13.5%",
+          "21.6%",
+          "29.0%",
+          "79.6%"
+        ],
+        [
+          "Poisson",
+          "Inv",
+          "14.5%",
+          "11.9%",
+          "10.8%",
+          "18.8%",
+          "28.4%",
+          "31.9%"
+        ],
+        [
+          "Helmholtz",
+          "Inv",
+          "10.4%",
+          "5.6%",
+          "5.0%",
+          "8.4%",
+          "8.5%",
+          "8.9%"
+        ],
+        [
+          "Navier–Stokes",
+          "Inv",
+          "13.1%",
+          "6.3%",
+          "5.6%",
+          "11.2%",
+          "11.7%",
+          "11.7%"
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "If you replicate, make sure to match the observation masks and the normalization used in the paper.",
+  "interesting": [
+    "PRISMA highlights a design pattern: *conditioning via residual features* (train-time) vs *guidance via residual gradients* (sample-time).",
+    "The spectral view connects naturally to known frequency/pathology issues in PDE learning (spectral bias, aliasing)."
+  ],
+  "bibtex": "@article{prisma2025,\n  title={Beyond Loss Guidance: Using PDE Residuals as Spectral Attention in Diffusion Neural Operators},\n  author={Batatia, Ilyes and others},\n  journal={arXiv preprint arXiv:2512.01370},\n  year={2025}\n}"
+}

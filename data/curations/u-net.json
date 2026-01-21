@@ -1,0 +1,80 @@
+{
+  "slug": "u-net",
+  "short_title": "U-Net",
+  "full_title": "U-Net: Convolutional Networks for Biomedical Image Segmentation",
+  "authors": "Olaf Ronneberger, Philipp Fischer, Thomas Brox",
+  "year": 2015,
+  "venue": "MICCAI",
+  "category": "CNN baseline",
+  "method_class": "CNN / U-Net",
+  "badges": [
+    "Baseline",
+    "CNN"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/1505.04597",
+    "paper_label": "arXiv:1505.04597"
+  },
+  "tagline": "Encoder–decoder CNN with skip connections; a strong grid-to-grid baseline for PDE field reconstruction.",
+  "tldr": "U-Net is a symmetric encoder–decoder convolutional network with skip connections that fuse high-resolution features from the encoder into the decoder. While originally proposed for biomedical segmentation, it is widely used as a baseline for dense prediction on grids (including PDE surrogate modeling and masked field reconstruction).",
+  "problem": "Provide a fast, high-quality mapping from input images/tensors to output images/tensors when locality and multi-scale context matter. In AI4PDE, U-Net is a common baseline for grid-based surrogates and inpainting.",
+  "benefits": [
+    "Strong locality + multi-scale inductive bias; often competitive with more complex models on image-like PDE grids.",
+    "Easy to train and deploy; compatible with many conditioning signals via concatenation.",
+    "Good default backbone for diffusion denoisers and PDE inpainting models."
+  ],
+  "core_math": [
+    "\\text{Encoder: } h_{l+1} = \\sigma(\\mathrm{Conv}(h_l))\\;\\; \\xrightarrow{\\downarrow}\\;\\; \\text{(downsample)}",
+    "\\text{Decoder: } g_{l-1} = \\sigma(\\mathrm{UpConv}(g_l))\\;\\; \\oplus\\;\\; h_{l-1}\\;\\; \\text{(skip connection)}"
+  ],
+  "theory": [
+    "Skip connections preserve fine spatial detail while allowing deep receptive fields through downsampling."
+  ],
+  "contrib": [
+    "Introduced the now-standard U-shaped encoder–decoder with skip connections for dense prediction.",
+    "Demonstrated strong segmentation performance with limited labeled data via heavy data augmentation."
+  ],
+  "pdes": [
+    "(baseline architecture; not PDE-specific)"
+  ],
+  "tasks": [
+    "segmentation (original)",
+    "grid-to-grid regression (baseline)",
+    "inpainting"
+  ],
+  "setting": [
+    "Convolution + ReLU blocks with max-pooling downsampling.",
+    "Transposed convolutions (or upsampling+conv) for decoding.",
+    "Skip connections concatenate encoder feature maps into decoder."
+  ],
+  "baselines": [
+    "FCN / plain encoder–decoder CNNs"
+  ],
+  "results_tables": [
+    {
+      "title": "Why it is used in AI4PDE",
+      "header": [
+        "Use case",
+        "Reason"
+      ],
+      "rows": [
+        [
+          "Surrogate modeling",
+          "Fast grid-to-grid mapping; strong locality bias"
+        ],
+        [
+          "Masked reconstruction",
+          "Skip connections preserve detail in inpainting tasks"
+        ],
+        [
+          "Diffusion denoiser backbone",
+          "Standard U-Net is a strong denoising architecture"
+        ]
+      ]
+    }
+  ],
+  "interesting": [
+    "Many diffusion models use a U-Net backbone; this makes U-Net a key baseline component for generative PDE inference."
+  ],
+  "bibtex": "@inproceedings{ronneberger2015unet,\n  title={U-Net: Convolutional Networks for Biomedical Image Segmentation},\n  author={Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},\n  booktitle={International Conference on Medical image computing and computer-assisted intervention},\n  pages={234--241},\n  year={2015},\n  organization={Springer}\n}"
+}

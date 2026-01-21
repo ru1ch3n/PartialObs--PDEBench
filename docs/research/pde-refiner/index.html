@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PDE-Refiner (2023) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>PDE-Refiner (2023)</h1>
+          <p class="subtitle"><b>PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction</b><br/>(see paper)</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2308.05732" target="_blank" rel="noopener noreferrer">arXiv:2308.05732</a></div></div><div class="badges">
+<span class="badge">Refinement</span>
+<span class="badge">Residual correction</span>
+<span class="badge">Rollout stability</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: iterative refinement (diffusion-like)<br/>Targets long-horizon rollouts<br/>Strong on chaotic PDEs</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>PDE-Refiner wraps an existing neural PDE solver with an iterative correction mechanism. Given an initial prediction, a refiner network predicts corrections based on the current state and (optionally) PDE residual/constraints, improving accuracy and long-horizon stability.</p></section>
+<section id="problem"><h2>Problem</h2><p>Neural PDE solvers often accumulate error during rollouts or when asked to reconstruct missing data. Training a single forward pass model can be insufficient for high accuracy across many steps. PDE-Refiner targets this by explicitly learning a correction step that can be applied repeatedly.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Turns many solvers into **iterative** solvers: accuracy can improve with more refinement steps.</li>
+<li>Can incorporate PDE residual signals, making corrections physically meaningful.</li>
+<li>Often improves long-horizon stability without dramatically increasing base model size.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>Refinement is a useful *bolt-on* strategy: you can apply it to existing operator learners (FNO/PINO) or CNN baselines.</li>
+<li>Connects to classical numerical ideas (fixed-point iteration, multigrid) but learned from data.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>SciML</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u^{(0)} = G_\theta(\text{input})\quad\text{(base predictor)}\]
+\[r^{(k)} = F(u^{(k)})\quad\text{(PDE residual)}\]
+\[\Delta u^{(k)} = R_\phi\big(u^{(k)}, r^{(k)}, c\big)\]
+\[u^{(k+1)} = u^{(k)} + \Delta u^{(k)}\quad\text{(iterative refinement)}\]
+\[\mathcal{L} = \sum_{k=0}^{K-1} \|u^{(k)}-u^\*\|^2 + \lambda\|F(u^{(k)})\|^2\quad\text{(unrolled training, example)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>Refinement can be interpreted as learning a data-driven preconditioned fixed-point iteration for PDE constraints.</li>
+<li>Unrolled refinement aligns training-time objectives with test-time iterative use.</li>
+</ul></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Introduces an iterative refinement loop for PDE trajectory prediction.</li>
+<li>Targets error accumulation in long rollouts (forecasting) and reconstruction.</li>
+<li>Demonstrates gains on chaotic PDE benchmarks.</li>
+</ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
+<li>Kuramoto–Sivashinsky</li>
+<li>Kolmogorov flow</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Long-horizon rollout forecasting</li>
+<li>Partial reconstruction</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Iterative refine steps at inference; can be paired with neural operators.</li>
+<li>Evaluates stability/accuracy for long rollouts on chaotic PDEs.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>FNO</li>
+<li>U-Net</li>
+<li>ResNet</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key results</h3>
+<div class="tablewrap"><table><thead><tr><th>Benchmark</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>KS long rollouts</td><td>Trajectory error</td><td>Refinement reduces drift vs one-shot operator baselines.</td></tr>
+<tr><td>Kolmogorov flow</td><td>Rollout stability</td><td>Improves long-horizon stability without retraining the base solver.</td></tr></tbody></table></div>
+</section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{pderefiner2023,
+  title={PDE-Refiner: Iterative Refinement for PDE Forecasting and Reconstruction},
+  author={...},
+  journal={arXiv preprint arXiv:2308.05732},
+  year={2023}
+}</code></pre></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-21</div>
+    </footer>
+  </main>
+</body>
+</html>

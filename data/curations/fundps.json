@@ -1,0 +1,139 @@
+{
+  "slug": "fundps",
+  "short_title": "FunDPS",
+  "full_title": "Guided Diffusion Sampling on Function Spaces with Applications to PDEs",
+  "authors": "Alex Tong et al.",
+  "year": 2025,
+  "venue": "arXiv",
+  "category": "Diffusion models for PDEs",
+  "method_class": "Diffusion",
+  "badges": [
+    "Diffusion",
+    "Posterior sampling",
+    "Inverse problems"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2505.17004",
+    "paper_label": "arXiv:2505.17004",
+    "code": "https://github.com/neuraloperator/FunDPS"
+  },
+  "tagline": "Diffusion Posterior Sampling (DPS), but formulated for **function spaces** and PDE fields.",
+  "tldr": "FunDPS adapts diffusion posterior sampling to PDE solution *fields*: sample from a learned diffusion prior while enforcing observations and (optionally) physics constraints through guidance terms. The key idea is to treat the unknown as a function (field) and make the guidance compatible with PDE operators and masks.",
+  "problem": "Inverse problems for PDEs (inpainting, sparse sensors, data assimilation) require drawing samples of solution fields consistent with partial observations. Standard diffusion priors sample unconditionally; naive conditioning can be weak or expensive. FunDPS targets practical posterior sampling for PDE fields by combining diffusion priors with measurement/physics guidance in a function-space framing.",
+  "benefits": [
+    "Works naturally with **arbitrary masks / sparse sensors** via a measurement operator M.",
+    "Guidance can incorporate **physics residuals** and/or observation likelihoods without retraining a new model for every mask.",
+    "Function-space viewpoint encourages discretization-robust formulations (same method across grid resolutions)."
+  ],
+  "core_math": [
+    "u_t = \\alpha_t\\,u_0 + \\sigma_t\\,\\varepsilon,\\quad \\varepsilon\\sim\\mathcal{N}(0,I)",
+    "s_\\theta(u_t,t) \\approx \\nabla_{u_t}\\log p_t(u_t)\\quad\\text{(score / denoiser)}",
+    "y = M u_0 + \\eta,\\quad \\log p(y\\mid u) \\propto -\\|Mu-y\\|_2^2/(2\\sigma_y^2)",
+    "J_{\\text{phys}}(u) = \\|F(u)\\|_2^2\\quad\\text{(PDE residual penalty)}",
+    "u_{t-\\Delta} \\leftarrow u_t + \\underbrace{\\text{DDPM/ODE step}}_{\\text{prior}} + \\lambda\\nabla_{u_t}\\log p(y\\mid u_t) - \\mu\\nabla_{u_t}J_{\\text{phys}}(u_t)"
+  ],
+  "theory": [
+    "Posterior sampling decomposes into a learned *prior* step (diffusion) plus *guidance* terms encoding measurements/constraints.",
+    "Guidance with linear measurement operators M enables efficient masked inpainting and sparse-sensor conditioning."
+  ],
+  "contrib": [
+    "Extends DPS to **function/field-valued unknowns** with PDE-relevant operators (masking, sensors, residuals).",
+    "Demonstrates PDE inverse tasks where guidance significantly improves fidelity under partial observations.",
+    "Provides empirical comparisons across PDE datasets and masking patterns (see tables)."
+  ],
+  "pdes": [
+    "Darcy flow",
+    "Poisson",
+    "Helmholtz",
+    "Navier–Stokes"
+  ],
+  "tasks": [
+    "Forward operator learning",
+    "Inverse / partial-observation reconstruction"
+  ],
+  "setting": [
+    "Guided diffusion sampling; compares different step counts.",
+    "Evaluated on standard PDE operator benchmarks; reports relative errors.",
+    "Includes both forward and inverse settings depending on PDE."
+  ],
+  "baselines": [
+    "DiffusionPDE",
+    "PINO",
+    "FNO",
+    "DeepONet"
+  ],
+  "results_tables": [
+    {
+      "title": "Reported relative error (examples)",
+      "note": "Transcribed from the earlier site draft; see the paper for full tables and exact splits.",
+      "header": [
+        "PDE",
+        "Dir.",
+        "FunDPS (1)",
+        "FunDPS (2)",
+        "DiffPDE (10)",
+        "DiffPDE (50)",
+        "PINO",
+        "FNO"
+      ],
+      "rows": [
+        [
+          "Darcy",
+          "Fwd",
+          "4.5%",
+          "4.2%",
+          "4.1%",
+          "4.1%",
+          "4.8%",
+          "4.9%"
+        ],
+        [
+          "Darcy",
+          "Inv",
+          "18.8%",
+          "18.4%",
+          "22.2%",
+          "21.7%",
+          "—",
+          "—"
+        ],
+        [
+          "Poisson",
+          "Inv",
+          "14.9%",
+          "14.1%",
+          "19.5%",
+          "19.3%",
+          "—",
+          "—"
+        ],
+        [
+          "Helmholtz",
+          "Inv",
+          "8.4%",
+          "7.8%",
+          "8.5%",
+          "8.5%",
+          "—",
+          "—"
+        ],
+        [
+          "Navier–Stokes",
+          "Inv",
+          "12.5%",
+          "11.8%",
+          "11.8%",
+          "11.7%",
+          "—",
+          "—"
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "Check the mask generator and the measurement noise level when comparing to other methods.",
+  "interesting": [
+    "Guidance terms are modular: you can swap in different observation models (noise, mask, forward operators) without retraining the prior.",
+    "This makes FunDPS a good *infrastructure* baseline for future partial-observation PDE benchmarks."
+  ],
+  "bibtex": "@article{fundps2025,\n  title={Guided Diffusion Sampling on Function Spaces with Applications to PDEs},\n  author={Tong, Alex and others},\n  journal={arXiv preprint arXiv:2505.17004},\n  year={2025}\n}"
+}

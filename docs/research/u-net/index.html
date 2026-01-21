@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>U-Net (2015) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>U-Net (2015)</h1>
+          <p class="subtitle"><b>U-Net: Convolutional Networks for Biomedical Image Segmentation</b><br/>Olaf Ronneberger, Philipp Fischer, Thomas Brox</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/1505.04597" target="_blank" rel="noopener noreferrer">arXiv:1505.04597</a></div></div><div class="badges">
+<span class="badge">Baseline</span>
+<span class="badge">CNN</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;"></p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>U-Net is a symmetric encoder–decoder convolutional network with skip connections that fuse high-resolution features from the encoder into the decoder. While originally proposed for biomedical segmentation, it is widely used as a baseline for dense prediction on grids (including PDE surrogate modeling and masked field reconstruction).</p></section>
+<section id="problem"><h2>Problem</h2><p>Provide a fast, high-quality mapping from input images/tensors to output images/tensors when locality and multi-scale context matter. In AI4PDE, U-Net is a common baseline for grid-based surrogates and inpainting.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Strong locality + multi-scale inductive bias; often competitive with more complex models on image-like PDE grids.</li>
+<li>Easy to train and deploy; compatible with many conditioning signals via concatenation.</li>
+<li>Good default backbone for diffusion denoisers and PDE inpainting models.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>Many diffusion models use a U-Net backbone; this makes U-Net a key baseline component for generative PDE inference.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>CNN / U-Net</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[\text{Encoder: } h_{l+1} = \sigma(\mathrm{Conv}(h_l))\;\; \xrightarrow{\downarrow}\;\; \text{(downsample)}\]
+\[\text{Decoder: } g_{l-1} = \sigma(\mathrm{UpConv}(g_l))\;\; \oplus\;\; h_{l-1}\;\; \text{(skip connection)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>Skip connections preserve fine spatial detail while allowing deep receptive fields through downsampling.</li>
+</ul></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Introduced the now-standard U-shaped encoder–decoder with skip connections for dense prediction.</li>
+<li>Demonstrated strong segmentation performance with limited labeled data via heavy data augmentation.</li>
+</ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
+<li>(baseline architecture; not PDE-specific)</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>segmentation (original)</li>
+<li>grid-to-grid regression (baseline)</li>
+<li>inpainting</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Convolution + ReLU blocks with max-pooling downsampling.</li>
+<li>Transposed convolutions (or upsampling+conv) for decoding.</li>
+<li>Skip connections concatenate encoder feature maps into decoder.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>FCN / plain encoder–decoder CNNs</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Why it is used in AI4PDE</h3>
+<div class="tablewrap"><table><thead><tr><th>Use case</th><th>Reason</th></tr></thead><tbody><tr><td>Surrogate modeling</td><td>Fast grid-to-grid mapping; strong locality bias</td></tr>
+<tr><td>Masked reconstruction</td><td>Skip connections preserve detail in inpainting tasks</td></tr>
+<tr><td>Diffusion denoiser backbone</td><td>Standard U-Net is a strong denoising architecture</td></tr></tbody></table></div>
+</section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@inproceedings{ronneberger2015unet,
+  title={U-Net: Convolutional Networks for Biomedical Image Segmentation},
+  author={Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
+  booktitle={International Conference on Medical image computing and computer-assisted intervention},
+  pages={234--241},
+  year={2015},
+  organization={Springer}
+}</code></pre></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-21</div>
+    </footer>
+  </main>
+</body>
+</html>

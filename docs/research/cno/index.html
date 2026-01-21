@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CNO (2023) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>CNO (2023)</h1>
+          <p class="subtitle"><b>Convolutional Neural Operator</b><br/>Božidar Raonić et al.</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2302.01178" target="_blank" rel="noopener noreferrer">arXiv:2302.01178</a></div>
+<div><b>Code:</b> <a class="meta-link" href="https://github.com/camlab-ethz/ConvolutionalNeuralOperator" target="_blank" rel="noopener noreferrer">repository</a></div></div><div class="badges">
+<span class="badge">Operator learning</span>
+<span class="badge">Convolution</span>
+<span class="badge">Multi-resolution</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: convolutional operator<br/>Works on multiple PDE families<br/>Competitive vs spectral operators</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>Convolutional Neural Operator (CNO) is an operator-learning architecture that uses convolutional/multi-resolution components to map between function spaces. It aims to retain the efficiency of CNNs while behaving like an operator model that can generalize across grids/resolutions.</p></section>
+<section id="problem"><h2>Problem</h2><p>Fourier-based operators (like FNO) excel on periodic/regular grids but can be sensitive to resolution changes and boundary geometry. CNO targets operator learning with convolutional building blocks and multi-scale resampling that better accommodate varied discretizations.</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Convolutional inductive bias can be strong for local PDE structure; multi-scale mixing helps capture long-range effects.</li>
+<li>Often easier to deploy on image-like PDE grids and potentially more memory-friendly than attention-based models.</li>
+<li>Can be used as a competitive operator-learning baseline alongside FNO/DeepONet.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>CNO is useful when Fourier assumptions are questionable (non-periodic boundaries, irregular sampling) or when you want CNN tooling.</li>
+<li>It provides a clean operator-learning baseline for PDEBench-style datasets.</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Operator learning</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[u = \mathcal{G}_\theta(a)\quad\text{(learn an operator mapping input field }a\text{ to output field }u\text{)}\]
+\[\text{(Convolutional operator block)}\;\; v_{l+1} = \sigma\!\left(W_lv_l + (K_l * v_l)\right)\]
+\[\text{(Multi-resolution mixing)}\;\; v \xrightarrow{\downarrow} v^{(s)} \xrightarrow{\text{conv}} \xrightarrow{\uparrow} v\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>CNO approximates integral operators via learned convolutional kernels and multi-scale aggregation.</li>
+<li>Resolution robustness is pursued through explicit resampling pathways (down/up operators).</li>
+</ul></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Defines an operator-learning architecture using only convolutions (no global Fourier mixing).</li>
+<li>Benchmarks across a broad PDE suite (Poisson, Wave, Navier–Stokes, etc.).</li>
+<li>Provides strong baseline performance with simple operations and good scaling.</li>
+</ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
+<li>Poisson</li>
+<li>Wave equation</li>
+<li>Navier–Stokes</li>
+<li>Allen–Cahn</li>
+<li>Transport</li>
+<li>Compressible Euler</li>
+<li>Darcy flow</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Forward operator learning</li>
+<li>Resolution generalization</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Evaluated on Representative PDE Benchmarks (RPB) and related datasets.</li>
+<li>Reports accuracy and efficiency across PDE types.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>FNO</li>
+<li>U-NO</li>
+<li>WNO</li>
+<li>U-Net</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key results</h3>
+<div class="tablewrap"><table><thead><tr><th>PDE suite</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Multiple PDEs</td><td>L2 / rollout error</td><td>Competitive accuracy across a wide PDE set with convolution-only design.</td></tr></tbody></table></div>
+</section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{cno2023,
+  title={Convolutional Neural Operator for Robust Operator Learning},
+  author={Kovachki, Nikola and others},
+  journal={arXiv preprint arXiv:2302.01178},
+  year={2023}
+}</code></pre></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-21</div>
+    </footer>
+  </main>
+</body>
+</html>

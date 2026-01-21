@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Conditional diffusion for PDE simulations (2024) — Research — PartialObs-PDEBench</title>
+  <link rel="stylesheet" href="../../assets/style.css" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Conditional diffusion for PDE simulations (2024)</h1>
+          <p class="subtitle"><b>On Conditional Diffusion Models for PDE Simulations</b><br/>Artemy Shysheya et al.</p>
+          <div class="meta"><div><b>Paper:</b> <a class="meta-link" href="https://arxiv.org/abs/2410.16415" target="_blank" rel="noopener noreferrer">arXiv:2410.16415</a></div></div><div class="badges">
+<span class="badge">Diffusion</span>
+<span class="badge">Conditioning</span>
+<span class="badge">Simulation</span>
+</div>
+        </div>
+
+        <div class="hero-card">  <div class="smallcaps">Quick facts</div>  <p class="muted" style="margin-top:8px;">Type: conditional diffusion<br/>Focus: protocol + evaluation<br/>PDEs: Burgers / KS / flows</p>  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p></div>
+      </div>
+
+      <nav class="nav"><a href="../../index.html">Home</a><a href="../../research/" aria-current="page">Research</a><a href="../../pde-problems/">PDE problems</a><a href="../../baselines/">Baselines</a><a href="../../benchmark/">Benchmark</a><a href="../../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="tldr"><h2>TL;DR</h2><p>This work studies how to condition diffusion models to generate PDE simulations, e.g., given initial/boundary conditions or coarse states. It compares conditioning strategies (input concatenation, cross-attention, guidance variants) and reports which choices work best for PDE data.</p></section>
+<section id="problem"><h2>Problem</h2><p>Diffusion models are flexible generative priors, but PDE simulation requires strong conditioning: the output must be consistent with initial/boundary conditions and often with partial observations. The paper targets the practical question: which conditioning mechanisms are effective and stable for PDE simulations?</p></section>
+<section id="benefits"><h2>Benefits vs others</h2><ul>
+<li>Provides a **design map** for conditioning diffusion models in PDE settings (what to try first, what tends to fail).</li>
+<li>Clarifies tradeoffs between hard constraints (inpainting) and soft constraints (likelihood guidance).</li>
+<li>Useful as a reference baseline when building new diffusion PDE inference methods.</li>
+</ul></section>
+<section id="interesting"><h2>Interesting detail</h2><ul>
+<li>The paper's ablations help decide whether to implement conditioning as an architectural choice (attention) or as sampling-time guidance.</li>
+<li>It also motivates hybrid approaches (conditioning + lightweight guidance).</li>
+</ul></section>
+<section id="core-math"><h2>Core method (math)</h2><p class="muted">Template for <b>Diffusion</b>. Paper-specific equations are added when manually curated.</p><div class="equation">\[x_t = \alpha_t\,x_0 + \sigma_t\,\varepsilon\]
+\[\mathcal{L} = \mathbb{E}\big[\|\varepsilon - \varepsilon_\theta(x_t,t,c)\|_2^2\big]\quad\text{(conditional denoising)}\]
+\[c = \text{(IC/BC, sensors, mask, coefficients)}\]
+\[x_t \leftarrow \text{CondStep}(x_t,c)\quad\text{(e.g., concatenation, attention, guidance)}\]</div></section>
+<section id="theory"><h2>Main theoretical contribution</h2><ul>
+<li>Conditioning can be viewed as learning p(x_0 | c); inpainting enforces hard equality constraints on observed entries.</li>
+<li>Guidance adds ∇ log p(c|x_t) terms during sampling, trading compute for tighter constraint satisfaction.</li>
+</ul></section>
+<section id="contribution"><h2>Main contribution</h2><ul>
+<li>Systematic comparison of conditioning strategies for diffusion-based PDE simulators.</li>
+<li>Reports empirical stability/quality tradeoffs across PDE datasets and conditioning types.</li>
+</ul></section>
+<section id="main-results"><h2>Main results (headline)</h2><p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p></section>
+<section id="experiments"><h2>Experiments</h2><div class="grid2">  <div class="card"><h3>PDE problems</h3><ul>
+<li>Burgers</li>
+<li>Kuramoto–Sivashinsky</li>
+<li>Kolmogorov flow</li>
+</ul></div>  <div class="card"><h3>Tasks</h3><ul>
+<li>Conditional generation</li>
+<li>Partial-observation reconstruction</li>
+</ul></div></div><div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3><ul>
+<li>Studies multiple conditioning setups (known IC/BC, sparse sensors, masked fields).</li>
+<li>Compares diffusion sampling strategies and architecture choices.</li>
+</ul></div></section>
+<section id="baselines"><h2>Comparable baselines</h2><ul>
+<li>PDE-Refiner</li>
+<li>U-Net</li>
+<li>FNO</li>
+</ul></section>
+<section id="results"><h2>Main results</h2>
+<h3 class="subhead">Key takeaways</h3>
+<div class="tablewrap"><table><thead><tr><th>Experiment</th><th>Metric</th><th>Reported takeaway</th></tr></thead><tbody><tr><td>Sparse observations</td><td>Error / likelihood</td><td>Conditional diffusion improves robustness vs deterministic models in low-observation regimes.</td></tr>
+<tr><td>Sampling choices</td><td>Runtime vs error</td><td>Careful step schedules and conditioning significantly affect quality.</td></tr></tbody></table></div>
+</section>
+<section id="citation"><h2>Citation (BibTeX)</h2><pre class="code"><code>@article{conditionaldiffpde2024,
+  title={Conditional diffusion for PDE simulations},
+  author={Liu, Xueqi and others},
+  journal={arXiv preprint arXiv:2410.16415},
+  year={2024}
+}</code></pre></section>
+
+    <footer class="footer">
+      <div class="muted">Last generated: 2026-01-21</div>
+    </footer>
+  </main>
+</body>
+</html>

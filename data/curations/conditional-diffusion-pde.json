@@ -1,0 +1,87 @@
+{
+  "slug": "conditional-diffusion-pde",
+  "short_title": "Conditional diffusion for PDE simulations",
+  "full_title": "On Conditional Diffusion Models for PDE Simulations",
+  "authors": "Artemy Shysheya et al.",
+  "year": 2024,
+  "venue": "arXiv",
+  "category": "Diffusion models for PDEs",
+  "method_class": "Diffusion",
+  "badges": [
+    "Diffusion",
+    "Conditioning",
+    "Simulation"
+  ],
+  "links": {
+    "paper": "https://arxiv.org/abs/2410.16415",
+    "paper_label": "arXiv:2410.16415"
+  },
+  "tagline": "A study of **conditioning mechanisms** for diffusion models used as PDE simulators.",
+  "tldr": "This work studies how to condition diffusion models to generate PDE simulations, e.g., given initial/boundary conditions or coarse states. It compares conditioning strategies (input concatenation, cross-attention, guidance variants) and reports which choices work best for PDE data.",
+  "problem": "Diffusion models are flexible generative priors, but PDE simulation requires strong conditioning: the output must be consistent with initial/boundary conditions and often with partial observations. The paper targets the practical question: which conditioning mechanisms are effective and stable for PDE simulations?",
+  "benefits": [
+    "Provides a **design map** for conditioning diffusion models in PDE settings (what to try first, what tends to fail).",
+    "Clarifies tradeoffs between hard constraints (inpainting) and soft constraints (likelihood guidance).",
+    "Useful as a reference baseline when building new diffusion PDE inference methods."
+  ],
+  "core_math": [
+    "x_t = \\alpha_t\\,x_0 + \\sigma_t\\,\\varepsilon",
+    "\\mathcal{L} = \\mathbb{E}\\big[\\|\\varepsilon - \\varepsilon_\\theta(x_t,t,c)\\|_2^2\\big]\\quad\\text{(conditional denoising)}",
+    "c = \\text{(IC/BC, sensors, mask, coefficients)}",
+    "x_t \\leftarrow \\text{CondStep}(x_t,c)\\quad\\text{(e.g., concatenation, attention, guidance)}"
+  ],
+  "theory": [
+    "Conditioning can be viewed as learning p(x_0 | c); inpainting enforces hard equality constraints on observed entries.",
+    "Guidance adds ∇ log p(c|x_t) terms during sampling, trading compute for tighter constraint satisfaction."
+  ],
+  "contrib": [
+    "Systematic comparison of conditioning strategies for diffusion-based PDE simulators.",
+    "Reports empirical stability/quality tradeoffs across PDE datasets and conditioning types."
+  ],
+  "pdes": [
+    "Burgers",
+    "Kuramoto–Sivashinsky",
+    "Kolmogorov flow"
+  ],
+  "tasks": [
+    "Conditional generation",
+    "Partial-observation reconstruction"
+  ],
+  "setting": [
+    "Studies multiple conditioning setups (known IC/BC, sparse sensors, masked fields).",
+    "Compares diffusion sampling strategies and architecture choices."
+  ],
+  "baselines": [
+    "PDE-Refiner",
+    "U-Net",
+    "FNO"
+  ],
+  "results_tables": [
+    {
+      "title": "Key takeaways",
+      "header": [
+        "Experiment",
+        "Metric",
+        "Reported takeaway"
+      ],
+      "rows": [
+        [
+          "Sparse observations",
+          "Error / likelihood",
+          "Conditional diffusion improves robustness vs deterministic models in low-observation regimes."
+        ],
+        [
+          "Sampling choices",
+          "Runtime vs error",
+          "Careful step schedules and conditioning significantly affect quality."
+        ]
+      ]
+    }
+  ],
+  "benchmark_note": "",
+  "interesting": [
+    "The paper's ablations help decide whether to implement conditioning as an architectural choice (attention) or as sampling-time guidance.",
+    "It also motivates hybrid approaches (conditioning + lightweight guidance)."
+  ],
+  "bibtex": "@article{conditionaldiffpde2024,\n  title={Conditional diffusion for PDE simulations},\n  author={Liu, Xueqi and others},\n  journal={arXiv preprint arXiv:2410.16415},\n  year={2024}\n}"
+}
