@@ -1,158 +1,105 @@
-# PartialObs-PDEBench: Partial-Observation PDE Reconstruction Benchmark (Baselines)
+# PartialObs–PDEBench
+**A benchmark + research map for PDE reconstruction and inference under partial observation.**
 
-PartialObs-PDEBench is a **config-driven benchmark harness** for reconstructing PDE solution fields from **partial observations** (sparse sensors / subsampling / missing blocks).
+PartialObs–PDEBench studies learning-based reconstruction of PDE solution fields when observations are incomplete (e.g., **missing sensors**, **masked pixels**, or **partial trajectories**). The repository couples:
 
-This repository is designed to be:
-- **Public + academic**: clean structure, explicit experiment configs, deterministic seeds, and reproducible outputs.
-- **Reusable**: add PDEs, masks, and methods via small isolated modules.
-- **Dataset-compatible**: supports DiffusionPDE-style `.npy` datasets (downloaded by the user; not redistributed here).
+- a **research index** (GitHub Pages) that organizes AI4PDE/AI4SDE papers and curated one-page summaries, and  
+- a **benchmark harness** (work in progress) for standardized partial-observation evaluations.
 
-**Project page:** `https://ru1ch3n.github.io/PartialObs-PDEBench/`  
-**Personal page:** `https://ru1ch3n.github.io/`
+**Project website:** https://ru1ch3n.github.io/PartialObs--PDEBench/  
+**Repository:** https://github.com/ru1ch3n/PartialObs--PDEBench
 
 ---
 
-## Problem setting
+## Scope and problem setting
 
-We treat the solution field `u` as partially observed:
+We consider a (possibly parametric) PDE with solution field \(u\). Under partial observation, we observe
+
 \[
-y = M(u) + \epsilon
+y = \mathcal{M}(u) + \epsilon,
 \]
-where:
-- `M` is a partial observation operator (mask/sensor pattern),
-- `ε` is optional noise.
 
-**Goal:** reconstruct the full field `u` from `(y, M)`.
+where \(\mathcal{M}\) is an observation operator (mask / sampling pattern / sensor map) and \(\epsilon\) is optional noise.
 
----
-
-## PDE suite
-
-This benchmark targets four canonical PDE families:
-
-- **Burgers (1D, time-dependent):** \(u(x,t)\)
-- **Darcy (2D, elliptic):** \( -\nabla\cdot(a(x)\nabla u) = f \)
-- **Poisson (2D, elliptic):** \( -\Delta u = f \)
-- **Navier–Stokes (2D vorticity):** \( \partial_t \omega + u\cdot\nabla\omega = \nu \Delta\omega + f \)
+**Goal:** reconstruct the full field \(u\) (or predict future states) from \((y, \mathcal{M})\).
 
 ---
 
-## Partial-observation masks (M1–M3)
+## What is included (today)
 
-We standardize three observation operators:
+### 1) Website: research map (stable)
+The GitHub Pages site lives in `docs/` and provides:
 
-- **M1: random points** — sample random sensor locations at a target observation ratio
-- **M2: regular subsampling** — observe a strided lattice (every *k*-th point)
-- **M3: block missing** — hide one or more contiguous rectangular regions (inpainting-style)
+- **Research index:** browse/search papers; most entries are **index-only** bibliographic records.
+- **Curated pages (high standard):** detailed, human-written summaries that include:
+  - main idea and method formulation (math when appropriate),
+  - PDE settings and tasks,
+  - experimental setup + baselines,
+  - main results (tables/figures when available).
 
-Mask configs live in `configs/mask/`.
+> Current curated set (seed): **FNO**, **DeepONet**, **DiffusionPDE**.
 
----
-
-## Baselines included
-
-### Supervised reconstruction models (train yourself)
-These models are trained on paired data (partial observation → full field):
-
-- **U-Net**: a strong CNN encoder–decoder baseline with skip connections.  
-  Reference: Ronneberger et al., *U-Net* (2015).  
-  Paper: `https://arxiv.org/abs/1505.04597`
-
-- **FNO (Fourier Neural Operator)**: operator learning with global Fourier-domain convolutions.  
-  Reference: Li et al., *FNO* (ICLR 2021 / arXiv:2010.08895).  
-  Paper: `https://arxiv.org/abs/2010.08895`  
-  Official ecosystem: `https://github.com/neuraloperator/neuraloperator`
-
-- **CNO (Convolutional Neural Operator)**: convolutional operator architecture for learning mappings between function spaces.  
-  Reference: Raonić et al., *Convolutional Neural Operators* (NeurIPS 2023 / arXiv:2302.01178).  
-  Paper: `https://arxiv.org/abs/2302.01178`  
-  Official repo: `https://github.com/camlab-ethz/ConvolutionalNeuralOperator`
-
-- **DeepONet**: branch/trunk operator network for learning nonlinear operators.  
-  Reference: Lu et al., *DeepONet* (Nature Machine Intelligence, 2021).  
-  Paper: `https://www.nature.com/articles/s42256-021-00302-5`  
-  arXiv: `https://arxiv.org/abs/1910.03193`  
-  Reference repo: `https://github.com/lululxvi/deeponet`
-
-### Physics-based optimization baseline (per-instance)
-- **PINN (Physics-Informed Neural Network)**: optimize network parameters per test instance using PDE residual + observation loss (and optional boundary/initial constraints).  
-  Reference: Raissi et al., *PINNs* (JCP 2019).  
-  Paper (DOI): `https://doi.org/10.1016/j.jcp.2018.10.045`  
-  Reference repo: `https://github.com/maziarraissi/PINNs`
-
-### Pretrained diffusion baseline (inference-only)
-- **DiffusionPDE**: pretrained diffusion prior for PDE solving under partial observation; evaluated via upstream inference scripts and released checkpoints.  
-  Paper: `https://arxiv.org/abs/2406.17763`  
-  Repo: `https://github.com/jhhuangchloe/DiffusionPDE`
-
-> Notes:
-> - This repo is a **benchmark harness**, not an “official” implementation of the above methods.
-> - Third-party datasets / weights / code are not redistributed here. See `THIRD_PARTY_NOTICES.md`.
+### 2) Benchmark harness (work in progress)
+The benchmark tab on the website (and the corresponding code/configs here) is under active development:
+- PDE suite definitions, mask operators, metrics, and reproducible configs will be expanded and stabilized over time.
 
 ---
 
-# Project website + research map (GitHub Pages)
+## Repository structure
 
-The GitHub Pages site lives in `docs/`.
+- `docs/` — static website (served by GitHub Pages).
+- `scripts/` — site generation utilities.
+- `scripts/research_db.ndjson` — **paper index** (NDJSON; metadata-only entries).
+- `data/curations/*.json` — **curated paper pages** (one JSON per curated paper).
+- `configs/` — benchmark config stubs (WIP).
 
-It includes:
-- A **research map** (Research tab) with one-page summaries for papers related to PDE inference under partial observation.
-- A **PDE problems** tab that groups papers by the PDEs they study.
-- A **Baselines** tab that indexes commonly compared methods.
-- A **Benchmark** tab (work in progress).
+---
 
-## Paper database (JSON / NDJSON source of truth)
+## Contributing (research index + curated pages)
 
-Paper metadata and summaries are stored as:
+The intended workflow is PR-friendly:
 
-- **Index list (metadata-only):** JSON Lines in:
+1. **Add an index entry** to `scripts/research_db.ndjson` (title/authors/venue/year/links/tags).  
+2. Optionally **add a curated JSON** to `data/curations/<slug>.json`.  
+3. Rebuild the static site:
+   ```bash
+   python scripts/generate_research_site.py
+   ```
+4. Commit the regenerated `docs/` outputs.
 
-  ```
-  scripts/research_db.ndjson
-  ```
+The website’s **Contribute** tab documents the JSON schema and review standard.
 
-- **Curations (rich content, one file per curated paper):**
-
-  ```
-  data/curations/<slug>.json
-  ```
-
-
-This is the recommended contribution workflow (easy to review in PRs):
-1) Add or edit an index entry (NDJSON) or a curation JSON file.
-2) Rebuild the static site.
-3) Commit the regenerated `docs/` outputs.
-
-To rebuild:
-```bash
-python scripts/generate_research_site.py
-```
-
-For details, see the **Contribute** tab on the website.
+---
 
 ## Local preview
+
 ```bash
 python -m http.server 8000 --directory docs
 ```
+
 Open:
 ```text
 http://localhost:8000
 ```
 
-## Publish with GitHub Pages
-1) GitHub repo → **Settings** → **Pages**  
-2) Build and deployment → **Deploy from a branch**  
-3) Branch: `main` (or `master`, depending on your repo default)  
-4) Folder: `/docs`  
+---
 
-Your site:
-```text
-https://ru1ch3n.github.io/PartialObs-PDEBench/
+## Citation
+
+If you use this repository or the website in academic work, please cite:
+
+```bibtex
+@misc{partialobs_pdebench,
+  title        = {PartialObs--PDEBench: PDE reconstruction under partial observation},
+  author       = {Ruichen and contributors},
+  howpublished = {GitHub repository},
+  year         = {2026},
+  url          = {https://github.com/ru1ch3n/PartialObs--PDEBench}
+}
 ```
 
 ---
 
-# License
-
-- This repository’s original code is released under the **MIT License** (see `LICENSE`).
-- External code/data/models are governed by upstream licenses/terms (see `THIRD_PARTY_NOTICES.md`).
+## License
+- Repository code is released under the **MIT License** (see `LICENSE`).
+- External datasets / pretrained weights / upstream code remain under their respective licenses (see `THIRD_PARTY_NOTICES.md`).

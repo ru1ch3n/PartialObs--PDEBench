@@ -321,3 +321,21 @@ th {
 /* Clickable ASCII tree */
 pre.ascii-tree a{color:#93c5fd;text-decoration:none;}
 pre.ascii-tree a:hover{color:#bfdbfe;text-decoration:underline;}
+
+
+/* --- Home: intro card --- */
+#intro{
+  border: 1px solid var(--border);
+  background: rgba(18,24,38,.45);
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+}
+#intro p{margin-top:10px;}
+#intro em{color:var(--accent); font-style: italic;}
+
+
+/* Improve native <select> dropdown visibility in dark theme (cross-browser) */
+select{color-scheme:dark;}
+select option{background-color:var(--code);color:var(--fg);} 
+select option:disabled{color:var(--muted);} 
+select optgroup{background-color:var(--code);color:var(--fg);} 
