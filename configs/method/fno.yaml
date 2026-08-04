@@ -1,0 +1,7 @@
+name: fno
+kwargs:
+  in_channels: 1
+  out_channels: 1
+  width: 32
+  layers: 4
+  modes: 12

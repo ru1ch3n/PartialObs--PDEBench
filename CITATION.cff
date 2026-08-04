@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "PDE-OBS: Partial-Observation PDE Benchmark"
+message: "If you use this software, please cite the repository and the accompanying benchmark paper."
+type: software
+authors:
+  - family-names: "Xu"
+    given-names: "Ruichen"
+repository-code: "https://github.com/ru1ch3n/PartialObs--PDEBench"
+url: "https://ru1ch3n.github.io/PartialObs--PDEBench/"
+license: MIT
+version: 0.1.0
+date-released: 2026-08-04

@@ -25,7 +25,7 @@ import os
 import shutil
 import re
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from urllib.parse import quote
@@ -764,7 +764,7 @@ def page(
     extra_head: str = "",
     body_html: str,
 ) -> str:
-    now = datetime.utcnow().strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -1108,7 +1108,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     <li><b>Research:</b> browse/search <b>{n_total}</b> AI4PDE/AI4SDE papers (<b>{n_curated}</b> curated pages + index placeholders).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> benchmark spec (PDE suite, masks, metrics, data generation) — <i>work in progress</i>.</li>
+    <li><b>Benchmark:</b> executable PDE-OBS reference suite with factorized generation, masks, IID/OOD splits, baselines, metrics, and SeaWulf launchers.</li>
     <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
 </section>

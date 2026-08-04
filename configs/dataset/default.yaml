@@ -1,0 +1,79 @@
+schema_version: 1
+name: pdeobs-v0.1-reference
+seed: 20260804
+tier: tiny
+resolution: 128
+trajectory_steps: 9
+dtype: float32
+compression: gzip
+compression_level: 4
+# One shard per parameter-regime node in the full tier (max count is 667).
+shard_size: 700
+
+families:
+  - darcy
+  - poisson
+  - helmholtz
+  - heat
+  - reaction_diffusion
+  - burgers
+  - navier_stokes
+
+boundaries:
+  - dirichlet
+  - neumann
+  - periodic
+  - robin_obstacle
+
+settings:
+  - smooth_grf
+  - medium_grf
+  - rough_grf
+  - low_frequency_fourier
+  - multi_frequency_fourier
+  - gaussian_blobs
+  - piecewise_blocks
+  - threshold_level_set
+  - dipole_vortex_pair
+  - front_ring_shock
+
+regimes:
+  - low
+  - medium
+  - high
+
+tiers:
+  tiny: 5
+  debug: 20
+  signal: 100
+  medium: 500
+  full: 2000
+
+splits:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+  regime_allocation_full:
+    low: 667
+    medium: 667
+    high: 666
+
+observations:
+  train:
+    protocol: random
+    count: 500
+  evaluation:
+    - {protocol: random, ratio: 0.01}
+    - {protocol: random, ratio: 0.03}
+    - {protocol: random, ratio: 0.05}
+    - {protocol: random, ratio: 0.10}
+    - {protocol: regular_grid, ratio: 0.03}
+    - {protocol: block_missing, missing_fraction: 0.25}
+    - {protocol: line_sensors, ratio: 0.03}
+    - {protocol: boundary_sensors, ratio: 0.03}
+    - {protocol: clustered, ratio: 0.03}
+
+output:
+  root: ${PDEOBS_DATA:-datasets}
+  atomic: true
+  checksum: sha256

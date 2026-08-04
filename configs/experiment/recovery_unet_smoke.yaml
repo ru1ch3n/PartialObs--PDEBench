@@ -1,0 +1,18 @@
+include: recovery_unet.yaml
+name: recovery-unet-smoke
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/smoke
+  mask:
+    protocol: random
+    count: 8
+
+method:
+  kwargs:
+    width: 4
+
+training:
+  epochs: 1
+  batch_size: 2
+  num_workers: 0
+  mixed_precision: false

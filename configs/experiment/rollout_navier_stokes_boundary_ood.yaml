@@ -1,0 +1,46 @@
+schema_version: 1
+name: rollout-navier-stokes-boundary-ood
+seed: 20260804
+task: rollout
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/medium
+  train_glob: "**/*.h5"
+  ood_view: boundary
+  state_representation: velocity
+  filters:
+    pde: navier_stokes
+  mask:
+    protocol: random_3pct
+    count: 500
+  input_horizon: 1
+  rollout_horizons: [1, 2, 4, 8]
+
+method:
+  name: autoregressive
+  base:
+    name: fno
+    kwargs:
+      in_channels: 2
+      out_channels: 2
+      width: 32
+      layers: 4
+      modes: 12
+
+training:
+  epochs: 100
+  batch_size: 8
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 4
+  checkpoint_every: 5
+  device: auto
+  mixed_precision: true
+
+evaluation:
+  physical_representation: velocity
+  include_frequency_bands: true
+  include_stability: true
+
+output:
+  root: ${PDEOBS_RUNS:-runs}

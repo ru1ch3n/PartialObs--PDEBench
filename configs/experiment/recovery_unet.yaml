@@ -1,0 +1,38 @@
+schema_version: 1
+name: recovery-unet
+seed: 20260804
+task: recovery
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/tiny
+  train_glob: "**/*.h5"
+  split: iid
+  target_time: -1
+  filters:
+    pde: poisson
+    boundary: periodic
+    setting: smooth_grf
+    regime: low
+  mask:
+    protocol: random
+    count: 500
+
+method:
+  name: unet
+  kwargs:
+    in_channels: 1
+    out_channels: 1
+    width: 32
+
+training:
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 4
+  checkpoint_every: 5
+  device: auto
+  mixed_precision: true
+
+output:
+  root: ${PDEOBS_RUNS:-runs}

@@ -1,0 +1,8 @@
+analysis:
+  # Used to rank the hardest individual samples and factor combinations.
+  primary_metric: rel_l2
+  group_anchor: [method, task]
+  top_k: 20
+  min_group_size: 1
+  # Error metrics default to lower-is-better. List score metrics here when needed.
+  higher_is_better: [accuracy, ssim, psnr]

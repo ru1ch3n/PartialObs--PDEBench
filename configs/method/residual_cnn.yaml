@@ -1,0 +1,14 @@
+name: residual_cnn
+kwargs:
+  in_channels: 1
+  width: 32
+  embedding_dim: 128
+  normalize_embeddings: true
+  default_output: embedding
+  # Official semantic axes for the supervised-multitask-small anchor.
+  # Leave this mapping out when only continuous retrieval embeddings are needed.
+  class_counts:
+    family: 7
+    boundary: 4
+    setting: 10
+    regime: 3

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ru1ch3n.github.io/PartialObs--PDEBench/schemas/release-manifest-v1.json",
+  "title": "PDE-OBS release manifest",
+  "type": "object",
+  "required": ["schema_version", "name", "tiers", "files"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "name": {"type": "string", "minLength": 1},
+    "dataset_version": {"type": "string"},
+    "git_commit": {"type": "string"},
+    "tiers": {
+      "type": "array",
+      "items": {"enum": ["tiny", "debug", "signal", "medium", "full"]},
+      "uniqueItems": true
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "url": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "size": {"type": "integer", "minimum": 0},
+          "tier": {"type": "string"},
+          "tiers": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

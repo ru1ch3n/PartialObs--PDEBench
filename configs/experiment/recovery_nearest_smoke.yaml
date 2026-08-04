@@ -1,0 +1,32 @@
+schema_version: 1
+name: recovery-nearest-smoke
+seed: 17
+task: recovery
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/smoke
+  train_glob: "**/*.h5"
+  split: iid
+  filters:
+    pde: poisson
+    boundary: periodic
+    setting: smooth_grf
+    regime: low
+  mask:
+    protocol: random
+    count: 8
+  max_samples: 2
+
+method:
+  name: nearest
+  kwargs: {}
+
+training:
+  batch_size: 2
+  num_workers: 0
+
+evaluation:
+  include_frequency_bands: true
+
+output:
+  root: ${PDEOBS_RUNS:-runs}

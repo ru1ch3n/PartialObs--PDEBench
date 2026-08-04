@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated benchmark data and run artifacts
+datasets/
+data/generated/
+runs/
+checkpoints/
+predictions/
+artifacts/
+logs/
+work/
+ignored/
+*.h5
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+*.sif
+
+# Temporary and atomic-write files
+*.tmp
+*.partial
+*.lock
+
+# Local cluster configuration may contain account/group names
+.env
+hpc/seawulf/local.env

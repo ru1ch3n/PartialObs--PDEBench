@@ -1,0 +1,19 @@
+name: pdeobs
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy>=1.24
+  - scipy>=1.10
+  - h5py>=3.8
+  - pyyaml>=6
+  - pandas>=2
+  - matplotlib>=3.7
+  - pytorch=2.5
+  - pytorch-cuda=12.4
+  - pytest>=7.4
+  - pip
+  - pip:
+      - -e .

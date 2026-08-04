@@ -1,0 +1,8 @@
+include: recovery_unet.yaml
+name: recovery-cno
+method:
+  name: cno
+  kwargs:
+    in_channels: 1
+    out_channels: 1
+    width: 32

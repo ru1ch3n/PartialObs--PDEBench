@@ -1,0 +1,7 @@
+include: recovery_unet.yaml
+name: inverse-darcy-unet
+task: inverse
+
+data:
+  filters:
+    pde: darcy

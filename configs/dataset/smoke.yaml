@@ -1,0 +1,15 @@
+include: default.yaml
+name: pdeobs-smoke
+seed: 17
+tier: tiny
+resolution: 16
+trajectory_steps: 3
+shard_size: 2
+families: [poisson]
+boundaries: [periodic]
+settings: [smooth_grf]
+regimes: [low]
+observations:
+  train:
+    protocol: random
+    count: 8

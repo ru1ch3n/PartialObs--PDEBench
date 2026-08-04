@@ -1,0 +1,21 @@
+cluster: seawulf
+data_root: ${PDEOBS_DATA}
+run_root: ${PDEOBS_RUNS}
+environment: ${PDEOBS_ENV}
+
+cpu:
+  partition: short-40core-shared
+  cpus: 8
+  memory: 32G
+  time: "04:00:00"
+
+gpu:
+  partition: a100
+  gpus: 1
+  cpus: 8
+  memory: 64G
+  time: "08:00:00"
+
+arrays:
+  generation_concurrency: 4
+  gpu_concurrency: 2

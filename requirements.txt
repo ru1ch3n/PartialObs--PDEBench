@@ -1,6 +1,15 @@
-# Static-site generator dependencies (optional)
-#
-# The website is pre-built under docs/, but contributors can regenerate it
-# with: python scripts/generate_research_site.py
+# Core benchmark runtime
+numpy>=1.24
+scipy>=1.10
+h5py>=3.8
+PyYAML>=6.0
 
+# Reference neural baselines and analysis
+torch>=2.1
+pandas>=2.0
+matplotlib>=3.7
+
+# Tests and the optional static-site generator
+pytest>=7.4
 bibtexparser>=1.4.0
+beautifulsoup4>=4.12

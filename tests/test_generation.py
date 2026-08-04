@@ -1,0 +1,367 @@
+from dataclasses import replace
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from pdeobs.generation import (
+    build_job_grid,
+    generate_job,
+    jobs_from_spec,
+    load_job_manifest,
+    run_generation,
+    select_array_job,
+    write_generation_plan,
+    write_job_manifest,
+)
+from pdeobs.schema import GenerationSpec, Sample
+from pdeobs.storage import (
+    AtomicHDF5ShardWriter,
+    IncompleteShardError,
+    LazyHDF5Dataset,
+    is_shard_complete,
+    read_shard_manifest,
+)
+
+
+def test_job_grid_balances_tiny_tier_and_manifest_round_trip(tmp_path, monkeypatch):
+    jobs = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        families=("poisson",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+    )
+    assert len(jobs) == 3
+    assert sum(job.sample_count for job in jobs) == 5
+    manifest = write_job_manifest(jobs, tmp_path / "jobs.jsonl")
+    assert load_job_manifest(manifest) == jobs
+    monkeypatch.setenv("SLURM_ARRAY_TASK_ID", "2")
+    assert select_array_job(manifest).job_id == jobs[2].job_id
+
+
+def test_job_grid_canonicalizes_setting_aliases_in_ids_and_paths(tmp_path):
+    job = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        families=("poisson",),
+        boundaries=("periodic",),
+        settings=("dipole",),
+        regimes=("low",),
+    )[0]
+    assert job.setting == "dipole_vortex_pair"
+    assert "dipole_vortex_pair" in Path(job.output_path).parts
+    assert "dipole_vortex_pair" in job.case_key.split("/")
+
+
+def test_job_grid_rejects_unregistered_setting_path(tmp_path):
+    with pytest.raises(ValueError, match="unknown setting"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            families=("poisson",),
+            boundaries=("periodic",),
+            settings=("../../escaped",),
+            regimes=("low",),
+        )
+
+
+def test_job_grid_rejects_duplicate_setting_aliases(tmp_path):
+    with pytest.raises(ValueError, match="same canonical setting"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            families=("poisson",),
+            boundaries=("periodic",),
+            settings=("dipole", "dipole_vortex_pair"),
+            regimes=("low",),
+        )
+
+
+@pytest.mark.parametrize(
+    ("key", "values"),
+    (
+        ("families", ("poisson", "poisson")),
+        ("boundaries", ("periodic", "periodic")),
+        ("regimes", ("low", "low")),
+    ),
+)
+def test_job_grid_rejects_duplicate_factors(tmp_path, key, values):
+    kwargs = {
+        "families": ("poisson",),
+        "boundaries": ("periodic",),
+        "settings": ("smooth_grf",),
+        "regimes": ("low",),
+    }
+    kwargs[key] = values
+    with pytest.raises(ValueError, match="duplicate"):
+        build_job_grid(tmp_path, tier="tiny", **kwargs)
+
+
+def test_jobs_from_spec_uses_canonical_setting_path(tmp_path):
+    spec = GenerationSpec(
+        pde="poisson",
+        boundary="periodic",
+        setting="dipole",
+        regime="low",
+        num_samples=1,
+    )
+    job = jobs_from_spec(spec, tmp_path)[0]
+    assert job.setting == "dipole_vortex_pair"
+    assert "dipole_vortex_pair" in Path(job.output_path).parts
+
+
+def test_config_adapters_write_plan_and_produce_json_safe_dry_run(tmp_path):
+    config = {
+        "tier": "tiny",
+        "resolution": 8,
+        "trajectory_steps": 9,
+        "shard_size": 2,
+        "families": ["poisson"],
+        "boundaries": ["periodic"],
+        "settings": ["smooth_grf"],
+        "regimes": ["low"],
+        "output": {"root": str(tmp_path / "configured")},
+    }
+    plan_path = tmp_path / "plan.jsonl"
+    planned = write_generation_plan(config, plan_path)
+    assert len(planned) == 1
+    summary = run_generation(config, tmp_path / "cli-output", plan_path=plan_path, dry_run=True)
+    assert summary["status"] == "dry_run"
+    assert summary["sample_count"] == 2
+    assert Path(summary["jobs"][0]["output_path"]).is_relative_to(tmp_path / "cli-output")
+
+
+def test_plan_rejects_a_different_runtime_code_identity(tmp_path):
+    planned_config = {
+        "tier": "tiny",
+        "families": ["poisson"],
+        "boundaries": ["periodic"],
+        "settings": ["smooth_grf"],
+        "regimes": ["low"],
+        "_provenance": {
+            "config_hash": "config-a",
+            "git": {"commit": "commit-a", "dirty": False, "status": ""},
+        },
+    }
+    plan = tmp_path / "identity.jsonl"
+    write_generation_plan(planned_config, plan)
+    current_config = {
+        **planned_config,
+        "_provenance": {
+            "config_hash": "config-a",
+            "git": {"commit": "commit-b", "dirty": False, "status": ""},
+        },
+    }
+    with pytest.raises(ValueError, match="current checkout"):
+        run_generation(current_config, tmp_path / "output", plan_path=plan, dry_run=True)
+
+
+def test_atomic_writer_resumes_partial_and_lazy_reader(tmp_path):
+    pytest.importorskip("h5py")
+    path = tmp_path / "resume.h5"
+
+    def sample(index):
+        return Sample(
+            np.full((6, 5), index, dtype=np.float32),
+            np.full((1, 6, 5), index + 1, dtype=np.float32),
+            np.zeros((6, 5), dtype=np.float32),
+            {"index": index},
+        )
+
+    first = AtomicHDF5ShardWriter(path, expected_count=2, spec={"case": "test"})
+    first.append(sample(0))
+    first.close()
+    resumed = AtomicHDF5ShardWriter(path, expected_count=2, spec={"case": "test"})
+    assert resumed.count == 1
+    resumed.append(sample(1))
+    resumed.finalize()
+
+    assert is_shard_complete(path, expected_count=2)
+    assert path.with_suffix(".manifest.json").exists()
+    assert path.with_suffix(".metadata.csv").exists()
+    assert path.with_suffix(".metadata.json").exists()
+    with LazyHDF5Dataset(path, verify=True) as dataset:
+        assert len(dataset) == 2
+        assert dataset[1].metadata["index"] == 1
+        assert dataset[1].trajectory.shape == (1, 6, 5, 1)
+
+
+def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp_path):
+    pytest.importorskip("h5py")
+
+    def sample(index):
+        return Sample(
+            np.full((6, 5), index, dtype=np.float32),
+            np.full((1, 6, 5), index + 1, dtype=np.float32),
+            np.zeros((6, 5), dtype=np.float32),
+            {"index": index},
+        )
+
+    completed_path = tmp_path / "completed.h5"
+    original_spec = {
+        "seed": 1,
+        "options": {"modes": [4, 8]},
+        "output_path": "/scratch/first/shard.h5",
+        "job_id": "first-audit-id",
+        "provenance": {
+            "captured_at_utc": "2026-01-01T00:00:00+00:00",
+            "config_hash": "config-a",
+            "git": {"commit": "commit-a", "dirty": False, "status": ""},
+            "runtime": {
+                "executable": "/first/python",
+                "hostname": "node-a",
+                "python": "3.12.1",
+            },
+            "slurm": {"SLURM_JOB_ID": "101"},
+        },
+    }
+    with AtomicHDF5ShardWriter(completed_path, expected_count=1, spec=original_spec) as writer:
+        writer.append(sample(0))
+
+    reordered_spec = {
+        "provenance": {
+            "captured_at_utc": "2026-01-02T00:00:00+00:00",
+            "config_hash": "config-a",
+            "git": {"commit": "commit-a", "dirty": False, "status": ""},
+            "runtime": {
+                "executable": "/second/python",
+                "hostname": "node-b",
+                "python": "3.12.1",
+            },
+            "slurm": {"SLURM_JOB_ID": "202"},
+        },
+        "job_id": "second-audit-id",
+        "output_path": "/scratch/second/shard.h5",
+        "options": {"modes": [4, 8]},
+        "seed": 1,
+    }
+    matching = AtomicHDF5ShardWriter(completed_path, expected_count=1, spec=reordered_spec)
+    assert matching.completed
+    with pytest.raises(IncompleteShardError, match="different job spec"):
+        AtomicHDF5ShardWriter(
+            completed_path,
+            expected_count=1,
+            spec={**reordered_spec, "seed": 2},
+        )
+    changed_commit = {
+        **reordered_spec,
+        "provenance": {
+            **reordered_spec["provenance"],
+            "git": {"commit": "commit-b", "dirty": False, "status": ""},
+        },
+    }
+    with pytest.raises(IncompleteShardError, match="different job spec"):
+        AtomicHDF5ShardWriter(
+            completed_path,
+            expected_count=1,
+            spec=changed_commit,
+        )
+    changed_config = {
+        **reordered_spec,
+        "provenance": {**reordered_spec["provenance"], "config_hash": "config-b"},
+    }
+    with pytest.raises(IncompleteShardError, match="different job spec"):
+        AtomicHDF5ShardWriter(
+            completed_path,
+            expected_count=1,
+            spec=changed_config,
+        )
+
+    partial_path = tmp_path / "partial.h5"
+    partial = AtomicHDF5ShardWriter(partial_path, expected_count=2, spec=original_spec)
+    partial.append(sample(0))
+    partial.close()
+    resumed = AtomicHDF5ShardWriter(partial_path, expected_count=2, spec=reordered_spec)
+    assert resumed.count == 1
+    resumed.append(sample(1))
+    resumed.finalize()
+    assert read_shard_manifest(partial_path)["spec"] == original_spec
+
+    mismatched_partial_path = tmp_path / "mismatched-partial.h5"
+    mismatched = AtomicHDF5ShardWriter(
+        mismatched_partial_path, expected_count=2, spec=original_spec
+    )
+    mismatched.append(sample(0))
+    mismatched.close()
+    with pytest.raises(IncompleteShardError, match="different job spec"):
+        AtomicHDF5ShardWriter(
+            mismatched_partial_path,
+            expected_count=2,
+            spec={**reordered_spec, "seed": 2},
+        )
+
+
+def test_generate_job_skips_identical_content_with_fresh_provenance(tmp_path):
+    pytest.importorskip("h5py")
+    job = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        families=("poisson",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+        provenance={
+            "captured_at_utc": "2026-01-01T00:00:00+00:00",
+            "config_hash": "config-a",
+            "git": {"commit": "commit-a", "dirty": False, "status": ""},
+            "runtime": {
+                "executable": "/login/python",
+                "hostname": "login-a",
+                "python": "3.12.1",
+            },
+            "slurm": {"SLURM_JOB_ID": "101"},
+        },
+    )[0]
+    first = generate_job(job)
+    rerun = generate_job(
+        replace(
+            job,
+            provenance={
+                "captured_at_utc": "2026-01-02T00:00:00+00:00",
+                "config_hash": "config-a",
+                "git": {"commit": "commit-a", "dirty": False, "status": ""},
+                "runtime": {
+                    "executable": "/compute/python",
+                    "hostname": "compute-b",
+                    "python": "3.12.1",
+                },
+                "slurm": {"SLURM_JOB_ID": "202"},
+            },
+        )
+    )
+    assert not first.skipped
+    assert rerun.skipped
+    assert rerun.sha256 == first.sha256
+
+
+def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
+    pytest.importorskip("h5py")
+    job = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        families=("heat",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+        seed=19,
+    )[0]
+    first = generate_job(job)
+    second = generate_job(job)
+    assert not first.skipped
+    assert second.skipped
+    assert first.sha256 == second.sha256
+    with LazyHDF5Dataset(job.output_path) as dataset:
+        assert len(dataset) == 2
+        assert dataset[0].trajectory.shape == (9, 8, 8, 1)
+        metadata = dataset[0].metadata
+        assert metadata["sample_id"].startswith("seed-19/")
+        assert metadata["boundary_ood"] is False
+        assert metadata["parameter_ood"] is False
+        assert metadata["solver_fidelity"] == "compact_reference"
