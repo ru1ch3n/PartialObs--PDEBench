@@ -104,8 +104,13 @@ install a validated solver plugin at the same registered family names.
 ## Train and evaluate a recovery baseline
 
 ```bash
+# Generate the focused 34-sample signal-tier case. Unlike the five-sample
+# tiny tier, this seed contains train, validation, and test rows for low regime.
+pdeobs generate --config configs/dataset/recovery_signal.yaml \
+  --output datasets/signal
+
 pdeobs train --config configs/experiment/recovery_unet.yaml \
-  --set data.root=datasets/tiny \
+  --set data.root=datasets/signal \
   --set training.epochs=2
 
 pdeobs eval --config configs/experiment/recovery_unet.yaml \
@@ -118,6 +123,14 @@ pdeobs infer --config configs/experiment/recovery_unet.yaml \
 
 Prediction files are appended batch by batch and atomically published as HDF5,
 so full-tier inference does not retain the complete result in memory.
+
+The default heat-rollout experiment uses the same strict signal-tier policy:
+
+```bash
+pdeobs generate --config configs/dataset/rollout_signal.yaml \
+  --output datasets/signal
+pdeobs train --config configs/experiment/rollout_fno.yaml
+```
 
 Every run records the fully resolved configuration, Git revision, dependency
 versions, seed, host, and Slurm identifiers. The compact neural models here are
@@ -146,7 +159,7 @@ pdeobs doctor       verify a local or SeaWulf environment
 pdeobs list         discover registered components
 pdeobs plan         write explicit generation jobs for a Slurm array
 pdeobs generate     produce one job, a plan, or a local tier
-pdeobs download     fetch a published tier with SHA-256 verification
+pdeobs download     fetch a tier from an explicit release manifest
 pdeobs train        fit a configured method with resumable checkpoints
 pdeobs infer        write predictions from a checkpoint
 pdeobs eval         calculate benchmark metrics and OOD breakdowns
@@ -198,6 +211,11 @@ data/curations/      curated research-map records
 Git contains code, configurations, small fixtures, manifests, and checksums.
 Generated datasets, model weights, run directories, environments, and container
 images are intentionally ignored.
+
+No convergence-validated dataset release is published yet. Consequently,
+`pdeobs download` intentionally requires an explicit `--manifest` URL or path;
+the project will not silently point users at a nonexistent or unvalidated
+“latest” release.
 
 ## Research website
 

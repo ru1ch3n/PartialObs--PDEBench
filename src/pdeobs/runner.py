@@ -16,6 +16,49 @@ from .config import config_hash, load_config, save_resolved_config
 from .dataset import BenchmarkDataset, collate_benchmark, find_shards
 from .provenance import write_provenance
 
+_FACTOR_FIELDS = ("pde", "boundary", "setting", "regime")
+
+
+def _positive_horizons(value: Any, *, name: str) -> tuple[int, ...]:
+    """Normalize one horizon scalar/sequence and reject ambiguous empty values."""
+
+    values = (value,) if isinstance(value, (int, np.integer)) else tuple(value)
+    horizons = tuple(sorted({int(item) for item in values}))
+    if not horizons or horizons[0] < 1:
+        raise ValueError(f"{name} must contain positive integers")
+    return horizons
+
+
+def _evaluation_horizons(config: Mapping[str, Any]) -> tuple[int, ...]:
+    """Return horizons reported at evaluation, independently of training."""
+
+    data = config.get("data", {})
+    evaluation = config.get("evaluation", {})
+    value = evaluation.get(
+        "horizons",
+        data.get(
+            "evaluation_horizons", data.get("rollout_horizons", data.get("horizon", (1, 2, 4, 8)))
+        ),
+    )
+    return _positive_horizons(value, name="evaluation horizons")
+
+
+def _training_horizons(config: Mapping[str, Any]) -> tuple[int, ...]:
+    """Return rollout horizons visible to optimization.
+
+    Legacy ``data.rollout_horizons`` is now treated as an evaluation schedule.
+    When a rollout config does not explicitly name its training schedule, the
+    official short-horizon protocol uses the available horizons up to two.
+    """
+
+    data = config.get("data", {})
+    value = data.get("training_horizons", data.get("training_horizon"))
+    if value is None:
+        evaluation = _evaluation_horizons(config)
+        short = tuple(horizon for horizon in evaluation if horizon <= 2)
+        return short or (evaluation[0],)
+    return _positive_horizons(value, name="training horizons")
+
 
 def _run_directory(config: Mapping[str, Any], output: str | Path | None) -> Path:
     if output is not None:
@@ -60,6 +103,15 @@ def _data_settings(config: Mapping[str, Any]) -> tuple[list[Path], dict[str, Any
     return shards, data
 
 
+def _allow_split_fallback(config: Mapping[str, Any]) -> bool:
+    """Return the explicit small-data escape hatch for missing official splits."""
+
+    value = config.get("data", {}).get("allow_split_fallback", False)
+    if not isinstance(value, bool):
+        raise ValueError("data.allow_split_fallback must be true or false")
+    return value
+
+
 def _dataset(
     config: Mapping[str, Any],
     subset: str | None,
@@ -68,6 +120,7 @@ def _dataset(
     ood_view: str | None = None,
     ood_membership: bool | None = None,
     mask_override: Mapping[str, Any] | None = None,
+    rollout_horizon: int | None = None,
 ) -> BenchmarkDataset | None:
     shards, data = _data_settings(config)
     task = str(config.get("task", "recovery"))
@@ -89,8 +142,15 @@ def _dataset(
         )
     mask = dict(mask_override or data.get("mask", {}))
     target_step = int(data.get("target_step", data.get("target_time", -1)))
-    horizons = data.get("rollout_horizons", [data.get("horizon", 8)])
-    horizon = max(int(item) for item in horizons)
+    if task == "rollout":
+        if rollout_horizon is not None:
+            horizon = _positive_horizons(rollout_horizon, name="rollout horizon override")[-1]
+        elif subset in {"train", "validation"}:
+            horizon = _training_horizons(config)[-1]
+        else:
+            horizon = _evaluation_horizons(config)[-1]
+    else:
+        horizon = int(data.get("horizon", 8))
     history_steps = int(data.get("input_horizon", data.get("history_steps", 1)))
     options = dict(
         task=task,
@@ -158,6 +218,61 @@ def _loader(dataset: BenchmarkDataset, config: Mapping[str, Any], *, shuffle: bo
     )
 
 
+def _dataset_context(dataset: BenchmarkDataset) -> dict[str, Any]:
+    """Summarize immutable factor values represented by an evaluated dataset."""
+
+    context: dict[str, Any] = {}
+    for field in _FACTOR_FIELDS:
+        values = sorted(
+            {
+                str(metadata[field])
+                for metadata in dataset.metadata
+                if metadata.get(field) is not None
+            }
+        )
+        if len(values) == 1:
+            context[field] = values[0]
+        elif values:
+            context[f"{field}_values"] = values
+    return context
+
+
+def _evaluation_context(
+    config: Mapping[str, Any],
+    dataset: BenchmarkDataset,
+    **values: Any,
+) -> dict[str, Any]:
+    context = {"config_hash": config_hash(config), **_dataset_context(dataset)}
+    context.update(values)
+    return context
+
+
+def _mask_context(mask: Mapping[str, Any], dataset: BenchmarkDataset) -> dict[str, Any]:
+    protocol = str(mask.get("protocol", "random_3pct"))
+    context: dict[str, Any] = {"mask_protocol": protocol}
+    if mask.get("ratio") is not None:
+        context["observation_ratio"] = float(mask["ratio"])
+    elif protocol in {
+        "random_1pct",
+        "random_3pct",
+        "random_5pct",
+        "random_10pct",
+    }:
+        context["observation_ratio"] = {
+            "random_1pct": 0.01,
+            "random_3pct": 0.03,
+            "random_5pct": 0.05,
+            "random_10pct": 0.10,
+        }[protocol]
+    elif mask.get("count") is not None and dataset.metadata:
+        resolution = dataset.metadata[0].get("resolution")
+        if isinstance(resolution, (list, tuple)) and len(resolution) == 2:
+            total = int(resolution[0]) * int(resolution[1])
+            if total > 0:
+                context["observation_ratio"] = float(mask["count"]) / total
+    return context
+
+
 def _training_config(config: Mapping[str, Any], run_dir: Path, resume: Path | None) -> Any:
     from .training import TrainingConfig
 
@@ -170,9 +285,8 @@ def _training_config(config: Mapping[str, Any], run_dir: Path, resume: Path | No
     values.setdefault("seed", config.get("seed", 0))
     data = config.get("data", {})
     values.setdefault("target_step", data.get("target_step", data.get("target_time", -1)))
-    horizons = data.get("rollout_horizons")
-    if horizons:
-        values.setdefault("horizon", max(int(item) for item in horizons))
+    if str(config.get("task", "recovery")) == "rollout":
+        values.setdefault("horizon", _training_horizons(config)[-1])
     values.setdefault("history_steps", data.get("input_horizon", data.get("history_steps", 1)))
     if str(config.get("task", "recovery")) == "rollout":
         values.setdefault("rollout_target_offset", 0)
@@ -198,10 +312,10 @@ def _evaluation_config(
     values.setdefault("task", config.get("task", "recovery"))
     data = config.get("data", {})
     values.setdefault("target_step", data.get("target_step", data.get("target_time", -1)))
-    horizons = data.get("rollout_horizons")
-    if horizons:
-        values.setdefault("horizons", tuple(int(item) for item in horizons))
-        values.setdefault("horizon", max(int(item) for item in horizons))
+    if str(config.get("task", "recovery")) == "rollout":
+        horizons = _evaluation_horizons(config)
+        values.setdefault("horizons", horizons)
+        values.setdefault("horizon", horizons[-1])
     values.setdefault("history_steps", data.get("input_horizon", data.get("history_steps", 1)))
     if str(config.get("task", "recovery")) == "rollout":
         values.setdefault("rollout_target_offset", 0)
@@ -258,7 +372,11 @@ def run_train(
         return {"run_dir": str(run_dir), "config_hash": config_hash(config), "dry_run": True}
     from .training import Trainer
 
-    train_data = _dataset(config, "train", fallback_unfiltered=True)
+    train_data = _dataset(
+        config,
+        "train",
+        fallback_unfiltered=_allow_split_fallback(config),
+    )
     assert train_data is not None
     validation_data = _dataset(config, "validation")
     model = _method(config)
@@ -298,7 +416,11 @@ def run_infer(
         return {"output": str(output_path), "dry_run": True}
     from .evaluation import evaluate_model
 
-    dataset = _dataset(config, "test", fallback_unfiltered=True)
+    dataset = _dataset(
+        config,
+        "test",
+        fallback_unfiltered=_allow_split_fallback(config),
+    )
     assert dataset is not None
     model = _method(config)
     _load_checkpoint(model, checkpoint)
@@ -307,10 +429,11 @@ def run_infer(
         model,
         _loader(dataset, config, shuffle=False),
         config=evaluation,
-        context={
-            "config_hash": config_hash(config),
-            "split": "test" if dataset.effective_split == "test" else "all_fallback",
-        },
+        context=_evaluation_context(
+            config,
+            dataset,
+            split="test" if dataset.effective_split == "test" else "all_fallback",
+        ),
     )
     return {
         "output": str(output_path),
@@ -336,24 +459,68 @@ def run_evaluate(
     write_provenance(report.parent / "evaluation.provenance.json", config=config)
     if dry_run:
         return {"output": str(report), "dry_run": True}
-    from .evaluation import evaluate_model, evaluate_ood, ood_metric_degradation
+    from .evaluation import evaluate_model, ood_metric_degradation
+    from .splits import time_horizon_ood_split
 
     model = _method(config)
     _load_checkpoint(model, checkpoint)
     evaluation = _evaluation_config(config, report_path=report)
-    views = tuple(str(view) for view in evaluation.ood_views)
+    aliases = {
+        "boundary_ood": "boundary",
+        "setting_ood": "setting",
+        "parameter_ood": "parameter",
+        "combination_ood": "combination",
+        "horizon": "time_horizon",
+        "horizon_ood": "time_horizon",
+        "time_horizon_ood": "time_horizon",
+    }
+    views = tuple(
+        dict.fromkeys(
+            aliases.get(
+                str(view).lower().replace("-", "_"),
+                str(view).lower().replace("-", "_"),
+            )
+            for view in evaluation.ood_views
+        )
+    )
+    valid_views = {"boundary", "setting", "parameter", "combination", "time_horizon"}
+    invalid_views = set(views) - valid_views
+    if invalid_views:
+        raise ValueError(f"Unknown evaluation OOD views: {sorted(invalid_views)}")
+    if not views:
+        configured_view = str(config.get("data", {}).get("ood_view", "iid"))
+        if configured_view in valid_views - {"time_horizon"}:
+            views = (configured_view,)
+    configured_factor_view = str(config.get("data", {}).get("ood_view", "iid"))
+    factor_iid_view = (
+        configured_factor_view
+        if configured_factor_view in valid_views - {"time_horizon"}
+        else "iid"
+    )
+    factor_iid_context = (
+        {"factor_ood_view": factor_iid_view, "factor_is_ood": False}
+        if factor_iid_view != "iid"
+        else {}
+    )
     mask_protocols = tuple(str(protocol) for protocol in evaluation.mask_protocols)
     if not views and not mask_protocols:
-        dataset = _dataset(config, "test", fallback_unfiltered=True)
+        dataset = _dataset(
+            config,
+            "test",
+            fallback_unfiltered=_allow_split_fallback(config),
+        )
         assert dataset is not None
+        training_mask = dict(config.get("data", {}).get("mask", {"protocol": "random_3pct"}))
         return evaluate_model(
             model,
             _loader(dataset, config, shuffle=False),
             config=evaluation,
-            context={
-                "config_hash": config_hash(config),
-                "split": "test" if dataset.effective_split == "test" else "all_fallback",
-            },
+            context=_evaluation_context(
+                config,
+                dataset,
+                split="test" if dataset.effective_split == "test" else "all_fallback",
+                **_mask_context(training_mask, dataset),
+            ),
         )
 
     child_evaluation = replace(
@@ -370,36 +537,158 @@ def run_evaluate(
         "ood": {},
         "mask_ood": {},
     }
-    for view in views:
+    training_mask = dict(config.get("data", {}).get("mask", {"protocol": "random_3pct"}))
+    for view in (view for view in views if view != "time_horizon"):
         iid_data = _dataset(config, "test", ood_view=view, ood_membership=False)
         ood_data = _dataset(config, "test", ood_view=view, ood_membership=True)
         assert iid_data is not None and ood_data is not None
-        result["ood"][view] = evaluate_ood(
+        iid = evaluate_model(
             model,
             _loader(iid_data, config, shuffle=False),
+            config=child_evaluation,
+            context=_evaluation_context(
+                config,
+                iid_data,
+                split="iid",
+                ood_view=view,
+                is_ood=False,
+                **_mask_context(training_mask, iid_data),
+            ),
+        )
+        ood = evaluate_model(
+            model,
             _loader(ood_data, config, shuffle=False),
             config=child_evaluation,
+            context=_evaluation_context(
+                config,
+                ood_data,
+                split="ood",
+                ood_view=view,
+                is_ood=True,
+                **_mask_context(training_mask, ood_data),
+            ),
         )
+        result["ood"][view] = {
+            "iid": iid,
+            "ood": ood,
+            "degradation": ood_metric_degradation(iid["metrics"], ood["metrics"]),
+        }
+
+    if "time_horizon" in views:
+        training_horizons = _training_horizons(config)
+        evaluation_horizons = _evaluation_horizons(config)
+        requested_horizons = tuple(sorted(set(training_horizons) | set(evaluation_horizons)))
+        horizon_data = _dataset(
+            config,
+            "test",
+            fallback_unfiltered=_allow_split_fallback(config),
+            ood_view=factor_iid_view,
+            ood_membership=False if factor_iid_view != "iid" else None,
+            rollout_horizon=requested_horizons[-1],
+        )
+        assert horizon_data is not None
+        horizon_results: dict[int, dict[str, Any]] = {}
+        for horizon in requested_horizons:
+            horizon_evaluation = replace(
+                child_evaluation,
+                horizon=horizon,
+                horizons=(horizon,),
+            )
+            membership = time_horizon_ood_split(horizon, training_horizons=training_horizons)
+            horizon_result = evaluate_model(
+                model,
+                _loader(horizon_data, config, shuffle=False),
+                config=horizon_evaluation,
+                context=_evaluation_context(
+                    config,
+                    horizon_data,
+                    split="iid" if membership == "train" else "ood",
+                    ood_view="time_horizon",
+                    is_ood=membership != "train",
+                    rollout_horizon=horizon,
+                    **factor_iid_context,
+                    **_mask_context(training_mask, horizon_data),
+                ),
+            )
+            for metric in ("rel_l2", "mse"):
+                endpoint = f"{metric}_h{horizon}"
+                if endpoint not in horizon_result["metrics"]:
+                    raise ValueError(
+                        f"trajectory is too short to evaluate requested horizon {horizon}"
+                    )
+                horizon_result["metrics"][f"{metric}_at_horizon"] = horizon_result["metrics"][
+                    endpoint
+                ]
+            horizon_results[horizon] = horizon_result
+
+        reference_horizon = training_horizons[-1]
+        reference = horizon_results[reference_horizon]
+        horizon_summary: dict[str, Any] = {
+            "training_horizons": list(training_horizons),
+            "evaluation_horizons": list(evaluation_horizons),
+            "reference_horizon": reference_horizon,
+            "iid": {},
+            "ood": {},
+        }
+        for horizon, horizon_result in horizon_results.items():
+            if horizon in training_horizons:
+                horizon_summary["iid"][str(horizon)] = horizon_result
+            else:
+                horizon_summary["ood"][str(horizon)] = {
+                    "result": horizon_result,
+                    "degradation": ood_metric_degradation(
+                        reference["metrics"], horizon_result["metrics"]
+                    ),
+                }
+        result["ood"]["time_horizon"] = horizon_summary
 
     if mask_protocols:
-        training_mask = dict(config.get("data", {}).get("mask", {"protocol": "random_3pct"}))
-        iid_data = _dataset(config, "test", mask_override=training_mask)
+        iid_data = _dataset(
+            config,
+            "test",
+            ood_view=factor_iid_view,
+            ood_membership=False if factor_iid_view != "iid" else None,
+            mask_override=training_mask,
+        )
         assert iid_data is not None
         iid = evaluate_model(
             model,
             _loader(iid_data, config, shuffle=False),
             config=child_evaluation,
-            context={"mask": training_mask.get("protocol", "random_3pct")},
+            context=_evaluation_context(
+                config,
+                iid_data,
+                split="iid",
+                ood_view="mask",
+                is_ood=False,
+                **factor_iid_context,
+                **_mask_context(training_mask, iid_data),
+            ),
         )
         result["mask_ood"]["iid"] = iid
         for protocol in mask_protocols:
-            ood_data = _dataset(config, "test", mask_override={"protocol": protocol})
+            mask = {"protocol": protocol}
+            ood_data = _dataset(
+                config,
+                "test",
+                ood_view=factor_iid_view,
+                ood_membership=False if factor_iid_view != "iid" else None,
+                mask_override=mask,
+            )
             assert ood_data is not None
             ood = evaluate_model(
                 model,
                 _loader(ood_data, config, shuffle=False),
                 config=child_evaluation,
-                context={"mask": protocol},
+                context=_evaluation_context(
+                    config,
+                    ood_data,
+                    split="ood",
+                    ood_view="mask",
+                    is_ood=True,
+                    **factor_iid_context,
+                    **_mask_context(mask, ood_data),
+                ),
             )
             result["mask_ood"][protocol] = {
                 "result": ood,
@@ -411,6 +700,134 @@ def run_evaluate(
         encoding="utf-8",
     )
     return result
+
+
+def _configured_factor_context(config: Mapping[str, Any]) -> dict[str, Any]:
+    filters = config.get("data", {}).get("filters", {})
+    context: dict[str, Any] = {}
+    if isinstance(filters, Mapping):
+        for field in _FACTOR_FIELDS:
+            value = filters.get(field)
+            if isinstance(value, (str, int, float)) and not isinstance(value, bool):
+                context[field] = value
+    return context
+
+
+def _metric_record(
+    result: Mapping[str, Any],
+    *,
+    base: Mapping[str, Any],
+    **dimensions: Any,
+) -> dict[str, Any] | None:
+    metrics = result.get("metrics")
+    if not isinstance(metrics, Mapping):
+        return None
+    record = dict(base)
+    for key, value in result.items():
+        if key in {"metrics", "evaluation_config"} or isinstance(value, Mapping):
+            continue
+        record[key] = value
+    record.update(dimensions)
+    record["metrics"] = dict(metrics)
+    return record
+
+
+def _evaluation_metric_records(
+    evaluation: Mapping[str, Any],
+    *,
+    experiment_index: int,
+    experiment_config: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Flatten every IID/OOD result into analyzer- and leaderboard-ready rows."""
+
+    base = {
+        "experiment_index": experiment_index,
+        "experiment": str(experiment_config.get("name", f"run-{experiment_index:03d}")),
+        **_configured_factor_context(experiment_config),
+    }
+    records: list[dict[str, Any]] = []
+    direct = _metric_record(evaluation, base=base)
+    if direct is not None:
+        records.append(direct)
+
+    ood_results = evaluation.get("ood", {})
+    if isinstance(ood_results, Mapping):
+        for view in sorted(ood_results):
+            payload = ood_results[view]
+            if not isinstance(payload, Mapping):
+                continue
+            if view == "time_horizon":
+                iid = payload.get("iid", {})
+                if isinstance(iid, Mapping):
+                    for horizon, value in sorted(iid.items(), key=lambda item: int(item[0])):
+                        if isinstance(value, Mapping):
+                            row = _metric_record(
+                                value,
+                                base=base,
+                                split="iid",
+                                ood_view=view,
+                                is_ood=False,
+                                rollout_horizon=int(horizon),
+                            )
+                            if row is not None:
+                                records.append(row)
+                ood = payload.get("ood", {})
+                if isinstance(ood, Mapping):
+                    for horizon, value in sorted(ood.items(), key=lambda item: int(item[0])):
+                        nested = value.get("result") if isinstance(value, Mapping) else None
+                        if isinstance(nested, Mapping):
+                            row = _metric_record(
+                                nested,
+                                base=base,
+                                split="ood",
+                                ood_view=view,
+                                is_ood=True,
+                                rollout_horizon=int(horizon),
+                            )
+                            if row is not None:
+                                records.append(row)
+                continue
+            for split, is_ood in (("iid", False), ("ood", True)):
+                value = payload.get(split)
+                if isinstance(value, Mapping):
+                    row = _metric_record(
+                        value,
+                        base=base,
+                        split=split,
+                        ood_view=view,
+                        is_ood=is_ood,
+                    )
+                    if row is not None:
+                        records.append(row)
+
+    mask_results = evaluation.get("mask_ood", {})
+    if isinstance(mask_results, Mapping):
+        iid = mask_results.get("iid")
+        if isinstance(iid, Mapping):
+            row = _metric_record(
+                iid,
+                base=base,
+                split="iid",
+                ood_view="mask",
+                is_ood=False,
+            )
+            if row is not None:
+                records.append(row)
+        for protocol in sorted(key for key in mask_results if key != "iid"):
+            value = mask_results[protocol]
+            nested = value.get("result") if isinstance(value, Mapping) else None
+            if isinstance(nested, Mapping):
+                row = _metric_record(
+                    nested,
+                    base=base,
+                    split="ood",
+                    ood_view="mask",
+                    is_ood=True,
+                    mask_protocol=protocol,
+                )
+                if row is not None:
+                    records.append(row)
+    return records
 
 
 def run_benchmark(
@@ -446,6 +863,7 @@ def run_benchmark(
             raise ValueError("benchmark experiment mode must be train, eval, or train_eval")
         run_output = root / f"run-{index:03d}"
         experiment_overrides = list(experiment.get("set", []))
+        experiment_config = load_config(experiment_path, experiment_overrides)
         trained = None
         evaluation = None
         if mode in {"train", "train_eval"}:
@@ -466,8 +884,13 @@ def run_benchmark(
                 output=run_output / "metrics.json",
                 checkpoint=selected_checkpoint,
             )
-            if "metrics" in evaluation:
-                metric_records.append(evaluation)
+            metric_records.extend(
+                _evaluation_metric_records(
+                    evaluation,
+                    experiment_index=index,
+                    experiment_config=experiment_config,
+                )
+            )
         result = {
             "index": index,
             "mode": mode,
@@ -476,10 +899,15 @@ def run_benchmark(
             "evaluation": evaluation,
         }
         results.append(result)
+    from .reports import aggregate_records, flatten_record, write_csv_report, write_json_report
+
+    analysis_json = root / "analysis_records.json"
+    analysis_csv = root / "analysis_records.csv"
+    write_json_report(metric_records, analysis_json)
+    write_csv_report([flatten_record(record) for record in metric_records], analysis_csv)
+
     leaderboard = []
     if metric_records:
-        from .reports import aggregate_records, flatten_record, write_csv_report, write_json_report
-
         metric_names = sorted(
             {
                 key
@@ -488,13 +916,33 @@ def run_benchmark(
                 if key.startswith("metrics.")
             }
         )
-        leaderboard = aggregate_records(metric_records, metrics=metric_names)
+        leaderboard = aggregate_records(
+            metric_records,
+            group_by=(
+                "method",
+                "task",
+                "pde",
+                "boundary",
+                "setting",
+                "regime",
+                "ood_view",
+                "split",
+                "mask_protocol",
+                "rollout_horizon",
+            ),
+            metrics=metric_names,
+        )
         write_json_report(leaderboard, root / "leaderboard.json")
         write_csv_report(leaderboard, root / "leaderboard.csv")
     summary = {
         "benchmark_dir": str(root),
         "runs": results,
         "leaderboard": leaderboard,
+        "analysis_records": {
+            "count": len(metric_records),
+            "json": str(analysis_json),
+            "csv": str(analysis_csv),
+        },
         "dry_run": dry_run,
     }
     (root / "benchmark.json").write_text(

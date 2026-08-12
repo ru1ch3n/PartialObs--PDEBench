@@ -21,15 +21,16 @@ the revision recorded at submission.
 ## 2. Choose persistent and scratch locations
 
 ```bash
-export PDEOBS_ENV=/gpfs/projects/<group>/envs/pdeobs
+PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
+export PDEOBS_ENV="/gpfs/projects/<group>/envs/pdeobs-${PDEOBS_COMMIT}"
 export PDEOBS_DATA=/gpfs/scratch/$USER/pdeobs/data
 export PDEOBS_RUNS=/gpfs/scratch/$USER/pdeobs/runs
-export PDEOBS_ARTIFACTS=/gpfs/projects/<group>/pdeobs/artifacts
 ```
 
-Keep the environment and irreplaceable results in project space. Scratch is
-appropriate for regenerable shards and temporary runs but is not a release
-archive.
+SeaWulf scratch is temporary, is not backed up, and is subject to a 45-day
+purge. Project space lasts for the project and is appropriate for a shared
+environment or curated copy, but it is not backed up either. Keep at least one
+verified copy of irreplaceable results in an independent off-cluster archive.
 
 ## 3. Build once in a compute allocation
 
@@ -40,15 +41,21 @@ bash hpc/seawulf/bootstrap.sh
 "$PDEOBS_ENV/bin/python" -m pdeobs doctor --cluster seawulf --offline
 ```
 
-`environment.yml` pins the reference PyTorch 2.5 / CUDA 12.4 environment. Set
+The bootstrap builds a wheel from the checked-out commit and installs it
+non-editably. It records that commit inside `$PDEOBS_ENV`; every job refuses to
+run when the environment and checkout revisions differ. Use a commit-specific
+environment path as above, or rerun the bootstrap after changing revisions.
+
+`environment.yml` selects the reference PyTorch 2.5 / CUDA 12.4 environment. Set
 `PDEOBS_CUDA_MODULE` if the selected SeaWulf architecture requires an explicit
 CUDA module, and confirm the available module/driver combination before setup.
 For a GPU preflight, set `PDEOBS_REQUIRE_GPU=1` inside a GPU allocation; the GPU
 job scripts also stop immediately if PyTorch cannot see CUDA.
 
 If compute nodes cannot access package servers, populate a compatible
-wheelhouse in advance and set `PDEOBS_WHEELHOUSE` before running the bootstrap
-script.
+wheelhouse, including `setuptools` and `wheel`, and set `PDEOBS_WHEELHOUSE`
+before running the bootstrap script. For an archival campaign, also save an
+exact environment export beside its plan and validation report.
 
 ## 4. Run a single smoke task
 
@@ -84,10 +91,11 @@ bash hpc/seawulf/submit_generation.sh \
 ```
 
 Each array element writes an independent shard. Array tasks never append to a
-shared HDF5 or CSV file. After all tasks succeed, submit the aggregate/validate
-step with a Slurm `afterok` dependency.
+shared HDF5 or CSV file. A per-shard ownership lock rejects accidentally
+overlapping submissions.
 
-The checked-in plan has 840 independent regime-node jobs. SeaWulf may limit a
+The plan produced from `configs/dataset/default.yaml` has 840 independent
+regime-node jobs. SeaWulf may limit a
 user to 100 queued jobs, and an array's pending elements can count toward that
 limit. `submit_generation.sh` therefore accepts an inclusive `START STOP`
 window and refuses windows larger than `PDEOBS_MAX_QUEUED_TASKS` (default 100).
@@ -102,23 +110,40 @@ additional scratch space for partial shards, logs, metadata, and any curated
 copy to project storage; generate `tiny` first and measure its realized size
 before reserving space for `full`.
 
+After every array window succeeds, strictly validate the exact plan before
+training:
+
+```bash
+aggregation_job="$(sbatch --parsable hpc/seawulf/aggregate_cpu.sbatch \
+  "$PDEOBS_DATA/tiny" \
+  "$PDEOBS_DATA/tiny/summary.json" \
+  "$PDEOBS_DATA/plans/tiny.jsonl")"
+```
+
+The aggregate job verifies completion records, checksums, sample identities,
+and exact plan coverage. It is a storage/provenance gate, not a substitute for
+the numerical validation required for paper data.
+
 ## 6. Train and evaluate
 
 ```bash
 mkdir -p logs
-sbatch hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet.yaml
+sbatch --dependency="afterok:${aggregation_job}" \
+  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet.yaml
 sbatch hpc/seawulf/evaluate_gpu.sbatch \
   configs/experiment/recovery_unet.yaml /path/to/checkpoint.pt
 ```
 
 The default A100 scripts request one GPU, eight CPU cores, 64 GB memory, and
 eight hours. Change resources at submission time when measurements justify it;
-variables are not expanded in `#SBATCH` headers.
+variables are not expanded in `#SBATCH` headers. The trainer writes resumable
+checkpoints; if a run reaches the time limit, resubmit with
+`--resume /path/to/checkpoints/last.pt`.
 
 Official references:
 
 - [SeaWulf usage guidance](https://rci.stonybrook.edu/HPC/about/guidance)
 - [queues](https://rci.stonybrook.edu/HPC/docs/architecture/queues-table)
 - [Slurm jobs](https://rci.stonybrook.edu/HPC/docs/jobs/slurm-overview)
-- [storage](https://rci.stonybrook.edu/hpc/faqs/requesting-storage-on-seawulf)
+- [storage and retention](https://rci.stonybrook.edu/HPC/docs/storage/layout)
 - [Conda environments](https://rci.stonybrook.edu/HPC/docs/software/conda)

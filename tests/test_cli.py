@@ -5,7 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pdeobs.cli import main
+import pytest
+
+from pdeobs.cli import build_parser, main
 
 
 def test_cli_lists_components(capsys) -> None:
@@ -13,6 +15,12 @@ def test_cli_lists_components(capsys) -> None:
     output = capsys.readouterr().out
     assert '"poisson"' in output
     assert '"navier_stokes"' in output
+
+
+def test_download_requires_an_explicit_release_manifest() -> None:
+    with pytest.raises(SystemExit) as exc:
+        build_parser().parse_args(["download", "--tier", "tiny"])
+    assert exc.value.code == 2
 
 
 def test_cli_lists_builtins_in_fresh_process() -> None:

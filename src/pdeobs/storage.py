@@ -262,10 +262,12 @@ class AtomicHDF5ShardWriter:
         self.compression = compression
         self.compression_opts = compression_opts
         self.partial_path = self.path.with_name(self.path.name + ".partial")
+        self.lock_path = self.path.with_name(self.path.name + ".lock")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._file: Any | None = None
         self._completed = False
         self._count = 0
+        self._lock_owned = False
 
         if not overwrite and is_shard_complete(
             self.path, expected_count=self.expected_count, verify_checksum=True
@@ -283,34 +285,78 @@ class AtomicHDF5ShardWriter:
             self._count = int(manifest["sample_count"])
             return
 
-        if self.path.exists():
-            if overwrite:
-                # os.replace at finalize is recoverable until this point and no
-                # recursive or broad deletion is ever performed.
-                pass
-            elif resume and self._valid_finished_file(self.path, adopt_stored_spec=True):
-                self._publish_sidecars()
-                self._completed = True
-                return
-            else:
-                raise IncompleteShardError(
-                    f"{self.path} exists without a valid completion record; "
-                    "inspect it or pass overwrite=True"
-                )
+        self._acquire_lock()
 
-        mode = "a" if resume and not overwrite and self.partial_path.exists() else "w"
-        self._file = module.File(self.partial_path, mode)
-        if mode == "w":
-            self._file.attrs["schema_version"] = SCHEMA_VERSION
-            self._file.attrs["spec_json"] = json.dumps(
-                self.spec, sort_keys=True, separators=(",", ":")
-            )
-            if self.expected_count is not None:
-                self._file.attrs["expected_count"] = self.expected_count
-        else:
-            self._validate_partial_header()
-            self._repair_partial_rows()
-        self._count = self._dataset_count()
+        try:
+            if self.path.exists():
+                if overwrite:
+                    # os.replace at finalize is recoverable until this point and no
+                    # recursive or broad deletion is ever performed.
+                    pass
+                elif resume and self._valid_finished_file(self.path, adopt_stored_spec=True):
+                    self._publish_sidecars()
+                    self._completed = True
+                    self._release_lock()
+                    return
+                else:
+                    raise IncompleteShardError(
+                        f"{self.path} exists without a valid completion record; "
+                        "inspect it or pass overwrite=True"
+                    )
+
+            mode = "a" if resume and not overwrite and self.partial_path.exists() else "w"
+            self._file = module.File(self.partial_path, mode)
+            if mode == "w":
+                self._file.attrs["schema_version"] = SCHEMA_VERSION
+                self._file.attrs["spec_json"] = json.dumps(
+                    self.spec, sort_keys=True, separators=(",", ":")
+                )
+                if self.expected_count is not None:
+                    self._file.attrs["expected_count"] = self.expected_count
+            else:
+                self._validate_partial_header()
+                self._repair_partial_rows()
+            self._count = self._dataset_count()
+        except BaseException:
+            self._release_lock()
+            raise
+
+    def _acquire_lock(self) -> None:
+        """Claim this shard exclusively before opening its partial HDF5 file."""
+
+        owner = {
+            "pid": os.getpid(),
+            "hostname": os.environ.get("HOSTNAME") or os.environ.get("COMPUTERNAME"),
+            "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+            "slurm_array_task_id": os.environ.get("SLURM_ARRAY_TASK_ID"),
+            "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
+        try:
+            descriptor = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError as exc:
+            try:
+                existing = self.lock_path.read_text(encoding="utf-8").strip()
+            except OSError:
+                existing = "<unreadable>"
+            raise StorageError(
+                f"shard is already locked by another generator: {self.lock_path}; "
+                f"owner={existing}. Remove the lock only after confirming that job is no longer running."
+            ) from exc
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(owner, handle, sort_keys=True)
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+        except BaseException:
+            self.lock_path.unlink(missing_ok=True)
+            raise
+        self._lock_owned = True
+
+    def _release_lock(self) -> None:
+        if self._lock_owned:
+            self.lock_path.unlink(missing_ok=True)
+            self._lock_owned = False
 
     @property
     def completed(self) -> bool:
@@ -523,9 +569,12 @@ class AtomicHDF5ShardWriter:
         self._file.flush()
         self._file.close()
         self._file = None
-        os.replace(self.partial_path, self.path)
-        manifest = self._publish_sidecars()
-        self._completed = True
+        try:
+            os.replace(self.partial_path, self.path)
+            manifest = self._publish_sidecars()
+            self._completed = True
+        finally:
+            self._release_lock()
         return manifest
 
     def close(self) -> None:
@@ -533,13 +582,18 @@ class AtomicHDF5ShardWriter:
             self._file.flush()
             self._file.close()
             self._file = None
+        self._release_lock()
 
     def __enter__(self) -> AtomicHDF5ShardWriter:
         return self
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> bool:
         if exc_type is None and not self._completed:
-            self.finalize()
+            try:
+                self.finalize()
+            except BaseException:
+                self.close()
+                raise
         else:
             self.close()
         return False

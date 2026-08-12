@@ -73,6 +73,7 @@ FAMILY_GENERATORS: dict[str, Generator] = {
     "burgers": burgers.generate,
     "navier_stokes": navier_stokes.generate,
 }
+BUILTIN_FAMILY_GENERATORS = dict(FAMILY_GENERATORS)
 PDE_GENERATORS = FAMILY_GENERATORS
 FAMILY_NAMES = tuple(FAMILY_GENERATORS)
 PDE_FAMILIES = FAMILY_NAMES
@@ -81,6 +82,7 @@ TEMPORAL_FAMILIES = frozenset(("heat", "reaction_diffusion", "burgers", "navier_
 BOUNDARY_NAMES = ("dirichlet", "neumann", "periodic", "robin")
 REGIME_NAMES = ("low", "medium", "high")
 _GENERATOR_ALIASES: dict[str, str] = dict(FAMILY_ALIASES)
+_PLUGINS_DISCOVERED = False
 
 generate_darcy = darcy.generate
 generate_poisson = poisson.generate
@@ -143,9 +145,25 @@ def register_generator(
         _GENERATOR_ALIASES[token] = canonical
 
 
+def discover_generators(*, on_error: str = "warn") -> tuple[str, ...]:
+    """Load installed PDE entry points once for this Python process.
+
+    Generation performs this check even for built-in family names so a plugin
+    that explicitly registers a validated replacement cannot be bypassed merely
+    because it is the first PDE operation in a fresh worker process.
+    """
+
+    global _PLUGINS_DISCOVERED
+    if not _PLUGINS_DISCOVERED:
+        PDE_REGISTRY.discover(on_error=on_error)
+        _PLUGINS_DISCOVERED = True
+    return available_families()
+
+
 def get_generator(family: str) -> Generator:
     """Resolve a built-in ID/name or a runtime-registered family generator."""
 
+    discover_generators(on_error="warn")
     token = _registry_token(family)
     canonical = _GENERATOR_ALIASES.get(token, token)
     try:
@@ -193,6 +211,7 @@ generate = generate_sample
 __all__ = [
     "BOUNDARY_ALIASES",
     "BOUNDARY_NAMES",
+    "BUILTIN_FAMILY_GENERATORS",
     "FAMILY_ALIASES",
     "FAMILY_GENERATORS",
     "FAMILY_NAMES",
@@ -209,6 +228,7 @@ __all__ = [
     "STATIC_FAMILIES",
     "TEMPORAL_FAMILIES",
     "available_families",
+    "discover_generators",
     "generate",
     "generate_burgers",
     "generate_darcy",

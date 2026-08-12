@@ -28,9 +28,11 @@ def test_checked_in_experiments_select_one_data_tier(tmp_path: Path, monkeypatch
     monkeypatch.setenv("PDEOBS_DATA", str(data_root))
 
     recovery = load_config(repository / "configs/experiment/recovery_unet.yaml")
+    rollout = load_config(repository / "configs/experiment/rollout_fno.yaml")
     smoke = load_config(repository / "configs/experiment/recovery_unet_smoke.yaml")
 
-    assert Path(recovery["data"]["root"]) == data_root / "tiny"
+    assert Path(recovery["data"]["root"]) == data_root / "signal"
+    assert Path(rollout["data"]["root"]) == data_root / "signal"
     assert Path(smoke["data"]["root"]) == data_root / "smoke"
     assert smoke["data"]["mask"]["count"] == 8
     assert smoke["training"]["epochs"] == 1

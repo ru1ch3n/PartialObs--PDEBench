@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 
 from . import __version__
-from .registry import SETTING_REGISTRY, RegistryError
+from .registry import PDE_REGISTRY, SETTING_REGISTRY, RegistryError, normalize_name
 from .schema import GenerationSpec, Sample, derive_seed, json_safe, normalize_resolution
 from .settings import SETTING_NAMES
 from .splits import (
@@ -37,6 +37,28 @@ PDE_FAMILIES = (
     "burgers",
     "navier_stokes",
 )
+
+
+def _canonical_pde(name: str) -> str:
+    """Resolve a built-in or installed plugin PDE to a safe canonical name."""
+
+    # A fresh generation worker must discover explicit built-in replacements as
+    # well as new family names. The PDE module caches this entry-point scan.
+    from .pdes import discover_generators
+
+    discover_generators(on_error="warn")
+    try:
+        token = normalize_name(name)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"unknown PDE family {name!r}") from exc
+    if token in PDE_FAMILIES:
+        return token
+    if token in PDE_REGISTRY:
+        canonical = PDE_REGISTRY.resolve_name(token)
+        if canonical in PDE_REGISTRY.names():
+            return canonical
+    choices = ", ".join(sorted(set(PDE_FAMILIES) | set(PDE_REGISTRY.names())))
+    raise ValueError(f"unknown PDE family {name!r}; choose one of: {choices}")
 
 
 def _canonical_setting(name: str) -> str:
@@ -87,8 +109,7 @@ class GenerationJob:
     provenance: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
-        if self.pde not in PDE_FAMILIES:
-            raise ValueError(f"unknown PDE family {self.pde!r}")
+        object.__setattr__(self, "pde", _canonical_pde(self.pde))
         if self.boundary not in BOUNDARIES:
             raise ValueError(f"unknown boundary {self.boundary!r}")
         if self.regime not in REGIMES:
@@ -206,17 +227,19 @@ def build_job_grid(
     counts = tier_regime_counts(tier_size, full_size=macro_size)
     root = Path(output_dir)
     jobs: list[GenerationJob] = []
+    canonical_families = tuple(_canonical_pde(name) for name in families)
     canonical_settings = tuple(_canonical_setting(name) for name in settings)
+    if len(set(canonical_families)) != len(canonical_families):
+        raise ValueError("families contain duplicate aliases for the same canonical PDE")
     if len(set(canonical_settings)) != len(canonical_settings):
         raise ValueError("settings contain aliases that resolve to the same canonical setting")
     for factor_name, factor_values in (
-        ("families", tuple(families)),
         ("boundaries", tuple(boundaries)),
         ("regimes", tuple(regimes)),
     ):
         if len(set(factor_values)) != len(factor_values):
             raise ValueError(f"{factor_name} contain duplicate semantic values")
-    for family in families:
+    for family in canonical_families:
         for boundary in boundaries:
             for setting in canonical_settings:
                 for regime in regimes:
@@ -330,7 +353,28 @@ def generate_job(
     """Generate or resume one independent shard."""
 
     # Importing here keeps manifest inspection and ``--dry-run`` light-weight.
-    from .pdes import generate_sample
+    from .pdes import BUILTIN_FAMILY_GENERATORS, generate_sample, get_generator
+
+    generator = get_generator(job.pde)
+    builtin_generator = BUILTIN_FAMILY_GENERATORS.get(job.pde)
+    is_builtin_generator = builtin_generator is generator
+    generator_options = dict(job.options or {})
+    solver_fidelity = str(
+        generator_options.pop(
+            "solver_fidelity",
+            "compact_reference" if is_builtin_generator else "external_plugin",
+        )
+    )
+    solver_version = str(
+        generator_options.pop(
+            "solver_version",
+            __version__ if is_builtin_generator else "unreported",
+        )
+    )
+    solver_implementation = (
+        f"{getattr(generator, '__module__', '<unknown>')}:"
+        f"{getattr(generator, '__qualname__', generator.__class__.__qualname__)}"
+    )
 
     writer = AtomicHDF5ShardWriter(
         job.output_path,
@@ -359,6 +403,12 @@ def generate_job(
         for row in range(writer.count, job.sample_count):
             regime_index = job.sample_start + row
             macro_index = regime_offset + regime_index
+            assignment = case_plan[macro_index]
+            if assignment.regime != job.regime:
+                raise RuntimeError(
+                    "generation split plan is inconsistent with the requested regime: "
+                    f"{assignment.regime!r} != {job.regime!r} at macro index {macro_index}"
+                )
             sample_seed = job.sample_seed(regime_index)
             output = generate_sample(
                 family=job.pde,
@@ -369,8 +419,15 @@ def generate_job(
                 resolution=normalize_resolution(job.resolution),
                 # A dataset-wide trajectory setting applies only to temporal
                 # equations; elliptic families are canonically T=1.
-                time_steps=(1 if job.pde not in TEMPORAL_FAMILIES else job.time_steps),
-                **dict(job.options or {}),
+                # Built-in elliptic families are canonically static.  External
+                # plugins receive the configured value and decide their own
+                # static/temporal contract.
+                time_steps=(
+                    1
+                    if job.pde in PDE_FAMILIES and job.pde not in TEMPORAL_FAMILIES
+                    else job.time_steps
+                ),
+                **generator_options,
             )
             ood_labels = official_ood_labels(
                 pde=job.pde,
@@ -398,12 +455,14 @@ def generate_job(
                 "setting": job.setting,
                 "regime": job.regime,
                 "state_representation": state_representation,
-                "solver_fidelity": "compact_reference",
+                "solver_fidelity": solver_fidelity,
+                "solver_version": solver_version,
+                "solver_implementation": solver_implementation,
                 "pdeobs_version": __version__,
                 "resolution": list(normalize_resolution(job.resolution)),
                 "regime_sample_index": regime_index,
                 "macro_sample_index": macro_index,
-                "split": case_plan[macro_index].split,
+                "split": assignment.split,
                 "tier": job.tier,
                 "seed": sample_seed,
                 "generation_seed": job.seed,
@@ -439,13 +498,14 @@ def jobs_from_spec(spec: GenerationSpec, output_dir: str | Path) -> list[Generat
 
     jobs: list[GenerationJob] = []
     root = Path(output_dir).resolve()
+    pde = _canonical_pde(spec.pde)
     setting = _canonical_setting(spec.setting)
     for shard_index, start in enumerate(range(0, spec.num_samples, spec.shard_size)):
         count = min(spec.shard_size, spec.num_samples - start)
         path = (
             root
             / spec.tier
-            / spec.pde
+            / pde
             / spec.boundary
             / setting
             / spec.regime
@@ -455,7 +515,7 @@ def jobs_from_spec(spec: GenerationSpec, output_dir: str | Path) -> list[Generat
             raise ValueError("generation output escapes the requested output directory")
         jobs.append(
             GenerationJob(
-                pde=spec.pde,
+                pde=pde,
                 boundary=spec.boundary,
                 setting=setting,
                 regime=spec.regime,

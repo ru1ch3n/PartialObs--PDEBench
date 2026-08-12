@@ -1,0 +1,7 @@
+include: default.yaml
+name: pdeobs-rollout-signal
+tier: signal
+families: [heat]
+boundaries: [periodic]
+settings: [smooth_grf]
+regimes: [low]

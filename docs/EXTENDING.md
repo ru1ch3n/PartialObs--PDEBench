@@ -28,13 +28,14 @@ my_method = "my_package.pdeobs_plugin:register"
 ```
 
 The referenced callable can return a method class or register one or more
-implementations. PDE solvers use the analogous `pdeobs.pdes` group. Plugin
-discovery is lazy, so lightweight interpolation runs do not import all optional
-deep-learning dependencies.
+implementations. PDE solvers use the analogous `pdeobs.pdes` group. Discovery
+happens on first use of the corresponding extensible component; importing the
+top-level package alone does not import third-party solver packages.
 
 For a paper-data solver, register the family under its canonical name with
 replacement enabled, record the upstream code/version and all tolerances in the
-job options, and run the gate in `NUMERICAL_VALIDATION.md`. A plugin must use the
+job options (`solver_fidelity` and `solver_version` are promoted into sample
+metadata), and run the gate in `NUMERICAL_VALIDATION.md`. A plugin must use the
 public setting registry rather than maintaining a second set of condition
 generators.
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from pdeobs.dataset import BenchmarkDataset, collate_benchmark
 from pdeobs.schema import Sample
@@ -73,6 +74,31 @@ def test_rollout_uses_requested_sparse_history_and_future_horizon(tmp_path: Path
     assert int(row["mask"][0].sum()) == 7
     assert row["target"].shape == (3, 8, 8, 1)
     np.testing.assert_array_equal(row["target"], trajectory[2:5])
+
+
+def test_rollout_rejects_a_short_trajectory_instead_of_truncating(tmp_path: Path) -> None:
+    shard = tmp_path / "short-temporal.h5"
+    trajectory = np.zeros((4, 8, 8, 1), dtype=np.float32)
+    with AtomicHDF5ShardWriter(shard, expected_count=1, spec={"test": True}) as writer:
+        writer.append(
+            Sample(
+                condition=trajectory[0],
+                trajectory=trajectory,
+                geometry=np.zeros((8, 8, 1), dtype=np.float32),
+                metadata={"sample_id": "short-0", "split": "train", "pde": "heat"},
+            )
+        )
+
+    dataset = BenchmarkDataset(
+        shard,
+        task="rollout",
+        history_steps=2,
+        horizon=3,
+        mask={"protocol": "random", "count": 7},
+    )
+
+    with pytest.raises(ValueError, match=r"2 history \+ 3 future"):
+        _ = dataset[0]
 
 
 def test_forward_masks_the_condition(tmp_path: Path) -> None:

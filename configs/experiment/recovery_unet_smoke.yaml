@@ -3,6 +3,8 @@ name: recovery-unet-smoke
 
 data:
   root: ${PDEOBS_DATA:-datasets}/smoke
+  verify_shards: true
+  allow_split_fallback: true
   mask:
     protocol: random
     count: 8

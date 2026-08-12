@@ -11,10 +11,6 @@ from typing import Any
 
 from . import __version__
 
-DEFAULT_RELEASE_MANIFEST = (
-    "https://github.com/ru1ch3n/PartialObs--PDEBench/releases/latest/download/manifest.json"
-)
-
 
 def _overrides(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
@@ -72,7 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
     download.add_argument(
         "--tier", required=True, choices=("tiny", "debug", "signal", "medium", "full")
     )
-    download.add_argument("--manifest", default=DEFAULT_RELEASE_MANIFEST)
+    download.add_argument(
+        "--manifest",
+        required=True,
+        help="published manifest URL or local path (no official data release exists yet)",
+    )
     download.add_argument("--output", type=Path, default=Path("datasets"))
     download.add_argument("--force", action="store_true")
     download.set_defaults(handler=_cmd_download)
@@ -155,10 +155,11 @@ def _component_names(*, discover: bool = False) -> dict[str, tuple[str, ...]]:
 
     # Neural imports remain dependency-safe.
     from .methods import available_methods, discover_methods
+    from .pdes import discover_generators
     from .registry import MASK_REGISTRY, METRIC_REGISTRY, PDE_REGISTRY, SETTING_REGISTRY
 
     if discover:
-        PDE_REGISTRY.discover(on_error="warn")
+        discover_generators(on_error="warn")
         SETTING_REGISTRY.discover(on_error="warn")
         MASK_REGISTRY.discover(on_error="warn")
         METRIC_REGISTRY.discover(on_error="warn")

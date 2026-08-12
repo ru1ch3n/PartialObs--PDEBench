@@ -140,21 +140,35 @@ def build_split_plan(
 ) -> tuple[SampleAssignment, ...]:
     """Build an exact, deterministic plan for one 2000-sample macro case.
 
-    Regime, IID split, and tier order use independent derived RNG streams so no
-    factor is accidentally encoded by another one.  Counts remain exact.
+    Regimes use their canonical contiguous ranges and tier ranks interleave
+    those ranges in round-robin order.  Consequently ``assignment.regime`` is
+    the same regime addressed by generation's ``(regime, regime_index)`` pair,
+    while ``assignment.in_tier(...)`` exactly matches the balanced prefix used
+    by every nested release tier.  IID splits use an independent derived RNG
+    stream and retain exact macro-case counts.
     """
 
     if total < 1:
         raise ValueError("total must be positive")
     regimes = _labels_from_counts(regime_counts(total))
     splits = _labels_from_counts(split_counts(total))
-    tier_order = np.arange(total, dtype=np.int64)
     if shuffle:
-        np.random.default_rng(derive_seed(seed, case_key, "regime")).shuffle(regimes)
         np.random.default_rng(derive_seed(seed, case_key, "split")).shuffle(splits)
-        np.random.default_rng(derive_seed(seed, case_key, "tier")).shuffle(tier_order)
+
+    # Release tiers allocate their requested size across REGIMES by largest
+    # remainder, then take a prefix within each regime.  The equivalent global
+    # order is low[0], medium[0], high[0], low[1], ... .  Encoding that order in
+    # tier_rank makes SampleAssignment authoritative instead of retaining a
+    # second, contradictory random tier assignment that generation ignored.
+    seen = {regime: 0 for regime in REGIMES}
+    regime_order = {regime: index for index, regime in enumerate(REGIMES)}
     rank = np.empty(total, dtype=np.int64)
-    rank[tier_order] = np.arange(total)
+    for index, regime_value in enumerate(regimes):
+        regime = str(regime_value)
+        rank[index] = len(REGIMES) * seen[regime] + regime_order[regime]
+        seen[regime] += 1
+    if sorted(int(value) for value in rank) != list(range(total)):
+        raise AssertionError("balanced regime order did not produce exact tier ranks")
     return tuple(
         SampleAssignment(index, str(regimes[index]), str(splits[index]), int(rank[index]))
         for index in range(total)

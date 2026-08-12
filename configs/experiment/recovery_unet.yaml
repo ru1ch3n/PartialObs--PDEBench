@@ -4,8 +4,10 @@ seed: 20260804
 task: recovery
 
 data:
-  root: ${PDEOBS_DATA:-datasets}/tiny
+  root: ${PDEOBS_DATA:-datasets}/signal
   train_glob: "**/*.h5"
+  verify_shards: true
+  allow_split_fallback: false
   split: iid
   target_time: -1
   filters:

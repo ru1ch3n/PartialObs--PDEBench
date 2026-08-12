@@ -233,12 +233,14 @@ def prepare_batch_with_context(
         if target.ndim != 5:
             raise ValueError("rollout targets must have shape BTCHW (or BTHWC before adaptation)")
         if inputs is None:
-            history = min(config.history_steps, target.shape[1] - 1)
-            horizon = min(config.horizon, target.shape[1] - history)
-            if horizon < 1:
+            required_steps = config.history_steps + config.horizon
+            if target.shape[1] < required_steps:
                 raise ValueError(
-                    "rollout trajectory is too short for the requested history/horizon"
+                    f"rollout trajectory has {target.shape[1]} steps, but requires "
+                    f"{config.history_steps} history + {config.horizon} future steps"
                 )
+            history = config.history_steps
+            horizon = config.horizon
             inputs = target[:, :history]
             target = target[:, history : history + horizon]
             if mask is not None and mask.ndim == 5:
@@ -248,9 +250,13 @@ def prepare_batch_with_context(
             # initial state. Set rollout_target_offset=0 for loaders whose target
             # tensor already begins at the first future state.
             start = config.rollout_target_offset
-            horizon = min(config.horizon, target.shape[1] - start)
-            if horizon < 1:
-                raise ValueError("rollout trajectory is too short for rollout_target_offset")
+            available = target.shape[1] - start
+            if available < config.horizon:
+                raise ValueError(
+                    f"rollout target has {max(0, available)} steps after offset {start}, "
+                    f"but horizon {config.horizon} was requested"
+                )
+            horizon = config.horizon
             target = target[:, start : start + horizon]
     else:
         if target.ndim == 5:

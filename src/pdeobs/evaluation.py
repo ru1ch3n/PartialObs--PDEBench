@@ -111,18 +111,28 @@ def _prepare_numpy_batch(
         if target.ndim != 5:
             raise ValueError("rollout targets must have shape BTHWC or BTCHW")
         if inputs is None:
-            history = min(config.history_steps, target.shape[1] - 1)
-            horizon = min(config.horizon, target.shape[1] - history)
+            required_steps = config.history_steps + config.horizon
+            if target.shape[1] < required_steps:
+                raise ValueError(
+                    f"rollout trajectory has {target.shape[1]} steps, but requires "
+                    f"{config.history_steps} history + {config.horizon} future steps"
+                )
+            history = config.history_steps
+            horizon = config.horizon
             inputs = target[:, :history]
             target = target[:, history : history + horizon]
             if mask is not None and mask.ndim == 5:
                 mask = mask[:, :history]
         else:
             start = config.rollout_target_offset
-            horizon = min(config.horizon, target.shape[1] - start)
+            available = target.shape[1] - start
+            if available < config.horizon:
+                raise ValueError(
+                    f"rollout target has {max(0, available)} steps after offset {start}, "
+                    f"but horizon {config.horizon} was requested"
+                )
+            horizon = config.horizon
             target = target[:, start : start + horizon]
-        if horizon < 1:
-            raise ValueError("rollout trajectory is too short for the requested horizon")
     else:
         if target.ndim == 5:
             target = target[:, config.target_step]

@@ -202,10 +202,15 @@ class BenchmarkDataset(Sequence[dict[str, Any]]):
                 "metadata": metadata,
             }
 
-        history = min(self.history_steps, max(0, trajectory.shape[0] - 1))
-        horizon = min(self.horizon, max(0, trajectory.shape[0] - history))
-        if horizon < 1:
-            raise ValueError(f"sample {metadata.get('sample_id')} has no future rollout state")
+        required_steps = self.history_steps + self.horizon
+        if trajectory.shape[0] < required_steps:
+            raise ValueError(
+                f"sample {metadata.get('sample_id')} has {trajectory.shape[0]} trajectory "
+                f"steps, but rollout requires {self.history_steps} history + "
+                f"{self.horizon} future steps"
+            )
+        history = self.history_steps
+        horizon = self.horizon
         history_values = np.asarray(trajectory[:history], dtype=np.float32)
         target = np.asarray(trajectory[history : history + horizon], dtype=np.float32)
         mask = self._mask(history_values, metadata)

@@ -14,11 +14,13 @@ from pdeobs.generation import (
     write_generation_plan,
     write_job_manifest,
 )
+from pdeobs.registry import PDE_REGISTRY
 from pdeobs.schema import GenerationSpec, Sample
 from pdeobs.storage import (
     AtomicHDF5ShardWriter,
     IncompleteShardError,
     LazyHDF5Dataset,
+    StorageError,
     is_shard_complete,
     read_shard_manifest,
 )
@@ -66,6 +68,78 @@ def test_job_grid_rejects_unregistered_setting_path(tmp_path):
             settings=("../../escaped",),
             regimes=("low",),
         )
+
+
+def test_job_grid_rejects_unknown_pde_after_plugin_discovery(tmp_path, monkeypatch):
+    monkeypatch.setattr("pdeobs.pdes._PLUGINS_DISCOVERED", False)
+    monkeypatch.setattr(PDE_REGISTRY, "discover", lambda **_: ())
+    with pytest.raises(ValueError, match="unknown PDE family"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            families=("../../not-a-solver",),
+            boundaries=("periodic",),
+            settings=("smooth_grf",),
+            regimes=("low",),
+        )
+
+
+def test_external_pde_plugin_is_discovered_and_generated(tmp_path, monkeypatch):
+    monkeypatch.setattr("pdeobs.pdes._PLUGINS_DISCOVERED", False)
+    monkeypatch.setattr(PDE_REGISTRY, "_objects", dict(PDE_REGISTRY._objects))
+    monkeypatch.setattr(PDE_REGISTRY, "_aliases", dict(PDE_REGISTRY._aliases))
+    discovery_calls = 0
+    received_time_steps: list[int | None] = []
+
+    def external_solver(
+        boundary="periodic",
+        setting="smooth_grf",
+        regime="low",
+        seed=0,
+        resolution=(8, 8),
+        time_steps=None,
+        **_options,
+    ):
+        del boundary, setting, regime, seed
+        received_time_steps.append(time_steps)
+        height, width = resolution
+        steps = int(time_steps or 1)
+        condition = np.ones((height, width, 1), dtype=np.float32)
+        trajectory = np.ones((steps, height, width, 1), dtype=np.float32)
+        geometry = np.zeros_like(condition)
+        return Sample(condition, trajectory, geometry, {"plugin": True})
+
+    def discover(**_kwargs):
+        nonlocal discovery_calls
+        discovery_calls += 1
+        PDE_REGISTRY.register("external_wave", external_solver)
+        return ("external_wave",)
+
+    monkeypatch.setattr(PDE_REGISTRY, "discover", discover)
+    job = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        time_steps=4,
+        families=("external-wave",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+    )[0]
+    assert job.pde == "external_wave"
+    assert "external_wave" in Path(job.output_path).parts
+    assert discovery_calls == 1
+
+    result = generate_job(job)
+    assert result.sample_count == 2
+    assert received_time_steps == [4, 4]
+    with LazyHDF5Dataset(job.output_path) as dataset:
+        assert dataset[0].trajectory.shape == (4, 8, 8, 1)
+        assert dataset[0].metadata["pde"] == "external_wave"
+        assert dataset[0].metadata["solver_fidelity"] == "external_plugin"
+        assert dataset[0].metadata["solver_version"] == "unreported"
+        assert dataset[0].metadata["solver_implementation"].endswith("external_solver")
 
 
 def test_job_grid_rejects_duplicate_setting_aliases(tmp_path):
@@ -187,6 +261,19 @@ def test_atomic_writer_resumes_partial_and_lazy_reader(tmp_path):
         assert len(dataset) == 2
         assert dataset[1].metadata["index"] == 1
         assert dataset[1].trajectory.shape == (1, 6, 5, 1)
+
+
+def test_atomic_writer_excludes_concurrent_shard_writers(tmp_path):
+    pytest.importorskip("h5py")
+    path = tmp_path / "exclusive.h5"
+    writer = AtomicHDF5ShardWriter(path, expected_count=1, spec={"case": "lock"})
+    try:
+        assert path.with_name(path.name + ".lock").is_file()
+        with pytest.raises(StorageError, match="already locked"):
+            AtomicHDF5ShardWriter(path, expected_count=1, spec={"case": "lock"})
+    finally:
+        writer.close()
+    assert not path.with_name(path.name + ".lock").exists()
 
 
 def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp_path):
@@ -365,3 +452,5 @@ def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
         assert metadata["boundary_ood"] is False
         assert metadata["parameter_ood"] is False
         assert metadata["solver_fidelity"] == "compact_reference"
+        assert metadata["solver_version"] == "0.1.0"
+        assert metadata["solver_implementation"].startswith("pdeobs.pdes.heat:")

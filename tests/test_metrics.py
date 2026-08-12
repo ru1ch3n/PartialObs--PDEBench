@@ -5,9 +5,11 @@ from pdeobs.metrics import (
     frequency_band_errors,
     high_frequency_energy,
     ood_degradation,
+    physical_errors,
     relative_l2,
     rollout_horizon_metrics,
     stability_metrics,
+    velocity_from_vorticity,
     vorticity,
 )
 
@@ -46,3 +48,25 @@ def test_vorticity_and_ood_degradation():
     np.testing.assert_allclose(omega, 2.0)
     assert ood_degradation(0.2, 0.5) == 2.5
     assert np.isclose(ood_degradation(0.8, 0.6, higher_is_better=True, mode="difference"), 0.2)
+
+
+def test_periodic_vorticity_physics_includes_reconstructed_kinetic_energy():
+    y, x = np.mgrid[:24, :24] / 24.0
+    omega = (np.sin(2.0 * np.pi * x) * np.cos(2.0 * np.pi * y))[None, ..., None]
+    velocity = velocity_from_vorticity(omega, spatial_axes=(-3, -2))
+    kx = 2.0 * np.pi * np.fft.fftfreq(24, d=1.0 / 24)[None, :]
+    ky = 2.0 * np.pi * np.fft.fftfreq(24, d=1.0 / 24)[:, None]
+    divergence = np.fft.ifft2(
+        1j * kx * np.fft.fft2(velocity[..., 0]) + 1j * ky * np.fft.fft2(velocity[..., 1])
+    ).real
+    assert np.sqrt(np.mean(divergence**2)) < 1.0e-12
+
+    metrics = physical_errors(
+        2.0 * omega,
+        omega,
+        representation="vorticity",
+        spatial_axes=(-3, -2),
+    )
+    assert np.isclose(metrics["energy_relative_error"], 3.0)
+    assert np.isclose(metrics["enstrophy_relative_error"], 3.0)
+    assert np.isclose(metrics["vorticity_rel_l2"], 1.0)

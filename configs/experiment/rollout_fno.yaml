@@ -3,7 +3,7 @@ name: rollout-fno
 task: rollout
 
 data:
-  root: ${PDEOBS_DATA:-datasets}/tiny
+  root: ${PDEOBS_DATA:-datasets}/signal
   train_glob: "**/*.h5"
   split: iid
   filters:
@@ -12,7 +12,7 @@ data:
     setting: smooth_grf
     regime: low
   input_horizon: 1
-  rollout_horizons: [1, 2, 4, 8]
+  training_horizons: [1, 2]
 
 method:
   name: autoregressive
@@ -24,3 +24,7 @@ method:
       width: 32
       layers: 4
       modes: 12
+
+evaluation:
+  horizons: [1, 2, 4, 8]
+  ood_views: [time_horizon]

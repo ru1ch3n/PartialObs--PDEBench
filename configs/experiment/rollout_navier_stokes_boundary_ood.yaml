@@ -6,6 +6,8 @@ task: rollout
 data:
   root: ${PDEOBS_DATA:-datasets}/medium
   train_glob: "**/*.h5"
+  verify_shards: true
+  allow_split_fallback: false
   ood_view: boundary
   state_representation: velocity
   filters:
@@ -14,7 +16,7 @@ data:
     protocol: random_3pct
     count: 500
   input_horizon: 1
-  rollout_horizons: [1, 2, 4, 8]
+  training_horizons: [1, 2]
 
 method:
   name: autoregressive
@@ -38,6 +40,8 @@ training:
   mixed_precision: true
 
 evaluation:
+  horizons: [1, 2, 4, 8]
+  ood_views: [boundary, time_horizon]
   physical_representation: velocity
   include_frequency_bands: true
   include_stability: true

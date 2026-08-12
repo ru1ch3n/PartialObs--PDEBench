@@ -56,7 +56,24 @@ def generate(
     coefficient_seed = make_rng(seed, 100)
     latent = make_setting_field(setting, (height, width), coefficient_seed)
     contrast = CONTRAST_BY_REGIME[regime]
-    coefficient = np.exp(0.5 * np.log(contrast) * latent)
+    latent_min = float(np.min(latent))
+    latent_max = float(np.max(latent))
+    latent_span = latent_max - latent_min
+    if not np.isfinite(latent_span) or latent_span <= 1.0e-12:
+        raise RuntimeError(f"setting {setting!r} produced a degenerate Darcy coefficient latent")
+    # Setting generators intentionally have different marginal distributions
+    # (Gaussian, binary, localized, and discontinuous).  Their standardized
+    # values are not bounded by [-1, 1], so exponentiating the raw field makes
+    # the realized contrast depend on the setting and can exceed the requested
+    # regime by many orders of magnitude.  Range-normalize first and map the
+    # endpoints to contrast**(-1/2) and contrast**(+1/2).
+    bounded_latent = 2.0 * (latent - latent_min) / latent_span - 1.0
+    coefficient = np.exp(0.5 * np.log(contrast) * bounded_latent)
+    stored_coefficient = np.asarray(coefficient, dtype=np.dtype(dtype))
+    realized_contrast = float(
+        np.max(stored_coefficient).astype(np.float64)
+        / np.min(stored_coefficient).astype(np.float64)
+    )
     forcing = np.sin(2.0 * np.pi * xx) * np.sin(2.0 * np.pi * yy)
     forcing += 0.2 * np.sin(4.0 * np.pi * xx + 0.3) * np.sin(2.0 * np.pi * yy)
     forcing -= float(np.mean(forcing))
@@ -92,6 +109,8 @@ def generate(
         geometry=add_channel(geometry),
         parameters={
             "coefficient_contrast": contrast,
+            "requested_coefficient_contrast": contrast,
+            "realized_coefficient_contrast": realized_contrast,
             "solver_steps": iterations,
             "forcing_amplitude": 1.0,
         },

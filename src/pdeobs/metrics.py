@@ -294,6 +294,46 @@ def vorticity(
     return dv_dx - du_dy
 
 
+def velocity_from_vorticity(
+    field: Array,
+    *,
+    channel_axis: int = -1,
+    spatial_axes: tuple[int, int] | None = None,
+) -> np.ndarray:
+    """Recover periodic divergence-free velocity from scalar vorticity.
+
+    Canonical ``BHWC`` and ``BTHWC`` inputs may retain a singleton vorticity
+    channel.  Leading batch/time axes are preserved and the returned velocity
+    uses channels-last ``[..., H, W, 2]`` layout on the unit periodic domain.
+    """
+
+    values = np.asarray(field, dtype=np.float64)
+    axes = _spatial_axes(values, spatial_axes)
+    channel = channel_axis % values.ndim
+    if channel not in axes:
+        if values.shape[channel] != 1:
+            raise ValueError("Vorticity input must have one channel")
+        omega = np.take(values, 0, axis=channel)
+        adjusted_axes = tuple(axis - (axis > channel) for axis in axes)
+    else:
+        # Plain HW/BHW scalar arrays have no explicit channel dimension.
+        omega = values
+        adjusted_axes = axes
+
+    ordered = np.moveaxis(omega, adjusted_axes, (-2, -1))
+    height, width = ordered.shape[-2:]
+    dx, dy = 1.0 / width, 1.0 / height
+    flattened = ordered.reshape(-1, height, width)
+    velocity = np.empty((*ordered.shape[:-2], height, width, 2), dtype=np.float64)
+
+    from .pdes.common import stream_velocity
+
+    for index, frame in enumerate(flattened):
+        velocity_x, velocity_y = stream_velocity(frame, dx, dy)
+        velocity.reshape(-1, height, width, 2)[index] = np.stack((velocity_x, velocity_y), axis=-1)
+    return velocity
+
+
 def enstrophy(
     field: Array,
     *,
@@ -370,7 +410,16 @@ def physical_errors(
         p_omega = vorticity(pred, channel_axis=channel_axis, spatial_axes=spatial_axes)
         t_omega = vorticity(truth, channel_axis=channel_axis, spatial_axes=spatial_axes)
     elif representation == "vorticity":
-        p_energy = t_energy = np.nan
+        p_velocity = velocity_from_vorticity(
+            pred, channel_axis=channel_axis, spatial_axes=spatial_axes
+        )
+        t_velocity = velocity_from_vorticity(
+            truth, channel_axis=channel_axis, spatial_axes=spatial_axes
+        )
+        p_energy, t_energy = (
+            kinetic_energy(p_velocity, valid_mask=valid_mask),
+            kinetic_energy(t_velocity, valid_mask=valid_mask),
+        )
         p_omega, t_omega = pred, truth
     else:
         raise ValueError("representation must be 'velocity' or 'vorticity'")
@@ -392,9 +441,8 @@ def physical_errors(
     result = {
         "vorticity_rel_l2": float(relative_l2(p_error, t_error)),
         "enstrophy_relative_error": abs(p_enstrophy - t_enstrophy) / max(abs(t_enstrophy), epsilon),
+        "energy_relative_error": abs(p_energy - t_energy) / max(abs(t_energy), epsilon),
     }
-    if representation == "velocity":
-        result["energy_relative_error"] = abs(p_energy - t_energy) / max(abs(t_energy), epsilon)
     return {key: float(value) for key, value in result.items()}
 
 

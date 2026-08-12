@@ -1,0 +1,7 @@
+include: default.yaml
+name: pdeobs-recovery-signal
+tier: signal
+families: [poisson]
+boundaries: [periodic]
+settings: [smooth_grf]
+regimes: [low]

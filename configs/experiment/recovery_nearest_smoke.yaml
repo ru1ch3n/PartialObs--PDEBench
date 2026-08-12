@@ -6,6 +6,8 @@ task: recovery
 data:
   root: ${PDEOBS_DATA:-datasets}/smoke
   train_glob: "**/*.h5"
+  verify_shards: true
+  allow_split_fallback: true
   split: iid
   filters:
     pde: poisson

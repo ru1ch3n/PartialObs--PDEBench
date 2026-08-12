@@ -2,6 +2,7 @@ from collections import Counter
 
 from pdeobs.splits import (
     TIER_SIZES,
+    assign_regime,
     boundary_ood_split,
     build_split_plan,
     combination_ood_split,
@@ -40,6 +41,14 @@ def test_split_plan_is_deterministic_and_exact():
     assert Counter(row.regime for row in first) == regime_counts()
     assert Counter(row.split for row in first) == split_counts()
     assert sorted(row.tier_rank for row in first) == list(range(2000))
+    assert all(row.regime == assign_regime(row.sample_index) for row in first)
+
+    previous: set[int] = set()
+    for tier, expected_size in TIER_SIZES.items():
+        selected = {row.sample_index for row in first if row.in_tier(tier)}
+        assert len(selected) == expected_size
+        assert previous.issubset(selected)
+        previous = selected
 
 
 def test_factorized_ood_split_helpers():

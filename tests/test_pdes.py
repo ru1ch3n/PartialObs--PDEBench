@@ -1,13 +1,16 @@
 import numpy as np
 import pytest
 
+import pdeobs.pdes as pdes
 from pdeobs.pdes import (
     BOUNDARY_NAMES,
     PDE_FAMILIES,
     STATIC_FAMILIES,
     generate_sample,
 )
+from pdeobs.pdes.darcy import CONTRAST_BY_REGIME
 from pdeobs.registry import PDE_REGISTRY
+from pdeobs.settings import SETTING_NAMES
 
 
 @pytest.mark.parametrize("family", PDE_FAMILIES)
@@ -55,6 +58,57 @@ def test_navier_stokes_state_channels_follow_geometry_protocol():
     assert obstacle.geometry[..., 0].any()
 
 
+@pytest.mark.parametrize("setting", SETTING_NAMES)
+@pytest.mark.parametrize("regime", tuple(CONTRAST_BY_REGIME))
+def test_darcy_regimes_realize_exact_contrast_across_settings(setting, regime):
+    output = generate_sample(
+        "darcy",
+        boundary="periodic",
+        setting=setting,
+        regime=regime,
+        seed=17,
+        resolution=8,
+        solver_steps=1,
+    )
+    coefficient = output.condition[..., 0]
+    realized = float(np.max(coefficient) / np.min(coefficient))
+    requested = CONTRAST_BY_REGIME[regime]
+    assert np.isclose(realized, requested, rtol=2.0e-6)
+    assert output.parameters["requested_coefficient_contrast"] == requested
+    assert np.isclose(output.parameters["realized_coefficient_contrast"], realized, rtol=1.0e-7)
+
+
 def test_builtin_pdes_are_available_through_extension_registry():
     assert set(PDE_FAMILIES).issubset(PDE_REGISTRY.names())
     assert PDE_REGISTRY.get("f6") is PDE_REGISTRY.get("navier_stokes")
+
+
+def test_direct_generation_discovers_an_explicit_builtin_replacement(monkeypatch):
+    monkeypatch.setattr(pdes, "FAMILY_GENERATORS", dict(pdes.FAMILY_GENERATORS))
+    monkeypatch.setattr(pdes, "_GENERATOR_ALIASES", dict(pdes._GENERATOR_ALIASES))
+    monkeypatch.setattr(pdes, "_PLUGINS_DISCOVERED", False)
+    monkeypatch.setattr(PDE_REGISTRY, "_objects", dict(PDE_REGISTRY._objects))
+    monkeypatch.setattr(PDE_REGISTRY, "_aliases", dict(PDE_REGISTRY._aliases))
+
+    def replacement(**options):
+        condition = np.ones((8, 8, 1), dtype=np.float32)
+        return pdes.PDEOutput(
+            family="poisson",
+            boundary=options["boundary"],
+            setting=options["setting"],
+            regime=options["regime"],
+            seed=options["seed"],
+            condition=condition,
+            trajectory=condition[None],
+            geometry=np.zeros_like(condition),
+            parameters={"validated_plugin": True},
+        )
+
+    def discover(**_options):
+        pdes.register_generator("poisson", replacement, replace=True)
+        return ("poisson",)
+
+    monkeypatch.setattr(PDE_REGISTRY, "discover", discover)
+    output = pdes.generate_sample("poisson", resolution=8)
+
+    assert output.parameters["validated_plugin"] is True
