@@ -112,3 +112,23 @@ def test_split_fallback_flag_rejects_non_boolean_values() -> None:
 def test_download_requires_an_explicit_release_manifest() -> None:
     with pytest.raises(SystemExit):
         build_parser().parse_args(["download", "--tier", "tiny"])
+
+
+def test_github_readme_exposes_server_and_seawulf_quick_starts() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "[Linux server guide](docs/SERVER.md)" in readme
+    assert "## SeaWulf quick start" in readme
+    assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in readme
+    assert '--dependency="afterok:$smoke_job"' in readme
+
+
+def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:
+    guide = (SEAWULF / "README.md").read_text(encoding="utf-8")
+
+    assert "srun --partition=short-40core-shared" in guide
+    assert "configs/dataset/recovery_signal.yaml" in guide
+    assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in guide
+    assert '--dependency="afterok:${generation_job}"' in guide
+    assert '--dependency="afterok:${signal_train_job}"' in guide
+    assert "conservative safety cap" in guide

@@ -6,13 +6,15 @@ change.
 
 ## 1. Clone an exact Git revision
 
-On `milan.seawulf.stonybrook.edu`:
+From your local computer, connect to the Milan login node. Then clone and pin
+the campaign revision:
 
 ```bash
+ssh YOUR_NETID@milan.seawulf.stonybrook.edu
 module load slurm
 git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
 cd PartialObs--PDEBench
-git checkout <release-tag-or-commit>
+git checkout YOUR_RELEASE_TAG_OR_COMMIT
 ```
 
 Queued jobs do not pull from Git. This ensures every shard in a campaign uses
@@ -21,11 +23,17 @@ the revision recorded at submission.
 ## 2. Choose persistent and scratch locations
 
 ```bash
-PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
-export PDEOBS_ENV="/gpfs/projects/<group>/envs/pdeobs-${PDEOBS_COMMIT}"
-export PDEOBS_DATA=/gpfs/scratch/$USER/pdeobs/data
-export PDEOBS_RUNS=/gpfs/scratch/$USER/pdeobs/runs
+export PDEOBS_GROUP=YOUR_GROUP
+export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
+export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
+export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
+mkdir -p logs "$(dirname "$PDEOBS_ENV")" \
+  "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
 ```
+
+Run these exports again after each fresh login (or source them from a private,
+untracked shell snippet). Do not commit account or group-specific paths.
 
 SeaWulf scratch is temporary, is not backed up, and is subject to a 45-day
 purge. Project space lasts for the project and is appropriate for a shared
@@ -34,11 +42,16 @@ verified copy of irreplaceable results in an independent off-cluster archive.
 
 ## 3. Build once in a compute allocation
 
-Do not build packages on a login node. Start an interactive allocation, then:
+Do not build packages on a login node. From the repository root, request an
+interactive CPU allocation, bootstrap, and return to the login node:
 
 ```bash
+module load slurm
+srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
+  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
 bash hpc/seawulf/bootstrap.sh
 "$PDEOBS_ENV/bin/python" -m pdeobs doctor --cluster seawulf --offline
+exit
 ```
 
 The bootstrap builds a wheel from the checked-out commit and installs it
@@ -57,26 +70,79 @@ wheelhouse, including `setuptools` and `wheel`, and set `PDEOBS_WHEELHOUSE`
 before running the bootstrap script. For an archival campaign, also save an
 exact environment export beside its plan and validation report.
 
-## 4. Run a single smoke task
+## 4. Run the dependency-chained smoke workflow
 
 ```bash
-mkdir -p logs
-sbatch --array=0-0 hpc/seawulf/generate_array.sbatch \
-  configs/dataset/smoke.yaml "$PDEOBS_DATA/smoke"
-```
+"$PDEOBS_ENV/bin/python" -m pdeobs plan \
+  --config configs/dataset/smoke.yaml --tier tiny \
+  --output "$PDEOBS_DATA/plans/smoke.jsonl"
 
-Inspect the output and `seff <job-id>` before submitting a larger array.
-After that job succeeds, exercise the complete data-to-training path with the
-resolution-aware smoke experiment:
+generation_job="$(sbatch --parsable --array=0-0 \
+  hpc/seawulf/generate_array.sbatch \
+  configs/dataset/smoke.yaml "$PDEOBS_DATA/smoke" \
+  "$PDEOBS_DATA/plans/smoke.jsonl")"
+generation_job="${generation_job%%;*}"
 
-```bash
-mkdir -p logs
-sbatch hpc/seawulf/train_gpu.sbatch \
+aggregation_job="$(sbatch --parsable \
+  --dependency="afterok:${generation_job}" \
+  hpc/seawulf/aggregate_cpu.sbatch \
+  "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/smoke/summary.json" \
+  "$PDEOBS_DATA/plans/smoke.jsonl")"
+aggregation_job="${aggregation_job%%;*}"
+
+training_job="$(sbatch --parsable \
+  --dependency="afterok:${aggregation_job}" \
+  hpc/seawulf/train_gpu.sbatch \
   configs/experiment/recovery_unet_smoke.yaml \
-  --output "$PDEOBS_RUNS/smoke-train"
+  --output "$PDEOBS_RUNS/smoke-train")"
+training_job="${training_job%%;*}"
+
+echo "generation=$generation_job aggregation=$aggregation_job training=$training_job"
+squeue -j "$generation_job,$aggregation_job,$training_job"
 ```
 
-## 5. Plan and submit a release tier
+The aggregate job validates checksums and exact plan coverage. Because each
+step uses `afterok`, a failure prevents downstream work from starting. Inspect
+`logs/`, `sacct -j JOB_ID`, and `seff JOB_ID` before proceeding.
+
+## 5. Run the strict signal-tier recovery example
+
+This focused example generates one 34-sample low-regime shard with real
+train/validation/test coverage, validates it, trains, and evaluates:
+
+```bash
+"$PDEOBS_ENV/bin/python" -m pdeobs plan \
+  --config configs/dataset/recovery_signal.yaml --tier signal \
+  --output "$PDEOBS_DATA/plans/recovery-signal.jsonl"
+
+signal_job="$(sbatch --parsable --array=0-0 \
+  hpc/seawulf/generate_array.sbatch \
+  configs/dataset/recovery_signal.yaml "$PDEOBS_DATA/signal" \
+  "$PDEOBS_DATA/plans/recovery-signal.jsonl")"
+signal_job="${signal_job%%;*}"
+
+signal_check_job="$(sbatch --parsable --dependency="afterok:${signal_job}" \
+  hpc/seawulf/aggregate_cpu.sbatch \
+  "$PDEOBS_DATA/signal" "$PDEOBS_DATA/signal/summary.json" \
+  "$PDEOBS_DATA/plans/recovery-signal.jsonl")"
+signal_check_job="${signal_check_job%%;*}"
+
+signal_train_job="$(sbatch --parsable --dependency="afterok:${signal_check_job}" \
+  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet.yaml \
+  --output "$PDEOBS_RUNS/recovery-signal")"
+signal_train_job="${signal_train_job%%;*}"
+
+signal_eval_job="$(sbatch --parsable --dependency="afterok:${signal_train_job}" \
+  hpc/seawulf/evaluate_gpu.sbatch configs/experiment/recovery_unet.yaml \
+  "$PDEOBS_RUNS/recovery-signal/checkpoints/best.pt" \
+  --output "$PDEOBS_RUNS/recovery-signal/metrics.json")"
+signal_eval_job="${signal_eval_job%%;*}"
+
+echo "generation=$signal_job validation=$signal_check_job training=$signal_train_job evaluation=$signal_eval_job"
+squeue -j "$signal_job,$signal_check_job,$signal_train_job,$signal_eval_job"
+```
+
+## 6. Scale to a factorized tier
 
 ```bash
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \
@@ -95,10 +161,9 @@ shared HDF5 or CSV file. A per-shard ownership lock rejects accidentally
 overlapping submissions.
 
 The plan produced from `configs/dataset/default.yaml` has 840 independent
-regime-node jobs. SeaWulf may limit a
-user to 100 queued jobs, and an array's pending elements can count toward that
-limit. `submit_generation.sh` therefore accepts an inclusive `START STOP`
-window and refuses windows larger than `PDEOBS_MAX_QUEUED_TASKS` (default 100).
+regime-node jobs. As a conservative safety cap, `submit_generation.sh` accepts
+an inclusive `START STOP` window and refuses windows larger than
+`PDEOBS_MAX_QUEUED_TASKS` (default 100).
 Wait for `0 99` to finish, then submit `100 199`, and continue through the last
 plan index; `%${PDEOBS_GENERATION_CONCURRENCY:-4}` in the array request limits
 simultaneously running tasks. Confirm current site policy before changing either
@@ -110,8 +175,7 @@ additional scratch space for partial shards, logs, metadata, and any curated
 copy to project storage; generate `tiny` first and measure its realized size
 before reserving space for `full`.
 
-After every array window succeeds, strictly validate the exact plan before
-training:
+After every array window succeeds, strictly validate the exact plan:
 
 ```bash
 aggregation_job="$(sbatch --parsable hpc/seawulf/aggregate_cpu.sbatch \
@@ -124,21 +188,26 @@ The aggregate job verifies completion records, checksums, sample identities,
 and exact plan coverage. It is a storage/provenance gate, not a substitute for
 the numerical validation required for paper data.
 
-## 6. Train and evaluate
+## 7. Monitor, resume, and evaluate
 
 ```bash
-mkdir -p logs
-sbatch --dependency="afterok:${aggregation_job}" \
-  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet.yaml
-sbatch hpc/seawulf/evaluate_gpu.sbatch \
-  configs/experiment/recovery_unet.yaml /path/to/checkpoint.pt
+squeue --user="$USER"
+sacct -j JOB_ID
+seff JOB_ID
+
+sbatch hpc/seawulf/train_gpu.sbatch \
+  configs/experiment/recovery_unet.yaml \
+  --output "$PDEOBS_RUNS/recovery-signal" \
+  --resume "$PDEOBS_RUNS/recovery-signal/checkpoints/last.pt"
 ```
 
 The default A100 scripts request one GPU, eight CPU cores, 64 GB memory, and
 eight hours. Change resources at submission time when measurements justify it;
 variables are not expanded in `#SBATCH` headers. The trainer writes resumable
 checkpoints; if a run reaches the time limit, resubmit with
-`--resume /path/to/checkpoints/last.pt`.
+`--resume /path/to/checkpoints/last.pt`. Always ensure a training configuration's
+`data.root` matches the tier you generated; the checked-in recovery example
+uses `$PDEOBS_DATA/signal`.
 
 Official references:
 

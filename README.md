@@ -6,6 +6,7 @@ learning under partial observation.**
 [Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) ·
 [reference protocol](docs/PROTOCOL.md) ·
 [extension guide](docs/EXTENDING.md) ·
+[Linux server guide](docs/SERVER.md) ·
 [SeaWulf guide](hpc/seawulf/README.md)
 
 PDE-OBS provides executable tools for factorized data generation, observation
@@ -187,14 +188,97 @@ my_method = "my_package.pdeobs_plugin:register"
 No CLI edits are required. Read [docs/EXTENDING.md](docs/EXTENDING.md) for the
 component contract and testing checklist.
 
-## SeaWulf
+## Run on a Linux server
 
-The repository contains separate shared-CPU, A100, aggregation, and
-manifest-array launchers. The intended flow is clone Git, checkout an exact
-revision, build the environment once in persistent storage, generate into
-scratch, and copy curated releases/results to project storage. Start with
-[hpc/seawulf/README.md](hpc/seawulf/README.md); do not launch the full tier before
-the checked-in smoke case succeeds.
+On an ordinary Linux CPU/GPU server, keep code, data, and runs separate and use
+`tmux` so an SSH disconnect does not stop a job:
+
+```bash
+git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
+cd PartialObs--PDEBench
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install ".[train,test]"
+
+export PDEOBS_DATA="$PWD/datasets"
+export PDEOBS_RUNS="$PWD/runs"
+pdeobs doctor                         # add --gpu when CUDA is expected
+```
+
+Start a persistent terminal with `tmux new -s pdeobs`, then run this inside
+the new session:
+
+```bash
+source .venv/bin/activate
+export PDEOBS_DATA="$PWD/datasets"
+export PDEOBS_RUNS="$PWD/runs"
+pdeobs generate --config configs/dataset/smoke.yaml \
+  --output "$PDEOBS_DATA/smoke"
+pdeobs aggregate --input "$PDEOBS_DATA/smoke" \
+  --output "$PDEOBS_DATA/smoke/summary.json" --validate-shards
+pdeobs train --config configs/experiment/recovery_unet_smoke.yaml \
+  --output "$PDEOBS_RUNS/smoke-train"
+```
+
+Detach from `tmux` with `Ctrl-b d` and reconnect with
+`tmux attach -t pdeobs`. For the strict signal-tier workflow, GPU checks,
+evaluation, resume commands, and update procedure, use the complete
+[Linux server guide](docs/SERVER.md).
+
+## SeaWulf quick start
+
+SeaWulf work must be submitted through Slurm. The repository includes CPU
+generation/aggregation launchers and A100 training/evaluation launchers. After
+cloning the repository on `milan.seawulf.stonybrook.edu`, set your group name
+and run:
+
+```bash
+module load slurm
+cd PartialObs--PDEBench
+
+export PDEOBS_GROUP=YOUR_GROUP
+export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
+export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
+export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
+mkdir -p logs "$(dirname "$PDEOBS_ENV")" \
+  "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
+
+# Bootstrap only inside a compute allocation, never on the login node.
+srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
+  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
+bash hpc/seawulf/bootstrap.sh
+exit
+
+# Make an exact smoke plan, then chain generation, validation, and training.
+"$PDEOBS_ENV/bin/python" -m pdeobs plan \
+  --config configs/dataset/smoke.yaml --tier tiny \
+  --output "$PDEOBS_DATA/plans/smoke.jsonl"
+smoke_job="$(sbatch --parsable --array=0-0 \
+  hpc/seawulf/generate_array.sbatch \
+  configs/dataset/smoke.yaml "$PDEOBS_DATA/smoke" \
+  "$PDEOBS_DATA/plans/smoke.jsonl")"
+smoke_job="${smoke_job%%;*}"
+check_job="$(sbatch --parsable --dependency="afterok:$smoke_job" \
+  hpc/seawulf/aggregate_cpu.sbatch \
+  "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/smoke/summary.json" \
+  "$PDEOBS_DATA/plans/smoke.jsonl")"
+check_job="${check_job%%;*}"
+train_job="$(sbatch --parsable --dependency="afterok:$check_job" \
+  hpc/seawulf/train_gpu.sbatch \
+  configs/experiment/recovery_unet_smoke.yaml \
+  --output "$PDEOBS_RUNS/smoke-train")"
+train_job="${train_job%%;*}"
+echo "generation=$smoke_job validation=$check_job training=$train_job"
+squeue --user="$USER"
+```
+
+Do not submit the full dataset first. Inspect `logs/`, the validation summary,
+and `seff JOB_ID`; then follow the exact-commit, signal-tier, array-window,
+resume, storage, and archive instructions in the full
+[SeaWulf guide](hpc/seawulf/README.md). SeaWulf scratch is temporary and not
+backed up.
 
 ## Repository structure
 
