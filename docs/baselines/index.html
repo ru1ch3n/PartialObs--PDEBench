@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Baselines — PartialObs–PDEBench</title>
-  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-13" />
   <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
@@ -15,13 +15,13 @@
         <div>
           <h1>Baselines & method taxonomy</h1>
           <p class="subtitle">Tables of method classes and commonly compared baselines.</p>
-          
+
         </div>
 
         <div class="hero-card">  <div class="smallcaps">Tip</div>  <p class="muted" style="margin-top:8px;">    Use <b>Method classes</b> to compare approaches, and <b>Baseline methods</b> to reproduce literature tables.  </p></div>
       </div>
 
-      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/" aria-current="page">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../contribute/">Contribute</a></nav>
+      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/" aria-current="page">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../server/">Run</a><a href="../contribute/">Contribute</a></nav>
     </div>
   </header>
 
@@ -38,49 +38,49 @@
 <tr><td><b>Benchmark</b></td><td>4</td><td><div class="equation">\[\text{(No single method.) Benchmarks define datasets, masks, metrics, and protocols.}\]</div></td><td><a href="../research/?method=Benchmark">View papers</a></td></tr>
 <tr><td><b>Transformers</b></td><td>3</td><td><div class="equation">\[\mathrm{Attn}(Q,K,V)=\mathrm{softmax}(QK^\top/\sqrt{d})V\ \ \text{(global token mixing)}\]</div></td><td><a href="../research/?method=Transformers">View papers</a></td></tr>
 <tr><td><b>CNN / U-Net</b></td><td>1</td><td><div class="equation">\[\text{A broad bucket: see the method class tags for the closest training objective.}\]</div></td><td><a href="../research/?method=CNN%20/%20U-Net">View papers</a></td></tr></tbody></table></div><section class="section">  <h2>Baseline methods (curated pages)</h2>  <p>Baseline lists are only available on manually curated paper pages. This table summarizes what is currently extracted.</p></section><div class="tablewrap"><table><thead><tr><th>Baseline method</th><th># curated papers</th><th>Examples</th><th></th></tr></thead><tbody><tr><td><b>FNO</b></td><td>20</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=FNO">Search</a></td></tr>
-<tr><td><b>U-Net</b></td><td>13</td><td class="muted"><a href="../research/conditional-diffusion-pde/">Conditional diffusion for PDE simulations</a>, <a href="../research/sinenet/">SineNet</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-Net">Search</a></td></tr>
+<tr><td><b>U-Net</b></td><td>13</td><td class="muted"><a href="../research/conditional-diffusion-pde/">Conditional diffusion for PDE simulations</a>, <a href="../research/paper/?slug=sinenet">SineNet</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-Net">Search</a></td></tr>
 <tr><td><b>DeepONet</b></td><td>11</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=DeepONet">Search</a></td></tr>
-<tr><td><b>Numerical solver</b></td><td>11</td><td class="muted"><a href="../research/gencast/">GenCast</a>, <a href="../research/fengwu/">FengWu</a>, <a href="../research/fourcastnet/">FourCastNet</a></td><td><a href="../research/?q=Numerical%20solver">Search</a></td></tr>
-<tr><td><b>PINN</b></td><td>8</td><td class="muted"><a href="../research/pdebench/">PDEBench</a>, <a href="../research/fbpinns/">FBPINNs</a>, <a href="../research/pinn-grad-pathologies/">PINN Grad Pathologies</a></td><td><a href="../research/?q=PINN">Search</a></td></tr>
-<tr><td><b>ResNet</b></td><td>5</td><td class="muted"><a href="../research/pde-refiner/">PDE-Refiner</a>, <a href="../research/pdearena/">PDEArena</a>, <a href="../research/pdebench/">PDEBench</a></td><td><a href="../research/?q=ResNet">Search</a></td></tr>
+<tr><td><b>Numerical solver</b></td><td>11</td><td class="muted"><a href="../research/paper/?slug=gencast">GenCast</a>, <a href="../research/paper/?slug=fengwu">FengWu</a>, <a href="../research/paper/?slug=fourcastnet">FourCastNet</a></td><td><a href="../research/?q=Numerical%20solver">Search</a></td></tr>
+<tr><td><b>PINN</b></td><td>8</td><td class="muted"><a href="../research/paper/?slug=pdebench">PDEBench</a>, <a href="../research/paper/?slug=fbpinns">FBPINNs</a>, <a href="../research/paper/?slug=pinn-grad-pathologies">PINN Grad Pathologies</a></td><td><a href="../research/?q=PINN">Search</a></td></tr>
+<tr><td><b>ResNet</b></td><td>5</td><td class="muted"><a href="../research/pde-refiner/">PDE-Refiner</a>, <a href="../research/paper/?slug=pdearena">PDEArena</a>, <a href="../research/paper/?slug=pdebench">PDEBench</a></td><td><a href="../research/?q=ResNet">Search</a></td></tr>
 <tr><td><b>PINO</b></td><td>4</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=PINO">Search</a></td></tr>
-<tr><td><b>Transformer</b></td><td>4</td><td class="muted"><a href="../research/poseidon/">Poseidon</a>, <a href="../research/sinenet/">SineNet</a>, <a href="../research/pdearena/">PDEArena</a></td><td><a href="../research/?q=Transformer">Search</a></td></tr>
+<tr><td><b>Transformer</b></td><td>4</td><td class="muted"><a href="../research/paper/?slug=poseidon">Poseidon</a>, <a href="../research/paper/?slug=sinenet">SineNet</a>, <a href="../research/paper/?slug=pdearena">PDEArena</a></td><td><a href="../research/?q=Transformer">Search</a></td></tr>
 <tr><td><b>DiffusionPDE</b></td><td>3</td><td class="muted"><a href="../research/fundps/">FunDPS</a>, <a href="../research/prisma/">PRISMA</a>, <a href="../research/videopde/">VideoPDE</a></td><td><a href="../research/?q=DiffusionPDE">Search</a></td></tr>
-<tr><td><b>GraphCast</b></td><td>3</td><td class="muted"><a href="../research/gencast/">GenCast</a>, <a href="../research/fengwu/">FengWu</a>, <a href="../research/neuralgcm/">NeuralGCM</a></td><td><a href="../research/?q=GraphCast">Search</a></td></tr>
-<tr><td><b>PDE-FIND</b></td><td>3</td><td class="muted"><a href="../research/pde-net-2/">PDE-Net 2.0</a>, <a href="../research/deep-hpm/">Deep HPM</a>, <a href="../research/pde-net/">PDE-Net</a></td><td><a href="../research/?q=PDE-FIND">Search</a></td></tr>
-<tr><td><b>U-NO</b></td><td>3</td><td class="muted"><a href="../research/diffusionpde/">DiffusionPDE</a>, <a href="../research/u-wno/">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-NO">Search</a></td></tr>
-<tr><td><b>DGM</b></td><td>2</td><td class="muted"><a href="../research/pinn/">PINN</a>, <a href="../research/deepbsde/">DeepBSDE</a></td><td><a href="../research/?q=DGM">Search</a></td></tr>
-<tr><td><b>ECMWF IFS</b></td><td>2</td><td class="muted"><a href="../research/graphcast/">GraphCast</a>, <a href="../research/pangu-weather/">Pangu-Weather</a></td><td><a href="../research/?q=ECMWF%20IFS">Search</a></td></tr>
-<tr><td><b>FourCastNet</b></td><td>2</td><td class="muted"><a href="../research/fengwu/">FengWu</a>, <a href="../research/graphcast/">GraphCast</a></td><td><a href="../research/?q=FourCastNet">Search</a></td></tr>
-<tr><td><b>Pangu-Weather</b></td><td>2</td><td class="muted"><a href="../research/fengwu/">FengWu</a>, <a href="../research/graphcast/">GraphCast</a></td><td><a href="../research/?q=Pangu-Weather">Search</a></td></tr>
-<tr><td><b>WNO</b></td><td>2</td><td class="muted"><a href="../research/u-wno/">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=WNO">Search</a></td></tr>
-<tr><td><b>CNO</b></td><td>1</td><td class="muted"><a href="../research/u-wno/">U-WNO</a></td><td><a href="../research/?q=CNO">Search</a></td></tr>
+<tr><td><b>GraphCast</b></td><td>3</td><td class="muted"><a href="../research/paper/?slug=gencast">GenCast</a>, <a href="../research/paper/?slug=fengwu">FengWu</a>, <a href="../research/paper/?slug=neuralgcm">NeuralGCM</a></td><td><a href="../research/?q=GraphCast">Search</a></td></tr>
+<tr><td><b>PDE-FIND</b></td><td>3</td><td class="muted"><a href="../research/paper/?slug=pde-net-2">PDE-Net 2.0</a>, <a href="../research/paper/?slug=deep-hpm">Deep HPM</a>, <a href="../research/paper/?slug=pde-net">PDE-Net</a></td><td><a href="../research/?q=PDE-FIND">Search</a></td></tr>
+<tr><td><b>U-NO</b></td><td>3</td><td class="muted"><a href="../research/diffusionpde/">DiffusionPDE</a>, <a href="../research/paper/?slug=u-wno">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=U-NO">Search</a></td></tr>
+<tr><td><b>DGM</b></td><td>2</td><td class="muted"><a href="../research/pinn/">PINN</a>, <a href="../research/paper/?slug=deepbsde">DeepBSDE</a></td><td><a href="../research/?q=DGM">Search</a></td></tr>
+<tr><td><b>ECMWF IFS</b></td><td>2</td><td class="muted"><a href="../research/paper/?slug=graphcast">GraphCast</a>, <a href="../research/paper/?slug=pangu-weather">Pangu-Weather</a></td><td><a href="../research/?q=ECMWF%20IFS">Search</a></td></tr>
+<tr><td><b>FourCastNet</b></td><td>2</td><td class="muted"><a href="../research/paper/?slug=fengwu">FengWu</a>, <a href="../research/paper/?slug=graphcast">GraphCast</a></td><td><a href="../research/?q=FourCastNet">Search</a></td></tr>
+<tr><td><b>Pangu-Weather</b></td><td>2</td><td class="muted"><a href="../research/paper/?slug=fengwu">FengWu</a>, <a href="../research/paper/?slug=graphcast">GraphCast</a></td><td><a href="../research/?q=Pangu-Weather">Search</a></td></tr>
+<tr><td><b>WNO</b></td><td>2</td><td class="muted"><a href="../research/paper/?slug=u-wno">U-WNO</a>, <a href="../research/cno/">CNO</a></td><td><a href="../research/?q=WNO">Search</a></td></tr>
+<tr><td><b>CNO</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=u-wno">U-WNO</a></td><td><a href="../research/?q=CNO">Search</a></td></tr>
 <tr><td><b>Deep Ritz</b></td><td>1</td><td class="muted"><a href="../research/pinn/">PINN</a></td><td><a href="../research/?q=Deep%20Ritz">Search</a></td></tr>
-<tr><td><b>DeepBSDE</b></td><td>1</td><td class="muted"><a href="../research/dgm/">DGM</a></td><td><a href="../research/?q=DeepBSDE">Search</a></td></tr>
+<tr><td><b>DeepBSDE</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=dgm">DGM</a></td><td><a href="../research/?q=DeepBSDE">Search</a></td></tr>
 <tr><td><b>Diffusion inpainting baseline</b></td><td>1</td><td class="muted"><a href="../research/diffusionpde/">DiffusionPDE</a></td><td><a href="../research/?q=Diffusion%20inpainting%20baseline">Search</a></td></tr>
-<tr><td><b>ECMWF ENS</b></td><td>1</td><td class="muted"><a href="../research/gencast/">GenCast</a></td><td><a href="../research/?q=ECMWF%20ENS">Search</a></td></tr>
+<tr><td><b>ECMWF ENS</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=gencast">GenCast</a></td><td><a href="../research/?q=ECMWF%20ENS">Search</a></td></tr>
 <tr><td><b>FCN</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=FCN">Search</a></td></tr>
 <tr><td><b>FCN / plain encoder–decoder CNNs</b></td><td>1</td><td class="muted"><a href="../research/u-net/">U-Net</a></td><td><a href="../research/?q=FCN%20/%20plain%20encoder%E2%80%93decoder%20CNNs">Search</a></td></tr>
 <tr><td><b>FNN</b></td><td>1</td><td class="muted"><a href="../research/deeponet/">DeepONet</a></td><td><a href="../research/?q=FNN">Search</a></td></tr>
 <tr><td><b>FunDPS</b></td><td>1</td><td class="muted"><a href="../research/prisma/">PRISMA</a></td><td><a href="../research/?q=FunDPS">Search</a></td></tr>
 <tr><td><b>GCN</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=GCN">Search</a></td></tr>
-<tr><td><b>GKN</b></td><td>1</td><td class="muted"><a href="../research/mgno/">MGNO</a></td><td><a href="../research/?q=GKN">Search</a></td></tr>
+<tr><td><b>GKN</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=mgno">MGNO</a></td><td><a href="../research/?q=GKN">Search</a></td></tr>
 <tr><td><b>GNO</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=GNO">Search</a></td></tr>
 <tr><td><b>LNO</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=LNO">Search</a></td></tr>
 <tr><td><b>MGNO</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=MGNO">Search</a></td></tr>
 <tr><td><b>PCA-NN</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=PCA-NN">Search</a></td></tr>
-<tr><td><b>PDE-Net</b></td><td>1</td><td class="muted"><a href="../research/pde-net-2/">PDE-Net 2.0</a></td><td><a href="../research/?q=PDE-Net">Search</a></td></tr>
+<tr><td><b>PDE-Net</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=pde-net-2">PDE-Net 2.0</a></td><td><a href="../research/?q=PDE-Net">Search</a></td></tr>
 <tr><td><b>PDE-Refiner</b></td><td>1</td><td class="muted"><a href="../research/conditional-diffusion-pde/">Conditional diffusion for PDE simulations</a></td><td><a href="../research/?q=PDE-Refiner">Search</a></td></tr>
-<tr><td><b>Persistence</b></td><td>1</td><td class="muted"><a href="../research/fourcastnet/">FourCastNet</a></td><td><a href="../research/?q=Persistence">Search</a></td></tr>
+<tr><td><b>Persistence</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=fourcastnet">FourCastNet</a></td><td><a href="../research/?q=Persistence">Search</a></td></tr>
 <tr><td><b>RBM</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=RBM">Search</a></td></tr>
-<tr><td><b>SINDy</b></td><td>1</td><td class="muted"><a href="../research/pde-find/">PDE-FIND</a></td><td><a href="../research/?q=SINDy">Search</a></td></tr>
+<tr><td><b>SINDy</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=pde-find">PDE-FIND</a></td><td><a href="../research/?q=SINDy">Search</a></td></tr>
 <tr><td><b>TF-Net</b></td><td>1</td><td class="muted"><a href="../research/fno/">FNO</a></td><td><a href="../research/?q=TF-Net">Search</a></td></tr>
-<tr><td><b>Traditional GCM</b></td><td>1</td><td class="muted"><a href="../research/neuralgcm/">NeuralGCM</a></td><td><a href="../research/?q=Traditional%20GCM">Search</a></td></tr>
+<tr><td><b>Traditional GCM</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=neuralgcm">NeuralGCM</a></td><td><a href="../research/?q=Traditional%20GCM">Search</a></td></tr>
 <tr><td><b>U-WNO</b></td><td>1</td><td class="muted"><a href="../research/diffusionpde/">DiffusionPDE</a></td><td><a href="../research/?q=U-WNO">Search</a></td></tr>
-<tr><td><b>XPINN</b></td><td>1</td><td class="muted"><a href="../research/fbpinns/">FBPINNs</a></td><td><a href="../research/?q=XPINN">Search</a></td></tr></tbody></table></div>
+<tr><td><b>XPINN</b></td><td>1</td><td class="muted"><a href="../research/paper/?slug=fbpinns">FBPINNs</a></td><td><a href="../research/?q=XPINN">Search</a></td></tr></tbody></table></div>
 
     <footer class="footer">
-      <div class="muted">Last generated: 2026-08-04</div>
+      <div class="muted">Last generated: 2026-08-15</div>
     </footer>
   </main>
 </body>

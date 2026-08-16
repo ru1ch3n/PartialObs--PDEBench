@@ -1,0 +1,33 @@
+schema_version: 1
+name: recovery-transparent-reference
+seed: 20260804
+task: recovery
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/signal
+  train_glob: "**/*.h5"
+  verify_shards: true
+  allow_split_fallback: false
+  split: iid
+  target_time: -1
+  filters:
+    pde: poisson
+    boundary: periodic
+    setting: smooth_grf
+    regime: low
+  mask:
+    protocol: random_3pct
+
+method:
+  name: nearest
+  kwargs: {}
+
+training:
+  batch_size: 16
+  num_workers: 4
+
+evaluation:
+  include_frequency_bands: true
+
+output:
+  root: ${PDEOBS_RUNS:-runs}

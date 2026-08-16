@@ -1,0 +1,14 @@
+include: recovery_fno_ood_base.yaml
+name: recovery-fno-mask-ood
+data:
+  split: iid
+evaluation:
+  mask_protocols:
+    - random_1pct
+    - random_5pct
+    - random_10pct
+    - regular_grid
+    - block_missing
+    - line_sensors
+    - boundary_sensors
+    - clustered_sensors

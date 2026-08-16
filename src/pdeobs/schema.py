@@ -168,8 +168,8 @@ class GenerationSpec:
         if int(self.shard_size) < 1:
             raise ValueError("shard_size must be positive")
         tier = str(self.tier).strip().lower()
-        if tier not in {"tiny", "debug", "signal", "medium", "full"}:
-            raise ValueError("tier must be tiny, debug, signal, medium, or full")
+        if tier not in {"tiny", "debug", "signal", "medium", "full", "custom"}:
+            raise ValueError("tier must be tiny, debug, signal, medium, full, or custom")
         object.__setattr__(self, "tier", tier)
         object.__setattr__(self, "resolution", normalize_resolution(self.resolution))
         if self.time_steps is not None and int(self.time_steps) < 1:

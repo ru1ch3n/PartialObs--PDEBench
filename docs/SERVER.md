@@ -62,6 +62,23 @@ Detach with `Ctrl-b d`. After reconnecting to the server, recover the session
 with `tmux attach -t pdeobs`. The smoke training checkpoint is written to
 `$PDEOBS_RUNS/smoke-train/checkpoints/best.pt`.
 
+The same server can use the config-free paper interface. Measure a small tier
+before increasing `--num-workers`:
+
+```bash
+pdeobs protocol --check
+pdeobs generate --tier signal --root "$PDEOBS_DATA" --num-workers 8
+pdeobs train --task sparse_recovery --model fno \
+  --data "$PDEOBS_DATA/pdeobs_signal" --split iid --mask random_3pct \
+  --output "$PDEOBS_RUNS/fno-sparse-recovery"
+pdeobs infer --task sparse_recovery --model fno \
+  --ckpt "$PDEOBS_RUNS/fno-sparse-recovery/checkpoints/best.pt" \
+  --data "$PDEOBS_DATA/pdeobs_signal" --split test
+pdeobs eval --task sparse_recovery \
+  --pred "$PDEOBS_RUNS/fno-sparse-recovery/preds.h5" \
+  --data "$PDEOBS_DATA/pdeobs_signal" --metrics rel_l2,spectral
+```
+
 ## 3. Run a strict train/validation/test example
 
 The five-sample tiny tier is only a pipeline preflight. The focused signal-tier

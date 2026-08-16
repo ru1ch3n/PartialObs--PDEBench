@@ -1,9 +1,15 @@
 import json
+from pathlib import Path
 
 import pytest
 
 from pdeobs.cli import main
-from pdeobs.difficulty import AnalysisConfig, analyze_path, analyze_records
+from pdeobs.difficulty import (
+    AnalysisConfig,
+    analyze_path,
+    analyze_records,
+    load_analysis_config,
+)
 from pdeobs.reports import write_json_report
 
 
@@ -144,3 +150,43 @@ def test_cli_and_long_form_records(tmp_path, capsys):
 def test_analysis_rejects_records_without_metrics():
     with pytest.raises(ValueError, match="No numeric metric fields"):
         analyze_records([{"pde": "heat", "regime": "low"}])
+
+
+def test_official_analysis_config_matches_evaluator_relative_l2_metric():
+    config_path = Path(__file__).parents[1] / "configs" / "analysis" / "difficulty.yaml"
+    config = load_analysis_config(config_path)
+
+    report = analyze_records([{"metrics.relative_l2": 0.2}], config=config)
+
+    assert report["detected"]["primary_metric"] == "relative_l2"
+
+
+@pytest.mark.parametrize(
+    "metric",
+    (
+        "recall@1",
+        "recall_at_1",
+        "map",
+        "map_at_5",
+        "ndcg",
+        "ndcg@10",
+        "ndcg_at_10",
+    ),
+)
+def test_retrieval_scores_are_inferred_as_higher_is_better(metric):
+    report = analyze_records(
+        [{f"metrics.{metric}": 0.75}],
+        config=AnalysisConfig(primary_metric=metric),
+    )
+
+    assert report["detected"]["metric_directions"][metric] == "higher_is_better"
+
+
+@pytest.mark.parametrize("metric", ("recall_error", "map_error", "ndcg_loss", "map_regret"))
+def test_retrieval_error_metrics_remain_lower_is_better(metric):
+    report = analyze_records(
+        [{f"metrics.{metric}": 0.25}],
+        config=AnalysisConfig(primary_metric=metric),
+    )
+
+    assert report["detected"]["metric_directions"][metric] == "lower_is_better"

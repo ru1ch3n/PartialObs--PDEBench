@@ -1,0 +1,6 @@
+include: recovery_fno_ood_base.yaml
+name: recovery-fno-boundary-ood
+data:
+  ood_view: boundary
+evaluation:
+  ood_views: [boundary]

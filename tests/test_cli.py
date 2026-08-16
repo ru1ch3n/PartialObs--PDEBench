@@ -5,8 +5,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from pdeobs.cli import build_parser, main
 
 
@@ -17,10 +15,63 @@ def test_cli_lists_components(capsys) -> None:
     assert '"navier_stokes"' in output
 
 
-def test_download_requires_an_explicit_release_manifest() -> None:
-    with pytest.raises(SystemExit) as exc:
-        build_parser().parse_args(["download", "--tier", "tiny"])
-    assert exc.value.code == 2
+def test_download_one_line_uses_the_publication_gated_default_endpoint() -> None:
+    args = build_parser().parse_args(["download", "--tier", "tiny", "--root", "data"])
+    assert args.manifest is None
+    assert args.root == Path("data")
+
+
+def test_cli_dispatches_doctor_download_and_aggregate(tmp_path: Path, monkeypatch, capsys) -> None:
+    from pdeobs import aggregate, doctor, download
+    from pdeobs.doctor import Check
+
+    monkeypatch.setattr(
+        doctor,
+        "run_doctor",
+        lambda **_: [Check("test runtime", True, "ready")],
+    )
+    assert main(["doctor"]) == 0
+    assert "test runtime" in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        download,
+        "download_release",
+        lambda manifest, output, tier, force=False: [Path(output) / f"{tier}.h5"],
+    )
+    assert (
+        main(
+            [
+                "download",
+                "--tier",
+                "tiny",
+                "--manifest",
+                str(tmp_path / "manifest.json"),
+                "--root",
+                str(tmp_path),
+            ]
+        )
+        == 0
+    )
+    assert "Verified 1 files" in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        aggregate,
+        "aggregate_path",
+        lambda *_, **__: {"dataset": {"shard_count": 1}, "leaderboard": []},
+    )
+    assert (
+        main(
+            [
+                "aggregate",
+                "--input",
+                str(tmp_path),
+                "--output",
+                str(tmp_path / "summary.json"),
+            ]
+        )
+        == 0
+    )
+    assert "Found 1 shards" in capsys.readouterr().out
 
 
 def test_cli_lists_builtins_in_fresh_process() -> None:
@@ -74,3 +125,148 @@ def test_cli_plan_and_generation_dry_run(tmp_path: Path, capsys) -> None:
     )
     output = capsys.readouterr().out
     assert '"selected_job_count": 1' in output
+
+
+def test_config_free_generation_and_generate_case_contracts(tmp_path: Path, capsys) -> None:
+    assert (
+        main(
+            [
+                "generate",
+                "--tier",
+                "tiny",
+                "--root",
+                str(tmp_path),
+                "--num-workers",
+                "2",
+                "--dry-run",
+                "--set",
+                "families=[poisson]",
+                "--set",
+                "boundaries=[periodic]",
+                "--set",
+                "settings=[smooth_grf]",
+                "--set",
+                "regimes=[low]",
+                "--set",
+                "resolution=8",
+            ]
+        )
+        == 0
+    )
+    generated = capsys.readouterr().out
+    assert '"output_root":' in generated
+    assert "pdeobs_tiny" in generated
+    assert '"num_workers": 1' in generated
+
+    assert (
+        main(
+            [
+                "generate-case",
+                "--pde",
+                "navier_stokes",
+                "--boundary",
+                "periodic",
+                "--setting",
+                "vortex_pair",
+                "--param-regime",
+                "high",
+                "--num-samples",
+                "100",
+                "--root",
+                str(tmp_path),
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    case = capsys.readouterr().out
+    assert '"case_id": "navier_stokes/periodic/dipole_vortex_pair/high"' in case
+    assert "dipole_vortex_pair" in case
+    assert '"tier": "signal"' in case
+
+
+def test_config_free_train_infer_eval_and_benchmark_preflights(tmp_path: Path, capsys) -> None:
+    data = tmp_path / "pdeobs_medium"
+    run = tmp_path / "run"
+    assert (
+        main(
+            [
+                "train",
+                "--task",
+                "sparse_recovery",
+                "--model",
+                "fno",
+                "--data",
+                str(data),
+                "--split",
+                "iid",
+                "--mask",
+                "random_3pct",
+                "--output",
+                str(run),
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    assert '"dry_run": true' in capsys.readouterr().out
+
+    checkpoint = run / "checkpoints" / "best.pt"
+    assert (
+        main(
+            [
+                "infer",
+                "--task",
+                "sparse_recovery",
+                "--model",
+                "fno",
+                "--ckpt",
+                str(checkpoint),
+                "--data",
+                str(data),
+                "--split",
+                "test",
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    infer_payload = capsys.readouterr().out
+    assert '"dry_run": true' in infer_payload
+    assert "preds.h5" in infer_payload
+
+    assert (
+        main(
+            [
+                "eval",
+                "--task",
+                "sparse_recovery",
+                "--pred",
+                str(run / "preds.h5"),
+                "--data",
+                str(data),
+                "--metrics",
+                "rel_l2,spectral,pde_residual",
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    assert '"dry_run": true' in capsys.readouterr().out
+
+    assert (
+        main(
+            [
+                "benchmark",
+                "--preset",
+                "fno_sparse_recovery",
+                "--tier",
+                "medium",
+                "--output",
+                str(tmp_path / "benchmark"),
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    assert '"dry_run": true' in capsys.readouterr().out

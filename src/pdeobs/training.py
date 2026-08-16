@@ -104,6 +104,50 @@ def seed_everything(seed: int, deterministic: bool = True) -> None:
                 torch.use_deterministic_algorithms(True)
 
 
+def _numpy_rng_payload(state: tuple[Any, ...]) -> dict[str, Any]:
+    """Convert NumPy's RNG tuple to weights-only-safe primitive values."""
+
+    return {
+        "bit_generator": str(state[0]),
+        "keys": np.asarray(state[1], dtype=np.uint32).tolist(),
+        "position": int(state[2]),
+        "has_gaussian": int(state[3]),
+        "cached_gaussian": float(state[4]),
+    }
+
+
+def _restore_numpy_rng(payload: Mapping[str, Any]) -> None:
+    np.random.set_state(
+        (
+            str(payload["bit_generator"]),
+            np.asarray(payload["keys"], dtype=np.uint32),
+            int(payload["position"]),
+            int(payload["has_gaussian"]),
+            float(payload["cached_gaussian"]),
+        )
+    )
+
+
+def load_checkpoint_payload(path: str | Path, *, map_location: Any = "cpu") -> Mapping[str, Any]:
+    """Load tensor/state dictionaries without enabling arbitrary pickle execution."""
+
+    _require_torch()
+    source = Path(path)
+    if not source.is_file():
+        raise FileNotFoundError(f"Checkpoint does not exist: {source}")
+    try:
+        payload = torch.load(source, map_location=map_location, weights_only=True)
+    except Exception as exc:
+        raise ValueError(
+            f"Checkpoint {source} is not compatible with safe weights-only loading. "
+            "PDE-OBS refuses arbitrary-pickle checkpoints; recreate it with this version "
+            "or export a plain state_dict."
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise ValueError(f"Checkpoint {source} must contain a state mapping")
+    return payload
+
+
 def resolve_device(requested: str = "auto") -> torch.device:
     _require_torch()
     if requested != "auto":
@@ -479,7 +523,7 @@ class Trainer:
             "config": asdict(self.config),
             "rng": {
                 "python": random.getstate(),
-                "numpy": np.random.get_state(),
+                "numpy": _numpy_rng_payload(np.random.get_state()),
                 "torch": torch.get_rng_state(),
                 "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
             },
@@ -492,10 +536,7 @@ class Trainer:
         return destination
 
     def load_checkpoint(self, path: str | Path) -> Mapping[str, Any]:
-        try:
-            checkpoint = torch.load(path, map_location=self.device, weights_only=False)
-        except TypeError:  # PyTorch versions predating weights_only
-            checkpoint = torch.load(path, map_location=self.device)
+        checkpoint = load_checkpoint_payload(path, map_location=self.device)
         target = self.model.module if hasattr(self.model, "module") else self.model
         target.load_state_dict(checkpoint["model_state"], strict=self.config.strict_resume)
         if "optimizer_state" in checkpoint:
@@ -508,7 +549,7 @@ class Trainer:
         rng = checkpoint.get("rng", {})
         if rng:
             random.setstate(rng["python"])
-            np.random.set_state(rng["numpy"])
+            _restore_numpy_rng(rng["numpy"])
             torch.set_rng_state(rng["torch"])
             if torch.cuda.is_available() and rng.get("cuda") is not None:
                 torch.cuda.set_rng_state_all(rng["cuda"])

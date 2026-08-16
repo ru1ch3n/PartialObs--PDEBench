@@ -13,6 +13,7 @@ It writes:
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
+  - docs/server/index.html              (Linux + SeaWulf run guide)
   - docs/contribute/index.html          (how to add/curate papers)
 
 This repo uses GitHub Pages with /docs as the site root.
@@ -735,7 +736,7 @@ def badges(items: List[str]) -> str:
 
 
 def nav(root: str, current: str) -> str:
-    # current: one of "home", "research", "pde", "baselines", "benchmark", "contribute"
+    # current: one of "home", "research", "pde", "baselines", "benchmark", "run", "contribute"
     def a(href: str, label: str, key: str) -> str:
         aria = ' aria-current="page"' if key == current else ""
         return f"<a href=\"{href}\"{aria}>{label}</a>"
@@ -747,6 +748,7 @@ def nav(root: str, current: str) -> str:
         + a(f"{root}pde-problems/", "PDE problems", "pde")
         + a(f"{root}baselines/", "Baselines", "baselines")
         + a(f"{root}benchmark/", "Benchmark", "benchmark")
+        + a(f"{root}server/", "Run", "run")
         + a(f"{root}contribute/", "Contribute", "contribute")
         + "</nav>"
     )
@@ -772,7 +774,7 @@ def page(
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
   <title>{html_escape(title)}</title>
-  <link rel=\"stylesheet\" href=\"{root}assets/style.css\" />
+  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-13\" />
   {extra_head}
 </head>
 
@@ -1086,14 +1088,18 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     n_total = len(papers)
     n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
 
-    # The homepage should stay minimal (no long “get started” block).
+    # Keep the homepage status concise; full commands live on the Run page.
     hero_card = (
         "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Contribute</div>"
+        "  <div class=\"smallcaps\">Benchmark status</div>"
+        "  <p style=\"margin:8px 0 0;\"><b>Benchmark-paper tooling: implemented</b></p>"
         "  <p class=\"muted\" style=\"margin-top:8px;\">"
-        "    Add or improve paper pages by editing <code>data/curations/*.json</code>. "
-        "    See the <b>Contribute</b> tab for the step-by-step workflow and templates."
+        "    Deterministic generation, verified shards, strict splits, baselines, "
+        "    OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in."
         "  </p>"
+        "  <p class=\"muted\"><b>Paper-data release:</b> pending numerical validation.</p>"
+        "  <p><a href=\"benchmark/\">Benchmark-paper contract</a> · "
+        "  <a href=\"server/\">Run on a server</a></p>"
         "</div>"
     )
 
@@ -1104,11 +1110,13 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
     (missing sensors, masked pixels, partial trajectories).
   </p>
+  <div class="note"><b>Manuscript scope:</b> the repository supports one data/benchmark paper—dataset design, task/split/metric protocols, anchor baselines, difficulty analysis, and one-line tools. New semantic-ID, large world-model, and foundation-model claims are separate projects.</div>
   <ul>
     <li><b>Research:</b> browse/search <b>{n_total}</b> AI4PDE/AI4SDE papers (<b>{n_curated}</b> curated pages + index placeholders).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> executable PDE-OBS reference suite with factorized generation, masks, IID/OOD splits, baselines, metrics, and SeaWulf launchers.</li>
+    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication gates.</li>
+    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
     <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
 </section>
@@ -1148,8 +1156,8 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         current="home",
         hero_h1="PartialObs–PDEBench",
         hero_subtitle_html=(
-            "A benchmark + research map for <b>PDE inference under partial observation</b>. "
-            "Homepage = summary + trees; details live in the other tabs."
+            "The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> "
+            "plus a supporting partial-observation research map."
         ),
         hero_meta_html=(
             "<div class=\"meta\">"
@@ -1164,7 +1172,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
             "<script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>"
             "<script>document.addEventListener('DOMContentLoaded',()=>{"
             "  if(!window.mermaid) return;"
-            "  // Enable clickable nodes (mermaid `click` directives) on GitHub Pages."
+            "  /* Enable clickable Mermaid nodes on GitHub Pages. */"
             "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});"
             "  mermaid.run({querySelector:'.mermaid'});"
             "});</script>"
@@ -1437,7 +1445,8 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
     for base, ps in sorted(base_to_papers.items(), key=lambda kv: (-len(kv[1]), kv[0].lower())):
         ex = sorted(ps, key=lambda x: (-x.get("year", 0), x.get("short_title", "")))[:3]
         ex_links = ", ".join(
-            f"<a href=\"../research/{pp['slug']}/\">{html_escape(pp['short_title'])}</a>" for pp in ex
+            f"<a href=\"{paper_link(pp, '../')}\">{html_escape(pp['short_title'])}</a>"
+            for pp in ex
         )
         qlink = f"../research/?q={quote(base)}"
         base_rows.append(
@@ -1611,7 +1620,7 @@ def render_contribute(papers: List[Dict[str, Any]]) -> str:
     return page(
         title="Contribute",
         root="../",
-        current="contribute/",
+        current="contribute",
         hero_h1="Contribute",
         hero_subtitle_html=f"Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).",
         hero_meta_html="",
@@ -1619,9 +1628,136 @@ def render_contribute(papers: List[Dict[str, Any]]) -> str:
         body_html=body,
     )
 
+
+def render_server() -> str:
+    """Render the public Linux-server and SeaWulf quick-start page."""
+
+    root = "../"
+    linux_guide = (
+        "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/SERVER.md"
+    )
+    seawulf_guide = (
+        "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/hpc/seawulf/README.md"
+    )
+    body = f"""
+<section class="section">
+  <h2>Choose the machine</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Single Linux server</h3>
+      <p>Use a virtual environment and <code>tmux</code>. Keep datasets and runs outside Git, then begin with the two-sample smoke workflow.</p>
+      <p><a href="{linux_guide}">Open the complete Linux server guide</a></p>
+    </div>
+    <div class="card">
+      <h3>SeaWulf cluster</h3>
+      <p>Pin one Git commit, build inside an allocation, and chain generation, validation, training, and evaluation with Slurm dependencies.</p>
+      <p><a href="{seawulf_guide}">Open the complete SeaWulf guide</a></p>
+    </div>
+  </div>
+</section>
+
+<section id="linux" class="section">
+  <h2>Linux server: verified smoke run</h2>
+  <p>Run these commands after connecting over SSH. Keep the session alive with <code>tmux</code> before starting longer work.</p>
+  <div class="card">
+<pre><code>git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
+cd PartialObs--PDEBench
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install ".[train,test]"
+
+export PDEOBS_DATA="$PWD/datasets"
+export PDEOBS_RUNS="$PWD/runs"
+mkdir -p "$PDEOBS_DATA" "$PDEOBS_RUNS"
+pdeobs doctor
+pdeobs protocol --check
+
+tmux new -s pdeobs
+pdeobs generate --config configs/dataset/smoke.yaml \\
+  --output "$PDEOBS_DATA/smoke"
+pdeobs aggregate --input "$PDEOBS_DATA/smoke" \\
+  --output "$PDEOBS_DATA/smoke/summary.json" --validate-shards
+pdeobs train --config configs/experiment/recovery_unet_smoke.yaml \\
+  --output "$PDEOBS_RUNS/smoke-train"</code></pre>
+  </div>
+  <p class="muted">Use <code>pdeobs doctor --gpu</code> when CUDA is expected. The full guide also covers the strict 34-sample signal workflow, evaluation, resume, and safe Git updates.</p>
+</section>
+
+<section id="seawulf" class="section">
+  <h2>SeaWulf: dependency-chained smoke example</h2>
+  <p>On SeaWulf, do not build or run long work on the login node. This example pins the environment to the checked-out commit and stops downstream work automatically if validation fails.</p>
+  <div class="card">
+<pre><code>ssh YOUR_NETID@milan.seawulf.stonybrook.edu
+module load slurm
+git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
+cd PartialObs--PDEBench
+git checkout YOUR_RELEASE_TAG_OR_COMMIT
+
+export PDEOBS_GROUP=YOUR_GROUP
+export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
+export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
+export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
+mkdir -p logs "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
+
+# Build only after entering a compute allocation.
+srun --partition=short-40core-shared --nodes=1 --ntasks=1 \\
+  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
+bash hpc/seawulf/bootstrap.sh
+exit
+
+"$PDEOBS_ENV/bin/python" -m pdeobs plan \\
+  --config configs/dataset/smoke.yaml --tier tiny \\
+  --output "$PDEOBS_DATA/plans/smoke.jsonl"
+
+generation_job="$(sbatch --parsable --array=0-0 \\
+  hpc/seawulf/generate_array.sbatch configs/dataset/smoke.yaml \\
+  "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/plans/smoke.jsonl")"
+generation_job="${{generation_job%%;*}}"
+
+validation_job="$(sbatch --parsable --dependency="afterok:$generation_job" \\
+  hpc/seawulf/aggregate_cpu.sbatch "$PDEOBS_DATA/smoke" \\
+  "$PDEOBS_DATA/smoke/summary.json" "$PDEOBS_DATA/plans/smoke.jsonl")"
+validation_job="${{validation_job%%;*}}"
+
+training_job="$(sbatch --parsable --dependency="afterok:$validation_job" \\
+  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet_smoke.yaml \\
+  --output "$PDEOBS_RUNS/smoke-train")"
+training_job="${{training_job%%;*}}"
+squeue -j "$generation_job,$validation_job,$training_job"</code></pre>
+  </div>
+  <div class="note"><b>Storage:</b> SeaWulf scratch is temporary and not backed up. Copy valuable validated outputs to an independent archive.</div>
+</section>
+
+<section class="section">
+  <h2>Before scaling</h2>
+  <ul>
+    <li>Finish the smoke workflow and inspect logs, validation summaries, memory, and GPU use.</li>
+    <li>Record the exact Git commit and keep resolved configurations and provenance with every run.</li>
+    <li>Use the focused signal-tier example before a factorized campaign.</li>
+    <li>Do not publish bundled solver outputs as paper ground truth until the numerical-validation gate passes.</li>
+  </ul>
+</section>
+"""
+    return page(
+        title="Run PDE-OBS on servers",
+        root=root,
+        current="run",
+        hero_h1="Run PDE-OBS from Git",
+        hero_subtitle_html=(
+            "Copy-ready paths for a single Linux server and the SeaWulf Slurm cluster."
+        ),
+        hero_meta_html=badges(
+            ["Linux CPU/GPU", "SeaWulf Slurm", "Verified smoke first", "Exact Git revision"]
+        ),
+        body_html=body,
+    )
+
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+    normalized = "\n".join(line.rstrip() for line in content.splitlines()) + "\n"
+    path.write_text(normalized, encoding="utf-8")
 
 
 
@@ -1703,6 +1839,7 @@ def main() -> None:
     # Core pages
     write(DOCS / "index.html", render_home(papers))
     write(DOCS / "research" / "index.html", render_research_index(papers))
+    write(DOCS / "server" / "index.html", render_server())
     write(DOCS / "contribute" / "index.html", render_contribute(papers))
 
     # Single generic placeholder page for non-curated papers

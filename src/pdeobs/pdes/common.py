@@ -618,11 +618,18 @@ def _safe_array(values: FloatArray, dtype: np.dtype[Any] | type[np.floating[Any]
     target_dtype = np.dtype(dtype)
     if not np.issubdtype(target_dtype, np.floating):
         raise TypeError("dtype must be a floating-point dtype")
-    limit = min(float(np.finfo(target_dtype).max) / 16.0, 1.0e12)
-    result = np.nan_to_num(
-        np.asarray(values, dtype=np.float64), nan=0.0, posinf=limit, neginf=-limit
-    )
-    return np.ascontiguousarray(np.clip(result, -limit, limit), dtype=target_dtype)
+    source = np.asarray(values, dtype=np.float64)
+    if not bool(np.all(np.isfinite(source))):
+        raise FloatingPointError("PDE solver output contains NaN or infinity")
+    maximum = float(np.max(np.abs(source), initial=0.0))
+    if maximum > float(np.finfo(target_dtype).max):
+        raise OverflowError(
+            f"PDE solver output magnitude {maximum:.6g} exceeds {target_dtype} range"
+        )
+    result = np.ascontiguousarray(source, dtype=target_dtype)
+    if not bool(np.all(np.isfinite(result))):
+        raise FloatingPointError("PDE solver output became non-finite during dtype conversion")
+    return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -717,7 +724,12 @@ def build_output(
     parameters: Mapping[str, float | int],
     dtype: np.dtype[Any] | type[np.floating[Any]] = np.float32,
 ) -> PDEOutput:
-    """Sanitize arrays, attach lightweight diagnostics, and validate layout."""
+    """Validate arrays, attach lightweight diagnostics, and validate layout.
+
+    Non-finite or out-of-range solver output is rejected. It is never clipped
+    or replaced, because doing so would hide numerical failures in generated
+    benchmark data.
+    """
 
     condition_array = _safe_array(condition, dtype)
     trajectory_array = _safe_array(trajectory, dtype)

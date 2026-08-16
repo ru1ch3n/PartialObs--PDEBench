@@ -21,6 +21,8 @@ Thumbs.db
 # Generated benchmark data and run artifacts
 datasets/
 data/generated/
+data/pdeobs_*/
+data/pdeobs_cases/
 runs/
 checkpoints/
 predictions/

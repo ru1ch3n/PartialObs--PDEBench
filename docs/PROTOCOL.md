@@ -4,6 +4,11 @@ This document freezes the defaults implemented in `pdeobs` version 0.1. The
 defaults are deliberately configurable: a paper release should publish the
 resolved YAML, generated manifest, checksums, and Git commit together.
 
+This numerical/data protocol is subordinate to the frozen
+[benchmark-paper contract](BENCHMARK_PAPER.md). The manuscript contribution is
+the controlled benchmark and its anchor analyses; new semantic-ID, large
+world-model, and foundation-model method claims are out of scope.
+
 ## Factorized data space
 
 The reference suite is the Cartesian product of:
@@ -62,7 +67,9 @@ Data are written as independent compressed HDF5 shards. Each array task owns
 one shard and first writes a temporary file; the final name appears only after
 shape and finite-value validation. A sidecar completion record stores schema
 version, stable generation identity, row count, and SHA-256 digest. Metadata are also
-available as CSV/JSONL for tools that should not open the arrays.
+available as a per-shard CSV plus a JSON summary for tools that should not open
+the arrays. Prediction evaluation additionally emits per-sample metric JSONL
+for difficulty and failure analysis.
 
 ## Observations
 

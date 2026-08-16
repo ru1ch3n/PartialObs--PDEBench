@@ -18,6 +18,7 @@ The checked-in configurations are executable reference protocols:
 - `method/*.yaml`: compact baseline architectures, including the residual-CNN
   retrieval/multitask encoder and MAE-style small reconstruction anchor.
 - `experiment/recovery_*.yaml`: sparse-to-full recovery training runs.
+- `experiment/forward_poisson_fno.yaml`: executable forward-prediction anchor.
 - `experiment/inverse_darcy_unet.yaml`: sparse solution-to-coefficient inversion.
 - `experiment/recovery_unet_smoke.yaml`: one-epoch training on the 16x16 smoke data.
 - `experiment/rollout_*.yaml`: autoregressive temporal runs.
@@ -28,6 +29,12 @@ The checked-in configurations are executable reference protocols:
 - `experiment/rollout_navier_stokes_boundary_ood.yaml`: unified-velocity,
   leave-obstacle-boundary-out training with physical rollout metrics.
 - `experiment/benchmark_smoke.yaml`: an evaluated baseline suite with a leaderboard.
+- `experiment/benchmark_paper_anchors.yaml`: paper field-anchor matrix with
+  transparent/neural baselines and separately trained factor/mask OOD runs.
+- `experiment/recovery_fno_{boundary,setting,parameter,combination}_ood.yaml`:
+  leak-free factor-specific OOD training/evaluation configs.
+- `experiment/recovery_fno_mask_ood.yaml`: 3% random training mask evaluated
+  against every official ratio/pattern view.
 - `analysis/difficulty.yaml`: metric direction, grouping, and failure-ranking defaults.
 - `cluster/seawulf.yaml`: documentation-only snapshot of the checked-in Slurm
   defaults. The launchers do not consume this YAML; use `sbatch` overrides or
@@ -40,7 +47,15 @@ pdeobs generate --config configs/dataset/smoke.yaml --output datasets/smoke
 pdeobs generate --config configs/dataset/rollout_signal.yaml --output datasets/signal
 pdeobs train --config configs/experiment/recovery_unet_smoke.yaml
 pdeobs benchmark --config configs/experiment/benchmark_smoke.yaml
+pdeobs benchmark --config configs/experiment/benchmark_paper_anchors.yaml --dry-run
 ```
+
+The config-free paper interface (`pdeobs generate --tier ...`, `train --task
+... --model ...`, and `benchmark --preset ...`) uses code-defined presets so it
+also works from an installed wheel. See
+[`docs/BENCHMARK_PAPER.md`](../docs/BENCHMARK_PAPER.md). Retrieval, routing, and
+foundation transfer remain lightweight APIs/protocols, not silently mapped onto
+the field-regression Trainer.
 
 Production experiment configs verify shard completion records and do not fall
 back across missing splits. They use the signal tier because the five-sample

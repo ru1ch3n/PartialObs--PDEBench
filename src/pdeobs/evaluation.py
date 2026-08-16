@@ -286,42 +286,88 @@ class _HDF5PredictionWriter(AbstractContextManager["_HDF5PredictionWriter"]):
         self.handle = h5py.File(self.partial, "w")
         self.count = 0
 
-    def append(self, prediction: np.ndarray, target: np.ndarray) -> None:
+    def _append_array(
+        self,
+        name: str,
+        values: np.ndarray,
+        start: int,
+        stop: int,
+    ) -> None:
+        if len(values) != stop - start:
+            raise ValueError(f"{name} batch length differs from prediction batch")
+        if name not in self.handle:
+            tail = tuple(int(size) for size in values.shape[1:])
+            chunks = (min(16, len(values)), *tail)
+            self.handle.create_dataset(
+                name,
+                shape=(0, *tail),
+                maxshape=(None, *tail),
+                chunks=chunks,
+                compression="gzip",
+                compression_opts=4,
+                dtype=values.dtype,
+            )
+        dataset = self.handle[name]
+        if tuple(dataset.shape[1:]) != tuple(values.shape[1:]):
+            raise ValueError(
+                f"inconsistent {name} batch shape {values.shape[1:]}; expected {dataset.shape[1:]}"
+            )
+        dataset.resize(stop, axis=0)
+        dataset[start:stop] = values
+
+    def _append_strings(self, name: str, values: list[str], start: int, stop: int) -> None:
+        if len(values) != stop - start:
+            raise ValueError(f"{name} batch length differs from prediction batch")
+        if name not in self.handle:
+            self.handle.create_dataset(
+                name,
+                shape=(0,),
+                maxshape=(None,),
+                chunks=(min(64, len(values)),),
+                dtype=h5py.string_dtype(encoding="utf-8"),
+            )
+        dataset = self.handle[name]
+        dataset.resize(stop, axis=0)
+        dataset[start:stop] = values
+
+    def append(
+        self,
+        prediction: np.ndarray,
+        target: np.ndarray,
+        *,
+        observation: np.ndarray | None = None,
+        mask: np.ndarray | None = None,
+        geometry: np.ndarray | None = None,
+        metadata: Iterable[Mapping[str, Any]] | None = None,
+    ) -> None:
         if prediction.shape != target.shape:
             raise ValueError("prediction and target batches must have identical shapes")
         if prediction.ndim < 1 or len(prediction) < 1:
             raise ValueError("prediction batches must contain at least one sample")
-        if "prediction" not in self.handle:
-            tail = tuple(int(size) for size in prediction.shape[1:])
-            chunks = (min(16, len(prediction)), *tail)
-            self.handle.create_dataset(
-                "prediction",
-                shape=(0, *tail),
-                maxshape=(None, *tail),
-                chunks=chunks,
-                compression="gzip",
-                compression_opts=4,
-                dtype=prediction.dtype,
-            )
-            self.handle.create_dataset(
-                "target",
-                shape=(0, *tail),
-                maxshape=(None, *tail),
-                chunks=chunks,
-                compression="gzip",
-                compression_opts=4,
-                dtype=target.dtype,
-            )
         start, stop = self.count, self.count + len(prediction)
-        for name, values in (("prediction", prediction), ("target", target)):
-            dataset = self.handle[name]
-            if tuple(dataset.shape[1:]) != tuple(values.shape[1:]):
-                raise ValueError(
-                    f"inconsistent {name} batch shape {values.shape[1:]}; "
-                    f"expected {dataset.shape[1:]}"
-                )
-            dataset.resize(stop, axis=0)
-            dataset[start:stop] = values
+        self._append_array("prediction", prediction, start, stop)
+        self._append_array("target", target, start, stop)
+        for name, values in (
+            ("observation", observation),
+            ("mask", mask),
+            ("geometry", geometry),
+        ):
+            if values is not None:
+                self._append_array(name, np.asarray(values), start, stop)
+        if metadata is not None:
+            rows = [dict(row) for row in metadata]
+            self._append_strings(
+                "metadata_json",
+                [json.dumps(row, sort_keys=True, default=str) for row in rows],
+                start,
+                stop,
+            )
+            self._append_strings(
+                "sample_id",
+                [str(row.get("sample_id", "")) for row in rows],
+                start,
+                stop,
+            )
         self.count = stop
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> bool:
@@ -381,7 +427,13 @@ def evaluate_model(
             writer = _HDF5PredictionWriter(config.predictions_path)
         for batch in loader:
             prediction, target = predict_batch(method, batch, config, device)
-            raw_geometry = unpack_batch_context(batch)[3]
+            raw_input, raw_mask, _, raw_geometry, raw_metadata = unpack_batch_context(batch)
+            observation = (
+                None if raw_input is None else _numpy_channels_last(raw_input, config.data_layout)
+            )
+            exported_mask = (
+                None if raw_mask is None else _numpy_channels_last(raw_mask, config.data_layout)
+            )
             geometry = (
                 None
                 if raw_geometry is None
@@ -389,7 +441,14 @@ def evaluate_model(
             )
             _accumulate_sample_metrics(totals, prediction, target, config, geometry)
             if writer is not None:
-                writer.append(prediction, target)
+                writer.append(
+                    prediction,
+                    target,
+                    observation=observation,
+                    mask=exported_mask,
+                    geometry=geometry,
+                    metadata=raw_metadata,
+                )
             sample_count += len(prediction)
     except BaseException as exc:
         if writer is not None:
@@ -418,6 +477,172 @@ def evaluate_model(
         destination.write_text(
             json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8"
         )
+    return result
+
+
+def _requested_metric_view(
+    available: Mapping[str, float], requested: Iterable[str] | None
+) -> tuple[dict[str, float], dict[str, str]]:
+    """Select friendly metric groups without inventing unavailable physics scores."""
+
+    if requested is None:
+        return dict(available), {}
+    aliases = {
+        "rel_l2": "relative_l2",
+        "relative_l2_error": "relative_l2",
+        "l2": "relative_l2",
+    }
+    selected: dict[str, float] = {}
+    unavailable: dict[str, str] = {}
+    for raw_name in requested:
+        name = str(raw_name).strip().lower().replace("-", "_")
+        if not name:
+            continue
+        if name == "pde_residual":
+            unavailable[name] = (
+                "a PDE residual needs the validated family-specific discrete operator, "
+                "condition, geometry, and physical parameters; prediction/target arrays "
+                "alone are insufficient"
+            )
+            continue
+        if name == "spectral":
+            matches = {
+                key: value
+                for key, value in available.items()
+                if key.startswith("spectral_")
+                or key in {"spectral_centroid_error", "high_frequency_energy_error"}
+            }
+            if not matches:
+                unavailable[name] = "no spectral metrics were produced for this prediction file"
+            selected.update(matches)
+            continue
+        canonical = aliases.get(name, name)
+        if canonical not in available:
+            unavailable[name] = f"metric {canonical!r} is not available for this task"
+            continue
+        selected[canonical] = float(available[canonical])
+    if not selected and not unavailable:
+        raise ValueError("--metrics did not contain any metric names")
+    return selected, unavailable
+
+
+def evaluate_prediction_file(
+    predictions_path: str | Path,
+    *,
+    task: str = "recovery",
+    metrics: Iterable[str] | None = None,
+    report_path: str | Path | None = None,
+    data_root: str | Path | None = None,
+    batch_size: int = 16,
+) -> dict[str, Any]:
+    """Stream an inference HDF5 file and write an honest standalone report.
+
+    This is the implementation behind ``pdeobs eval --pred ...``.  Unsupported
+    requested metrics are reported explicitly instead of being silently dropped
+    or replaced with an invalid proxy.
+    """
+
+    source = Path(predictions_path).expanduser().resolve()
+    if source.suffix.lower() not in {".h5", ".hdf5"}:
+        raise ValueError("--pred must reference an HDF5 file produced by pdeobs infer")
+    if int(batch_size) < 1:
+        raise ValueError("batch_size must be positive")
+    canonical_task = str(task).strip().lower().replace("-", "_")
+    canonical_task = {
+        "sparse_recovery": "recovery",
+        "sparse_to_full_recovery": "recovery",
+        "world_model": "rollout",
+        "world_modeling": "rollout",
+    }.get(canonical_task, canonical_task)
+    requested_metrics = None if metrics is None else tuple(metrics)
+    destination = (
+        Path(report_path).expanduser().resolve()
+        if report_path is not None
+        else source.with_name(f"{source.stem}.metrics.json")
+    )
+    records_destination = destination.with_name(f"{destination.stem}.records.jsonl")
+    records_partial = records_destination.with_name(f"{records_destination.name}.partial")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    config = EvaluationConfig(task=canonical_task)
+    totals: dict[str, float] = {}
+    sample_count = 0
+    with h5py.File(source, "r") as handle, records_partial.open("w", encoding="utf-8") as rows:
+        missing = {name for name in ("prediction", "target") if name not in handle}
+        if missing:
+            raise ValueError(f"prediction file is missing datasets: {sorted(missing)}")
+        prediction = handle["prediction"]
+        target = handle["target"]
+        if prediction.shape != target.shape:
+            raise ValueError(
+                f"prediction and target datasets differ: {prediction.shape} != {target.shape}"
+            )
+        if not len(prediction):
+            raise ValueError("prediction file contains no samples")
+        geometry = handle.get("geometry")
+        metadata_json = handle.get("metadata_json")
+        sample_ids = handle.get("sample_id")
+        for start in range(0, len(prediction), int(batch_size)):
+            stop = min(len(prediction), start + int(batch_size))
+            predicted_batch = np.asarray(prediction[start:stop])
+            target_batch = np.asarray(target[start:stop])
+            geometry_batch = None if geometry is None else np.asarray(geometry[start:stop])
+            metadata_rows = (
+                None if metadata_json is None else metadata_json.asstr()[start:stop].tolist()
+            )
+            id_rows = None if sample_ids is None else sample_ids.asstr()[start:stop].tolist()
+            for offset in range(stop - start):
+                sample_metrics = evaluate_predictions(
+                    predicted_batch[offset : offset + 1],
+                    target_batch[offset : offset + 1],
+                    config,
+                    geometry=(
+                        None if geometry_batch is None else geometry_batch[offset : offset + 1]
+                    ),
+                )
+                for key, value in sample_metrics.items():
+                    if key == "max_norm_growth":
+                        totals[key] = max(totals.get(key, float("-inf")), value)
+                    else:
+                        totals[key] = totals.get(key, 0.0) + value
+                record: dict[str, Any] = {}
+                if metadata_rows is not None:
+                    loaded_metadata = json.loads(metadata_rows[offset])
+                    if isinstance(loaded_metadata, dict):
+                        record.update(loaded_metadata)
+                if id_rows is not None and id_rows[offset]:
+                    record.setdefault("sample_id", id_rows[offset])
+                record.update(
+                    {
+                        "row_index": start + offset,
+                        "task": canonical_task,
+                        "prediction_file": str(source),
+                        "metrics": sample_metrics,
+                    }
+                )
+                rows.write(json.dumps(record, sort_keys=True, allow_nan=False) + "\n")
+                sample_count += 1
+    os.replace(records_partial, records_destination)
+    averaged = {
+        key: value if key == "max_norm_growth" else value / sample_count
+        for key, value in totals.items()
+    }
+    selected, unavailable = _requested_metric_view(averaged, requested_metrics)
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "task": canonical_task,
+        "prediction_file": str(source),
+        "data_root": None if data_root is None else str(Path(data_root)),
+        "samples": sample_count,
+        "metrics": selected,
+        "requested_metrics": None if requested_metrics is None else list(requested_metrics),
+        "unavailable_metrics": unavailable,
+        "sample_records": str(records_destination),
+        "output": str(destination),
+    }
+    destination.write_text(
+        json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     return result
 
 

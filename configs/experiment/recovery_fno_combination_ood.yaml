@@ -1,0 +1,14 @@
+include: recovery_fno_ood_base.yaml
+name: recovery-fno-combination-ood
+data:
+  ood_view: combination
+  state_representation: velocity
+  filters:
+    pde: navier_stokes
+method:
+  kwargs:
+    in_channels: 2
+    out_channels: 2
+evaluation:
+  ood_views: [combination]
+  physical_representation: velocity

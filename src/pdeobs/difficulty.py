@@ -160,6 +160,8 @@ _HIGHER_IS_BETTER_TOKENS = (
     "score",
     "ssim",
 )
+_LOWER_IS_BETTER_TOKENS = ("error", "loss", "regret")
+_RETRIEVAL_SCORE_METRIC = re.compile(r"(?:^|_)(?:recall|map|ndcg)(?:(?:@|_at_)(?:\d+|k))?(?:$|_)")
 _HORIZON_METRIC = re.compile(r"^(?P<metric>.+?)(?:_horizon_|_h)(?P<horizon>\d+)$")
 
 
@@ -440,8 +442,10 @@ def _metric_direction(metric: str, config: AnalysisConfig) -> str:
         return "higher_is_better"
     if any(metric.endswith(f"_{name}") for name in canonical_higher):
         return "higher_is_better"
-    if any(token in metric for token in _HIGHER_IS_BETTER_TOKENS) and not any(
-        token in metric for token in ("error", "loss", "regret")
+    if any(token in metric for token in _LOWER_IS_BETTER_TOKENS):
+        return "lower_is_better"
+    if any(token in metric for token in _HIGHER_IS_BETTER_TOKENS) or (
+        _RETRIEVAL_SCORE_METRIC.search(metric) is not None
     ):
         return "higher_is_better"
     return "lower_is_better"
@@ -892,7 +896,7 @@ def analyze_path(
 
     source = Path(input_path)
     if not source.is_file():
-        raise ValueError(f"Analysis input must be one JSON or CSV file: {source}")
+        raise ValueError(f"Analysis input must be one JSON, JSONL, or CSV file: {source}")
     report = analyze_records(load_records(source), config=config)
     write_analysis(report, output)
     return report

@@ -4,6 +4,7 @@ seed: 20260804
 tier: tiny
 resolution: 128
 trajectory_steps: 9
+samples_per_case: 2000
 dtype: float32
 compression: gzip
 compression_level: 4

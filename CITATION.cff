@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-title: "PDE-OBS: Partial-Observation PDE Benchmark"
-message: "If you use this software, please cite the repository and the accompanying benchmark paper."
+title: "PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics"
+message: "If you use this software, cite this repository; add the benchmark paper once it is released."
 type: software
 authors:
   - family-names: "Xu"

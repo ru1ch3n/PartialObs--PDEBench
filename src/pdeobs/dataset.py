@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from .masks import apply_mask, generate_mask
+from .registry import MASK_REGISTRY
 from .schema import derive_seed
 from .storage import LazyHDF5Dataset
 
@@ -99,9 +100,9 @@ class BenchmarkDataset(Sequence[dict[str, Any]]):
     def __len__(self) -> int:
         return len(self.indices)
 
-    def _mask(self, target: np.ndarray, metadata: Mapping[str, Any]) -> np.ndarray:
+    def _mask(self, target: np.ndarray, metadata: MutableMapping[str, Any]) -> np.ndarray:
         options = dict(self.mask_config)
-        protocol = str(options.pop("protocol", "random_3pct"))
+        protocol = MASK_REGISTRY.resolve_name(str(options.pop("protocol", "random_3pct")))
         mask_seed = derive_seed(
             self.seed,
             "mask",
@@ -109,7 +110,12 @@ class BenchmarkDataset(Sequence[dict[str, Any]]):
             protocol,
         )
         spatial = target.shape[:2] if target.ndim <= 3 else target.shape[-3:-1]
-        return generate_mask(protocol, spatial, seed=mask_seed, **options)
+        mask = generate_mask(protocol, spatial, seed=mask_seed, **options)
+        metadata["mask_id"] = protocol
+        metadata["mask_seed"] = int(mask_seed)
+        metadata["observation_count"] = int(np.count_nonzero(mask))
+        metadata["observation_ratio"] = float(np.mean(mask))
+        return mask
 
     def _state_view(
         self,

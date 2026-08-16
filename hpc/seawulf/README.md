@@ -51,6 +51,7 @@ srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
   --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
 bash hpc/seawulf/bootstrap.sh
 "$PDEOBS_ENV/bin/python" -m pdeobs doctor --cluster seawulf --offline
+"$PDEOBS_ENV/bin/python" -m pdeobs protocol --check
 exit
 ```
 

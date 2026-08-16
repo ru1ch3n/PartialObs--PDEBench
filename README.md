@@ -3,16 +3,25 @@
 **A controlled benchmark, reference implementation, and research map for PDE
 learning under partial observation.**
 
-[Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) ·
-[reference protocol](docs/PROTOCOL.md) ·
-[extension guide](docs/EXTENDING.md) ·
-[Linux server guide](docs/SERVER.md) ·
+[Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) |
+[benchmark-paper contract](docs/BENCHMARK_PAPER.md) |
+[reference protocol](docs/PROTOCOL.md) |
+[extension guide](docs/EXTENDING.md) |
+[Linux server guide](docs/SERVER.md) |
 [SeaWulf guide](hpc/seawulf/README.md)
 
 PDE-OBS provides executable tools for factorized data generation, observation
 masks, IID/OOD splits, recovery/forward/inverse and rollout baselines, metrics, and
 cluster-scale experiments. The existing `docs/` research map remains part of
 this repository.
+
+> **Paper scope:** this repository treats
+> **“PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics”**
+> as the only manuscript in scope. Its contribution is the dataset design,
+> task/split/metric protocol, anchor leaderboard, difficulty analysis, and
+> one-line tooling. Semantic-ID, large world-model, and foundation-model method
+> claims are explicitly separate projects. Run `pdeobs protocol --check` to
+> detect drift between the frozen paper contract and the default data config.
 
 > **Scientific status:** version 0.1 contains compact, deterministic reference
 > solvers and baselines. They are suitable for pipeline development, CI, and
@@ -39,7 +48,8 @@ this repository.
   CNO-like, ConvLSTM/autoregressive, residual-encoder, and MAE-style anchors.
 - Recovery, physical, spectral, rollout, retrieval, OOD, and solver-routing
   metrics, including continuous ANN, flat-VQ, and unsupervised-RQ anchors.
-- One CLI for planning, generation, download, training, inference, evaluation,
+- One CLI for protocol checks, planning, generation, one-case generation,
+  download, training, inference, evaluation,
   aggregation, problem-difficulty analysis, diagnostics, and component discovery.
 - CPU/GPU Slurm scripts for SeaWulf, including manifest-driven arrays and
   resume-safe independent shards.
@@ -88,10 +98,7 @@ pdeobs list
 For a full factorized tiny tier, use the default configuration:
 
 ```bash
-pdeobs plan --config configs/dataset/default.yaml --tier tiny \
-  --output datasets/plans/tiny.jsonl
-pdeobs generate --config configs/dataset/default.yaml \
-  --tier tiny --output datasets/tiny
+pdeobs generate --tier tiny --root ./data --num-workers 4
 ```
 
 Generation is deterministic and resumable. Existing shards are skipped only
@@ -101,6 +108,63 @@ The same planner can describe `medium` and `full`, but do not publish those
 outputs from the bundled compact solvers as benchmark ground truth. First
 complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md), or
 install a validated solver plugin at the same registered family names.
+
+## One-line benchmark tools
+
+The paper-facing interface does not require YAML. Advanced runs can still pass
+`--config` and repeatable `--set` overrides.
+
+```bash
+# Publication-gated download interface. This becomes live when a validated
+# release manifest and tier archives are published.
+pdeobs download --tier medium --root ./data
+
+# Canonical factorized generation. Output: ./data/pdeobs_signal
+pdeobs generate --tier signal --root ./data --num-workers 64
+
+# One explicit regime case. Output: ./data/pdeobs_cases/...
+pdeobs generate-case \
+  --pde navier_stokes \
+  --boundary periodic \
+  --setting vortex_pair \
+  --param-regime high \
+  --num-samples 100 \
+  --root ./data
+
+# Wheel-safe FNO reference preset. The preset chooses one shape-compatible
+# Poisson reference case; use YAML for a full cross-factor experiment matrix.
+pdeobs train \
+  --task sparse_recovery \
+  --model fno \
+  --data ./data/pdeobs_medium \
+  --split iid \
+  --mask random_3pct \
+  --output runs/fno_sparse_recovery
+
+pdeobs infer \
+  --task sparse_recovery \
+  --model fno \
+  --ckpt runs/fno_sparse_recovery/checkpoints/best.pt \
+  --data ./data/pdeobs_medium \
+  --split test
+
+pdeobs eval \
+  --task sparse_recovery \
+  --pred runs/fno_sparse_recovery/preds.h5 \
+  --data ./data/pdeobs_medium \
+  --metrics rel_l2,spectral,pde_residual
+
+pdeobs benchmark \
+  --preset fno_sparse_recovery \
+  --tier medium \
+  --output runs/fno_sparse_recovery_benchmark
+```
+
+`eval --pred` writes both an aggregate JSON report and factor-aware per-sample
+JSONL records for difficulty/failure analysis. `pde_residual` is reported as
+unavailable until the prediction artifact carries a validated family-specific
+discrete operator and all required physical context; the CLI never fabricates a
+residual score.
 
 ## Train and evaluate a recovery baseline
 
@@ -112,18 +176,24 @@ pdeobs generate --config configs/dataset/recovery_signal.yaml \
 
 pdeobs train --config configs/experiment/recovery_unet.yaml \
   --set data.root=datasets/signal \
-  --set training.epochs=2
+  --set training.epochs=2 \
+  --output runs/recovery-signal
 
 pdeobs eval --config configs/experiment/recovery_unet.yaml \
-  --checkpoint runs/<run-id>/checkpoints/best.pt
+  --set data.root=datasets/signal \
+  --checkpoint runs/recovery-signal/checkpoints/best.pt \
+  --output runs/recovery-signal/metrics.json
 
 pdeobs infer --config configs/experiment/recovery_unet.yaml \
-  --checkpoint runs/<run-id>/checkpoints/best.pt \
-  --output predictions/recovery.h5
+  --set data.root=datasets/signal \
+  --checkpoint runs/recovery-signal/checkpoints/best.pt \
+  --output runs/recovery-signal/predictions.h5
 ```
 
-Prediction files are appended batch by batch and atomically published as HDF5,
-so full-tier inference does not retain the complete result in memory.
+Prediction files include prediction, target, sparse observation, mask, geometry,
+sample ID, and metadata. They are appended batch by batch and atomically
+published as HDF5, so full-tier inference does not retain the complete result in
+memory.
 
 The default heat-rollout experiment uses the same strict signal-tier policy:
 
@@ -156,11 +226,13 @@ all tier and OOD definitions.
 ## Command-line interface
 
 ```text
+pdeobs protocol     print/check the frozen benchmark-paper contract
 pdeobs doctor       verify a local or SeaWulf environment
 pdeobs list         discover registered components
 pdeobs plan         write explicit generation jobs for a Slurm array
 pdeobs generate     produce one job, a plan, or a local tier
-pdeobs download     fetch a tier from an explicit release manifest
+pdeobs generate-case generate one explicit factor/regime case
+pdeobs download     fetch a checksum-verified published tier
 pdeobs train        fit a configured method with resumable checkpoints
 pdeobs infer        write predictions from a checkpoint
 pdeobs eval         calculate benchmark metrics and OOD breakdowns
@@ -173,6 +245,13 @@ Run `pdeobs <command> --help` for all options. YAML supports environment values
 such as `${PDEOBS_DATA}` and repeatable `--set key.path=value` overrides.
 Problem-difficulty tables are documented in
 [docs/DIFFICULTY_ANALYSIS.md](docs/DIFFICULTY_ANALYSIS.md).
+
+The checked-in paper matrix is
+`configs/experiment/benchmark_paper_anchors.yaml`. It includes transparent and
+neural field anchors plus separately trained boundary-, setting-, parameter-,
+combination-, and mask-OOD configurations. Retrieval, routing, and transfer are
+lightweight protocol/API anchors in this benchmark paper; they are not presented
+as completed new methods or a finished leaderboard.
 
 ## Extensibility
 
@@ -297,9 +376,11 @@ Generated datasets, model weights, run directories, environments, and container
 images are intentionally ignored.
 
 No convergence-validated dataset release is published yet. Consequently,
-`pdeobs download` intentionally requires an explicit `--manifest` URL or path;
-the project will not silently point users at a nonexistent or unvalidated
-“latest” release.
+the manifest-free `pdeobs download --tier ...` interface targets a stable,
+publication-gated release URL and currently fails with an explicit validation
+message. A private validated release can be used with `--manifest URL_OR_PATH`.
+This interface will become live without a CLI change once checksummed tier
+artifacts and the validation report are published.
 
 ## Research website
 

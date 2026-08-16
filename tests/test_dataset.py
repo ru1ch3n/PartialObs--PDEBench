@@ -38,6 +38,9 @@ def test_recovery_dataset_filters_and_applies_exact_mask(tmp_path: Path) -> None
 
     assert len(dataset) == 1
     assert int(row["mask"].sum()) == 5
+    assert row["metadata"]["mask_id"] == "random_3pct"
+    assert isinstance(row["metadata"]["mask_seed"], int)
+    assert row["metadata"]["observation_count"] == 5
     assert batch["observations"].shape == (1, 8, 8, 1)
     assert np.count_nonzero(batch["observations"]) == 5
 

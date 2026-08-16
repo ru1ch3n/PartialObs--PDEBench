@@ -68,6 +68,12 @@ def _content_provenance(value: Any) -> Any:
             stable["runtime"] = stable_runtime
         else:
             stable.pop("runtime", None)
+    git = stable.get("git")
+    if isinstance(git, Mapping):
+        commit = git.get("commit")
+        stable["git"] = {"commit": commit} if commit is not None else {}
+        if not stable["git"]:
+            stable.pop("git", None)
     return stable
 
 

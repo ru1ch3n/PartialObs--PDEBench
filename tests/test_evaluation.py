@@ -5,7 +5,14 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from pdeobs.evaluation import EvaluationConfig, evaluate_model, evaluate_predictions
+from pdeobs.difficulty import analyze_path
+from pdeobs.evaluation import (
+    EvaluationConfig,
+    evaluate_model,
+    evaluate_prediction_file,
+    evaluate_predictions,
+)
+from pdeobs.reports import load_records
 
 
 class IdentityMethod:
@@ -72,10 +79,28 @@ def test_evaluate_model_streams_prediction_export(tmp_path: Path) -> None:
     target = np.ones((3, 8, 8, 1), dtype=np.float32)
     output = tmp_path / "predictions.h5"
     config = EvaluationConfig(predictions_path=str(output), include_stability=False)
+    mask = np.ones_like(target)
+    geometry = np.zeros_like(target)
+    metadata = [{"sample_id": f"sample-{index}", "pde": "poisson"} for index in range(3)]
 
     result = evaluate_model(
         IdentityMethod(),
-        [_batch(target[:2], target[:2]), _batch(target[2:], target[2:])],
+        [
+            {
+                "input": target[:2],
+                "mask": mask[:2],
+                "target": target[:2],
+                "geometry": geometry[:2],
+                "metadata": metadata[:2],
+            },
+            {
+                "input": target[2:],
+                "mask": mask[2:],
+                "target": target[2:],
+                "geometry": geometry[2:],
+                "metadata": metadata[2:],
+            },
+        ],
         config=config,
     )
 
@@ -84,4 +109,38 @@ def test_evaluate_model_streams_prediction_export(tmp_path: Path) -> None:
     with h5py.File(output, "r") as handle:
         assert handle["prediction"].shape == (3, 8, 8, 1)
         assert handle["target"].shape == (3, 8, 8, 1)
+        assert handle["observation"].shape == (3, 8, 8, 1)
+        assert handle["mask"].shape == (3, 8, 8, 1)
+        assert handle["geometry"].shape == (3, 8, 8, 1)
+        assert handle["sample_id"].asstr()[0] == "sample-0"
+        assert '"pde": "poisson"' in handle["metadata_json"].asstr()[0]
         assert int(handle.attrs["samples"]) == 3
+
+
+def test_prediction_file_eval_filters_groups_and_reports_unavailable_physics(
+    tmp_path: Path,
+) -> None:
+    prediction_path = tmp_path / "predictions.h5"
+    target = np.ones((3, 8, 8, 1), dtype=np.float32)
+    with h5py.File(prediction_path, "w") as handle:
+        handle.create_dataset("prediction", data=target * 0.5)
+        handle.create_dataset("target", data=target)
+
+    report = evaluate_prediction_file(
+        prediction_path,
+        task="sparse_recovery",
+        metrics=("rel_l2", "spectral", "pde_residual"),
+    )
+
+    assert report["task"] == "recovery"
+    assert report["samples"] == 3
+    assert report["metrics"]["relative_l2"] == 0.5
+    assert "spectral_low" in report["metrics"]
+    assert "pde_residual" in report["unavailable_metrics"]
+    assert Path(report["output"]).is_file()
+    records = load_records(report["sample_records"])
+    assert len(records) == 3
+    assert records[0]["metrics.relative_l2"] == 0.5
+    difficulty = analyze_path(report["sample_records"], tmp_path / "difficulty.json")
+    assert difficulty["record_count"] == 3
+    assert difficulty["detected"]["primary_metric"] == "relative_l2"

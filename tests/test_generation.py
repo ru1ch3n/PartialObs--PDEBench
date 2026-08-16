@@ -296,6 +296,7 @@ def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp
         "provenance": {
             "captured_at_utc": "2026-01-01T00:00:00+00:00",
             "config_hash": "config-a",
+            "source_hash": "source-a",
             "git": {"commit": "commit-a", "dirty": False, "status": ""},
             "runtime": {
                 "executable": "/first/python",
@@ -312,6 +313,7 @@ def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp
         "provenance": {
             "captured_at_utc": "2026-01-02T00:00:00+00:00",
             "config_hash": "config-a",
+            "source_hash": "source-a",
             "git": {"commit": "commit-a", "dirty": False, "status": ""},
             "runtime": {
                 "executable": "/second/python",
@@ -327,6 +329,20 @@ def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp
     }
     matching = AtomicHDF5ShardWriter(completed_path, expected_count=1, spec=reordered_spec)
     assert matching.completed
+    status_only_change = {
+        **reordered_spec,
+        "provenance": {
+            **reordered_spec["provenance"],
+            "git": {
+                "commit": "commit-a",
+                "dirty": True,
+                "status": "?? data/pdeobs_tiny/_generation/resolved.yaml",
+            },
+        },
+    }
+    assert AtomicHDF5ShardWriter(
+        completed_path, expected_count=1, spec=status_only_change
+    ).completed
     with pytest.raises(IncompleteShardError, match="different job spec"):
         AtomicHDF5ShardWriter(
             completed_path,
@@ -355,6 +371,16 @@ def test_atomic_writer_rejects_completed_or_partial_shards_from_another_spec(tmp
             completed_path,
             expected_count=1,
             spec=changed_config,
+        )
+    changed_source = {
+        **reordered_spec,
+        "provenance": {**reordered_spec["provenance"], "source_hash": "source-b"},
+    }
+    with pytest.raises(IncompleteShardError, match="different job spec"):
+        AtomicHDF5ShardWriter(
+            completed_path,
+            expected_count=1,
+            spec=changed_source,
         )
 
     partial_path = tmp_path / "partial.h5"
@@ -448,6 +474,7 @@ def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
         assert len(dataset) == 2
         assert dataset[0].trajectory.shape == (9, 8, 8, 1)
         metadata = dataset[0].metadata
+        assert metadata["T"] == 9
         assert metadata["sample_id"].startswith("seed-19/")
         assert metadata["boundary_ood"] is False
         assert metadata["parameter_ood"] is False

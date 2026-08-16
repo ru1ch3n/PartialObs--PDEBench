@@ -1,0 +1,6 @@
+include: recovery_fno_ood_base.yaml
+name: recovery-fno-setting-ood
+data:
+  ood_view: setting
+evaluation:
+  ood_views: [setting]

@@ -460,6 +460,7 @@ def generate_job(
                 "solver_implementation": solver_implementation,
                 "pdeobs_version": __version__,
                 "resolution": list(normalize_resolution(job.resolution)),
+                "T": int(np.asarray(output.trajectory).shape[0]),
                 "regime_sample_index": regime_index,
                 "macro_sample_index": macro_index,
                 "split": assignment.split,
@@ -493,7 +494,12 @@ def run_array_job(
     return generate_job(select_array_job(manifest_path, index=index), resume=resume)
 
 
-def jobs_from_spec(spec: GenerationSpec, output_dir: str | Path) -> list[GenerationJob]:
+def jobs_from_spec(
+    spec: GenerationSpec,
+    output_dir: str | Path,
+    *,
+    include_tier_dir: bool = True,
+) -> list[GenerationJob]:
     """Split one explicit regime spec into shard-sized jobs."""
 
     jobs: list[GenerationJob] = []
@@ -502,14 +508,9 @@ def jobs_from_spec(spec: GenerationSpec, output_dir: str | Path) -> list[Generat
     setting = _canonical_setting(spec.setting)
     for shard_index, start in enumerate(range(0, spec.num_samples, spec.shard_size)):
         count = min(spec.shard_size, spec.num_samples - start)
+        case_root = root / spec.tier if include_tier_dir else root
         path = (
-            root
-            / spec.tier
-            / pde
-            / spec.boundary
-            / setting
-            / spec.regime
-            / f"shard_{shard_index:05d}.h5"
+            case_root / pde / spec.boundary / setting / spec.regime / f"shard_{shard_index:05d}.h5"
         )
         if not path.resolve().is_relative_to(root):
             raise ValueError("generation output escapes the requested output directory")
@@ -544,8 +545,12 @@ def generate_from_spec(
     output_dir: str | Path,
     *,
     resume: bool = True,
+    include_tier_dir: bool = True,
 ) -> list[GenerationResult]:
-    return [generate_job(job, resume=resume) for job in jobs_from_spec(spec, output_dir)]
+    return [
+        generate_job(job, resume=resume)
+        for job in jobs_from_spec(spec, output_dir, include_tier_dir=include_tier_dir)
+    ]
 
 
 def _config_sequence(
@@ -641,6 +646,7 @@ def run_generation(
     array_index: int | None = None,
     force: bool = False,
     dry_run: bool = False,
+    num_workers: int = 1,
 ) -> dict[str, Any]:
     """CLI adapter for a local tier or one manifest-selected array task.
 
@@ -648,6 +654,9 @@ def run_generation(
     printed directly or captured as scheduler provenance.
     """
 
+    workers = int(num_workers)
+    if workers < 1:
+        raise ValueError("num_workers must be positive")
     if plan_path is None:
         all_jobs = jobs_from_config(config, output_root=output_root, include_tier_dir=False)
     else:
@@ -680,14 +689,33 @@ def run_generation(
         "output_root": str(Path(output_root)),
         "plan_path": None if plan_path is None else str(Path(plan_path)),
         "force": bool(force),
+        "num_workers": min(workers, max(1, len(selected_jobs))),
         "sample_count": sum(job.sample_count for job in selected_jobs),
     }
     if dry_run:
         summary["jobs"] = [job.to_dict() for job in selected_jobs]
         return summary
 
-    results = [generate_job(job, resume=not force, overwrite=force) for job in selected_jobs]
+    if workers == 1 or len(selected_jobs) <= 1:
+        results = [generate_job(job, resume=not force, overwrite=force) for job in selected_jobs]
+    else:
+        # Each job owns one immutable shard path, so independent processes do
+        # not share an HDF5 handle. ``executor.map`` preserves manifest order.
+        from concurrent.futures import ProcessPoolExecutor
+
+        payloads = [(job, not force, force) for job in selected_jobs]
+        with ProcessPoolExecutor(max_workers=min(workers, len(selected_jobs))) as executor:
+            results = list(executor.map(_generate_job_with_policy, payloads))
     summary["generated_job_count"] = sum(not result.skipped for result in results)
     summary["skipped_job_count"] = sum(result.skipped for result in results)
     summary["results"] = [json_safe(asdict(result)) for result in results]
     return summary
+
+
+def _generate_job_with_policy(
+    payload: tuple[GenerationJob, bool, bool],
+) -> GenerationResult:
+    """Pickle-safe process-pool adapter used by local parallel generation."""
+
+    job, resume, overwrite = payload
+    return generate_job(job, resume=resume, overwrite=overwrite)

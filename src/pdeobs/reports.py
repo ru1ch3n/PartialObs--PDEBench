@@ -68,6 +68,16 @@ def load_records(paths: str | Path | Iterable[str | Path]) -> list[dict[str, Any
         path = Path(value)
         if path.suffix.lower() == ".json":
             loaded = _records_from_json(path)
+        elif path.suffix.lower() == ".jsonl":
+            loaded = []
+            with path.open("r", encoding="utf-8") as handle:
+                for line_number, line in enumerate(handle, start=1):
+                    if not line.strip():
+                        continue
+                    record = json.loads(line)
+                    if not isinstance(record, dict):
+                        raise ValueError(f"JSONL record {line_number} in {path} must be an object")
+                    loaded.append(flatten_record(record))
         elif path.suffix.lower() == ".csv":
             with path.open("r", newline="", encoding="utf-8") as handle:
                 loaded = [
@@ -75,7 +85,7 @@ def load_records(paths: str | Path | Iterable[str | Path]) -> list[dict[str, Any
                     for row in csv.DictReader(handle)
                 ]
         else:
-            raise ValueError(f"Report must be .json or .csv: {path}")
+            raise ValueError(f"Report must be .json, .jsonl, or .csv: {path}")
         for record in loaded:
             record.setdefault("source_file", str(path))
         records.extend(loaded)

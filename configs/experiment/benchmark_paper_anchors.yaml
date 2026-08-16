@@ -1,0 +1,24 @@
+schema_version: 1
+name: pdeobs-paper-anchor-suite
+output:
+  root: ${PDEOBS_RUNS:-runs}
+
+# Transparent anchors are evaluation-only. Learned anchors train and then use
+# the exact produced checkpoint. Factor-OOD matrices are separate configs so
+# held-out factors never leak into optimization.
+experiments:
+  - {config: recovery_zero.yaml, mode: eval}
+  - {config: recovery_mean.yaml, mode: eval}
+  - {config: recovery_nearest.yaml, mode: eval}
+  - {config: recovery_rbf.yaml, mode: eval}
+  - {config: recovery_unet.yaml, mode: train_eval}
+  - {config: recovery_fno.yaml, mode: train_eval}
+  - {config: recovery_cno.yaml, mode: train_eval}
+  - {config: forward_poisson_fno.yaml, mode: train_eval}
+  - {config: inverse_darcy_unet.yaml, mode: train_eval}
+  - {config: rollout_fno.yaml, mode: train_eval}
+  - {config: recovery_fno_boundary_ood.yaml, mode: train_eval}
+  - {config: recovery_fno_setting_ood.yaml, mode: train_eval}
+  - {config: recovery_fno_parameter_ood.yaml, mode: train_eval}
+  - {config: recovery_fno_combination_ood.yaml, mode: train_eval}
+  - {config: recovery_fno_mask_ood.yaml, mode: train_eval}

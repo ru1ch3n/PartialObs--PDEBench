@@ -8,9 +8,29 @@ from pdeobs.pdes import (
     STATIC_FAMILIES,
     generate_sample,
 )
+from pdeobs.pdes.common import build_output
 from pdeobs.pdes.darcy import CONTRAST_BY_REGIME
 from pdeobs.registry import PDE_REGISTRY
 from pdeobs.settings import SETTING_NAMES
+
+
+def test_nonfinite_solver_output_is_rejected_instead_of_sanitized():
+    condition = np.zeros((4, 4, 1), dtype=np.float64)
+    trajectory = condition[None].copy()
+    trajectory[0, 0, 0, 0] = np.nan
+
+    with pytest.raises(FloatingPointError, match="NaN or infinity"):
+        build_output(
+            family="poisson",
+            boundary="periodic",
+            setting="smooth_grf",
+            regime="low",
+            seed=0,
+            condition=condition,
+            trajectory=trajectory,
+            geometry=condition,
+            parameters={},
+        )
 
 
 @pytest.mark.parametrize("family", PDE_FAMILIES)

@@ -1,0 +1,39 @@
+schema_version: 1
+name: recovery-fno-ood-base
+seed: 20260804
+task: recovery
+
+data:
+  root: ${PDEOBS_DATA:-datasets}/medium
+  train_glob: "**/*.h5"
+  verify_shards: true
+  allow_split_fallback: false
+  filters:
+    pde: poisson
+  mask:
+    protocol: random_3pct
+
+method:
+  name: fno
+  kwargs:
+    in_channels: 1
+    out_channels: 1
+    width: 32
+    layers: 4
+    modes: 12
+
+training:
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 4
+  checkpoint_every: 5
+  device: auto
+  mixed_precision: true
+
+evaluation:
+  include_frequency_bands: true
+
+output:
+  root: ${PDEOBS_RUNS:-runs}

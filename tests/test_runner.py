@@ -52,6 +52,12 @@ def test_runner_materializes_official_ood_membership(tmp_path: Path) -> None:
     assert iid.metadata[0]["sample_id"] == "ood-0"
     assert ood.metadata[0]["sample_id"] == "ood-1"
 
+    alias_config = {**config, "data": {**config["data"], "split": "boundary_ood"}}
+    alias_config["data"].pop("ood_view")
+    alias_ood = _dataset(alias_config, "test", ood_membership=True)
+    assert alias_ood is not None
+    assert alias_ood.metadata[0]["sample_id"] == "ood-1"
+
 
 def _write_temporal_ood_fixture(root: Path) -> Path:
     shard = root / "temporal.h5"

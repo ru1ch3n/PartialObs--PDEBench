@@ -109,18 +109,26 @@ def test_split_fallback_flag_rejects_non_boolean_values() -> None:
         _allow_split_fallback({"data": {"allow_split_fallback": "yes"}})
 
 
-def test_download_requires_an_explicit_release_manifest() -> None:
-    with pytest.raises(SystemExit):
-        build_parser().parse_args(["download", "--tier", "tiny"])
+def test_download_cli_has_a_manifest_free_release_contract() -> None:
+    args = build_parser().parse_args(["download", "--tier", "tiny"])
+    assert args.manifest is None
 
 
 def test_github_readme_exposes_server_and_seawulf_quick_starts() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "[Linux server guide](docs/SERVER.md)" in readme
+    assert "[benchmark-paper contract](docs/BENCHMARK_PAPER.md)" in readme
+    assert "pdeobs generate-case" in readme
+    assert "--preset fno_sparse_recovery" in readme
+    assert "runs/<run-id>" not in readme
     assert "## SeaWulf quick start" in readme
     assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in readme
     assert '--dependency="afterok:$smoke_job"' in readme
+
+    ignored = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "data/pdeobs_*/" in ignored
+    assert "data/pdeobs_cases/" in ignored
 
 
 def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:

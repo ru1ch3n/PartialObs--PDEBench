@@ -12,11 +12,27 @@ from typing import Any
 
 import numpy as np
 
-from .config import config_hash, load_config, save_resolved_config
+from .config import (
+    apply_overrides,
+    config_hash,
+    expand_environment,
+    load_config,
+    save_resolved_config,
+)
 from .dataset import BenchmarkDataset, collate_benchmark, find_shards
 from .provenance import write_provenance
 
 _FACTOR_FIELDS = ("pde", "boundary", "setting", "regime")
+
+
+def _load_runner_config(
+    source: str | Path | Mapping[str, Any], overrides: Sequence[str] = ()
+) -> dict[str, Any]:
+    """Load YAML or an inline, wheel-safe preset mapping with identical semantics."""
+
+    if isinstance(source, Mapping):
+        return expand_environment(apply_overrides(dict(source), overrides))
+    return load_config(source, overrides)
 
 
 def _positive_horizons(value: Any, *, name: str) -> tuple[int, ...]:
@@ -126,6 +142,12 @@ def _dataset(
     task = str(config.get("task", "recovery"))
     filters = dict(data.get("filters", {}))
     configured_view = str(ood_view or data.get("ood_view", data.get("split", "iid")))
+    configured_view = {
+        "boundary_ood": "boundary",
+        "setting_ood": "setting",
+        "parameter_ood": "parameter",
+        "combination_ood": "combination",
+    }.get(configured_view, configured_view)
     official_views = {"boundary", "setting", "parameter", "combination"}
     if configured_view == "iid":
         split = subset
@@ -331,26 +353,34 @@ def _evaluation_config(
 
 
 def _load_checkpoint(model: Any, checkpoint: str | Path | None, device: str = "cpu") -> None:
-    if checkpoint is None:
-        return
     try:
-        import torch
         from torch import nn
     except ImportError as exc:
+        if checkpoint is None:
+            return
         raise ImportError("Loading a learned checkpoint requires PyTorch") from exc
+    if checkpoint is None:
+        if isinstance(model, nn.Module):
+            raise ValueError(
+                "inference/evaluation of a learned method requires --checkpoint/--ckpt; "
+                "refusing to score randomly initialized weights"
+            )
+        return
     if not isinstance(model, nn.Module):
         raise TypeError("A checkpoint can only be loaded into a PyTorch method")
-    payload = torch.load(checkpoint, map_location=device, weights_only=False)
+    from .training import load_checkpoint_payload
+
+    payload = load_checkpoint_payload(checkpoint, map_location=device)
     state = payload.get("model_state", payload)
     model.load_state_dict(state)
 
 
 def _prepare(
-    config_path: str | Path,
+    config_path: str | Path | Mapping[str, Any],
     overrides: Sequence[str],
     output: str | Path | None,
 ) -> tuple[dict[str, Any], Path]:
-    config = load_config(config_path, overrides)
+    config = _load_runner_config(config_path, overrides)
     run_dir = _run_directory(config, output)
     save_resolved_config(config, run_dir / "resolved.yaml")
     write_provenance(run_dir / "provenance.json", config=config)
@@ -359,7 +389,7 @@ def _prepare(
 
 def run_train(
     *,
-    config_path: str | Path,
+    config_path: str | Path | Mapping[str, Any],
     overrides: Sequence[str] = (),
     output: str | Path | None = None,
     checkpoint: str | Path | None = None,
@@ -398,7 +428,7 @@ def run_train(
 
 def run_infer(
     *,
-    config_path: str | Path,
+    config_path: str | Path | Mapping[str, Any],
     overrides: Sequence[str] = (),
     output: str | Path | None = None,
     checkpoint: str | Path | None = None,
@@ -408,7 +438,7 @@ def run_infer(
     del resume
     if output is None:
         raise ValueError("inference requires --output")
-    config = load_config(config_path, overrides)
+    config = _load_runner_config(config_path, overrides)
     output_path = Path(output).resolve()
     save_resolved_config(config, output_path.parent / "inference.resolved.yaml")
     write_provenance(output_path.parent / "inference.provenance.json", config=config)
@@ -444,7 +474,7 @@ def run_infer(
 
 def run_evaluate(
     *,
-    config_path: str | Path,
+    config_path: str | Path | Mapping[str, Any],
     overrides: Sequence[str] = (),
     output: str | Path | None = None,
     checkpoint: str | Path | None = None,
@@ -452,7 +482,7 @@ def run_evaluate(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     del resume
-    config = load_config(config_path, overrides)
+    config = _load_runner_config(config_path, overrides)
     report = Path(output).resolve() if output else _run_directory(config, None) / "metrics.json"
     report.parent.mkdir(parents=True, exist_ok=True)
     save_resolved_config(config, report.parent / "evaluation.resolved.yaml")
@@ -832,7 +862,7 @@ def _evaluation_metric_records(
 
 def run_benchmark(
     *,
-    config_path: str | Path,
+    config_path: str | Path | Mapping[str, Any],
     overrides: Sequence[str] = (),
     output: str | Path | None = None,
     checkpoint: str | Path | None = None,
@@ -840,7 +870,7 @@ def run_benchmark(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     del checkpoint, resume
-    config = load_config(config_path, overrides)
+    config = _load_runner_config(config_path, overrides)
     experiments = config.get("experiments")
     if not experiments:
         return run_train(
@@ -855,15 +885,27 @@ def run_benchmark(
     for index, experiment in enumerate(experiments):
         if isinstance(experiment, str):
             experiment = {"config": experiment}
-        experiment_path = Path(str(experiment["config"]))
-        if not experiment_path.is_absolute():
-            experiment_path = Path(config_path).resolve().parent / experiment_path
+        experiment_source = experiment["config"]
+        if isinstance(experiment_source, Mapping):
+            experiment_path: str | Path | Mapping[str, Any] = experiment_source
+            experiment_label = str(experiment.get("name", f"inline-{index:03d}"))
+        else:
+            resolved_path = Path(str(experiment_source))
+            if not resolved_path.is_absolute():
+                base = (
+                    Path.cwd()
+                    if isinstance(config_path, Mapping)
+                    else Path(config_path).resolve().parent
+                )
+                resolved_path = base / resolved_path
+            experiment_path = resolved_path
+            experiment_label = str(resolved_path)
         mode = str(experiment.get("mode", "train_eval")).lower()
         if mode not in {"train", "eval", "train_eval"}:
             raise ValueError("benchmark experiment mode must be train, eval, or train_eval")
         run_output = root / f"run-{index:03d}"
         experiment_overrides = list(experiment.get("set", []))
-        experiment_config = load_config(experiment_path, experiment_overrides)
+        experiment_config = _load_runner_config(experiment_path, experiment_overrides)
         trained = None
         evaluation = None
         if mode in {"train", "train_eval"}:
@@ -894,7 +936,7 @@ def run_benchmark(
         result = {
             "index": index,
             "mode": mode,
-            "config": str(experiment_path),
+            "config": experiment_label,
             "training": trained,
             "evaluation": evaluation,
         }

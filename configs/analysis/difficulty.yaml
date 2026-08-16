@@ -1,6 +1,6 @@
 analysis:
   # Used to rank the hardest individual samples and factor combinations.
-  primary_metric: rel_l2
+  primary_metric: relative_l2
   group_anchor: [method, task]
   top_k: 20
   min_group_size: 1

@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PartialObs–PDEBench</title>
-  <link rel="stylesheet" href="assets/style.css" />
-  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  // Enable clickable nodes (mermaid `click` directives) on GitHub Pages.  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});  mermaid.run({querySelector:'.mermaid'});});</script>
+  <link rel="stylesheet" href="assets/style.css?v=2026-08-13" />
+  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  /* Enable clickable Mermaid nodes on GitHub Pages. */  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});  mermaid.run({querySelector:'.mermaid'});});</script>
 </head>
 
 <body>
@@ -14,30 +14,32 @@
       <div class="hero-top">
         <div>
           <h1>PartialObs–PDEBench</h1>
-          <p class="subtitle">A benchmark + research map for <b>PDE inference under partial observation</b>. Homepage = summary + trees; details live in the other tabs.</p>
+          <p class="subtitle">The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> plus a supporting partial-observation research map.</p>
           <div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div></div>
         </div>
 
-        <div class="hero-card">  <div class="smallcaps">Contribute</div>  <p class="muted" style="margin-top:8px;">    Add or improve paper pages by editing <code>data/curations/*.json</code>.     See the <b>Contribute</b> tab for the step-by-step workflow and templates.  </p></div>
+        <div class="hero-card">  <div class="smallcaps">Benchmark status</div>  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>  <p class="muted" style="margin-top:8px;">    Deterministic generation, verified shards, strict splits, baselines,     OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in.  </p>  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>  <p><a href="benchmark/">Benchmark-paper contract</a> ·   <a href="server/">Run on a server</a></p></div>
       </div>
 
-      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="contribute/">Contribute</a></nav>
+      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="server/">Run</a><a href="contribute/">Contribute</a></nav>
     </div>
   </header>
 
   <main class="container">
-    
+
 <section id="intro" class="section">
   <h2>What is this website?</h2>
   <p>
     PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
     (missing sensors, masked pixels, partial trajectories).
   </p>
+  <div class="note"><b>Manuscript scope:</b> the repository supports one data/benchmark paper—dataset design, task/split/metric protocols, anchor baselines, difficulty analysis, and one-line tools. New semantic-ID, large world-model, and foundation-model claims are separate projects.</div>
   <ul>
     <li><b>Research:</b> browse/search <b>301</b> AI4PDE/AI4SDE papers (<b>12</b> curated pages + index placeholders).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> executable PDE-OBS reference suite with factorized generation, masks, IID/OOD splits, baselines, metrics, and SeaWulf launchers.</li>
+    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication gates.</li>
+    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
     <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
 </section>
@@ -259,7 +261,7 @@
 
 
     <footer class="footer">
-      <div class="muted">Last generated: 2026-08-04</div>
+      <div class="muted">Last generated: 2026-08-15</div>
     </footer>
   </main>
 </body>

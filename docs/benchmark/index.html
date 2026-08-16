@@ -4,18 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDE-OBS benchmark · PartialObs-PDEBench</title>
-  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-13" />
 </head>
 <body>
   <header class="hero">
     <div class="container">
-      <h1>PDE-OBS benchmark</h1>
-      <p class="subtitle">Controlled PDE learning from sparse sensors, missing regions, and partial trajectories.</p>
+      <h1>PDE-OBS benchmark paper</h1>
+      <p class="subtitle">A Controlled Partial-Observation Benchmark for PDE Dynamics.</p>
       <div class="badges">
         <span class="badge">7 PDE families</span>
         <span class="badge">4 boundaries</span>
         <span class="badge">10 settings</span>
         <span class="badge">IID + 6 OOD views</span>
+        <span class="badge">7 task protocols</span>
+        <span class="badge">15 analyses</span>
         <span class="badge">SeaWulf ready</span>
       </div>
       <nav class="nav">
@@ -24,6 +26,7 @@
         <a href="../pde-problems/">PDE problems</a>
         <a href="../baselines/">Baselines</a>
         <a href="./" aria-current="page">Benchmark</a>
+        <a href="../server/">Run</a>
         <a href="../contribute/">Contribute</a>
       </nav>
     </div>
@@ -31,21 +34,36 @@
 
   <main class="container">
     <section>
-      <h2>From specification to executable benchmark</h2>
+      <h2>One manuscript, controlled claims</h2>
       <p>
-        PDE-OBS factorizes difficulty by equation family, boundary protocol,
-        input or initial-condition structure, physical regime, observation
-        geometry, and prediction horizon. Version 0.1 provides deterministic
-        reference generators, immutable HDF5 shards, standardized splits and
-        masks, anchor baselines, metrics, and Slurm launchers.
+        This repository now treats <b>PDE-OBS: A Controlled Partial-Observation
+        Benchmark for PDE Dynamics</b> as the only manuscript in scope. Its
+        contribution is the dataset design, task/split/metric protocol, anchor
+        leaderboard, difficulty analysis, and one-line tooling. Semantic-ID,
+        large world-model, and foundation-model method claims are separate work.
       </p>
       <div class="note">
-        <b>Scientific status:</b> the bundled numerical solvers are compact
+        <b>Implementation status:</b> machine-verifiable protocol, one-line
+        generation/training/inference/evaluation/presets, strict storage and
+        split checks, anchor configs, per-sample failure records, Linux server
+        instructions, and SeaWulf workflows are checked in.
+      </div>
+      <div class="note">
+        <b>Scientific release status:</b> the bundled numerical solvers are compact
         development references, not convergence-validated paper ground truth.
         A paper release must pass the numerical-validation gate against trusted
         high-resolution solvers and publish that report with the data manifest
         and exact Git revision.
       </div>
+    </section>
+
+    <section>
+      <h2>Seven tasks, honest status</h2>
+      <div class="grid2">
+        <div class="card"><h3>Executable field tasks</h3><p>Sparse recovery, forward prediction, inverse prediction, and time-dependent rollout/world modeling run end to end.</p></div>
+        <div class="card"><h3>Lightweight anchor protocols</h3><p>Semantic retrieval and solver routing expose baseline APIs/metrics; foundation transfer is a protocol/component scaffold. They are not advertised as new completed methods.</p></div>
+      </div>
+      <p>Official views are IID plus boundary, setting, parameter, combination, mask, and time-horizon OOD. The paper contract requires 15 difficulty analyses, including spectral, scaling, ambiguity, routing, and qualitative failure studies.</p>
     </section>
 
     <section>
@@ -93,15 +111,19 @@
 cd PartialObs--PDEBench
 python -m pip install -e ".[train,test]"
 pdeobs doctor
-pdeobs generate --config configs/dataset/smoke.yaml --output datasets/smoke
-pdeobs list</code></pre>
+pdeobs protocol --check
+pdeobs generate --tier signal --root ./data --num-workers 8
+pdeobs train --task sparse_recovery --model fno \
+  --data ./data/pdeobs_signal --split iid --mask random_3pct \
+  --output runs/fno_sparse_recovery</code></pre>
       </div>
       <p>
         See the
-        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/PROTOCOL.md">reference protocol</a>,
+        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/BENCHMARK_PAPER.md">benchmark-paper contract</a>,
+        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/PROTOCOL.md">numerical/data protocol</a>,
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/NUMERICAL_VALIDATION.md">numerical-validation gate</a>,
-        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/EXTENDING.md">method extension guide</a>, and
-        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/hpc/seawulf/README.md">SeaWulf guide</a>.
+        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/EXTENDING.md">method extension guide</a>, or use the
+        <a href="../server/">Linux and SeaWulf quick starts</a>.
       </p>
     </section>
   </main>

@@ -1,6 +1,6 @@
 # Problem-difficulty analysis
 
-`pdeobs analyze` turns per-sample or per-run JSON/CSV metrics into deterministic,
+`pdeobs analyze` turns per-sample or per-run JSON, JSONL, or CSV metrics into deterministic,
 plot-independent paper tables:
 
 ```bash
@@ -15,6 +15,20 @@ its leaderboard. Every evaluated IID, factor-OOD, mask-OOD, and time-horizon
 row carries its method, task, factor context, observation protocol, split, and
 metrics. The file is deterministic for a fixed set of experiment results and
 is the supported hand-off to `pdeobs analyze`.
+
+For true sample-level failure rankings, evaluate a streamed inference artifact:
+
+```bash
+pdeobs eval --task sparse_recovery --pred runs/fno/preds.h5 \
+  --metrics rel_l2,spectral --output runs/fno/metrics.json
+pdeobs analyze --input runs/fno/metrics.records.jsonl \
+  --output runs/fno/difficulty.json \
+  --config configs/analysis/difficulty.yaml
+```
+
+The JSONL rows retain sample IDs and available PDE/boundary/setting/regime/mask
+metadata. Benchmark `analysis_records.json` remains the run/factor-level input;
+it must not be described as a sample-level failure file.
 
 The JSON report contains overall statistics; separate summaries for observation
 ratio, mask pattern, PDE, boundary, setting, and physical regime; rollout-horizon

@@ -1,0 +1,4 @@
+include: recovery_transparent.yaml
+name: recovery-mean
+method:
+  name: mean
