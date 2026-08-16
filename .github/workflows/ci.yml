@@ -24,6 +24,8 @@ jobs:
         run: |
           ruff format --check src tests
           ruff check src tests
+      - name: Check benchmark-paper protocol drift
+        run: pdeobs protocol --check --config configs/dataset/default.yaml
       - name: Validate shell launchers
         shell: bash
         run: bash -n hpc/seawulf/*.sh hpc/seawulf/*.sbatch
@@ -33,3 +35,10 @@ jobs:
         run: pytest
       - name: Build wheel
         run: python -m pip wheel --no-deps --wheel-dir dist .
+      - name: Smoke-test the installed wheel outside the checkout
+        run: |
+          python -m venv /tmp/pdeobs-wheel-smoke
+          /tmp/pdeobs-wheel-smoke/bin/python -m pip install dist/*.whl
+          cd /tmp
+          /tmp/pdeobs-wheel-smoke/bin/python -m pdeobs protocol --check
+          /tmp/pdeobs-wheel-smoke/bin/python -c "import os, pdeobs; assert os.environ['GITHUB_WORKSPACE'] not in pdeobs.__file__; print(pdeobs.__file__)"
