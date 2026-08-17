@@ -11,6 +11,7 @@ from pdeobs.aggregate import ShardValidationError, validate_hdf5_shard
 from pdeobs.pdes import PDE_FAMILIES, STATIC_FAMILIES, generate_sample
 from pdeobs.quality import (
     QualityGateError,
+    _masked_values,
     audit_dataset_quality,
     enforce_generation_quality,
     evaluate_sample_quality,
@@ -43,6 +44,16 @@ def _generated_sample(family: str, *, boundary: str = "periodic") -> Sample:
             "solver_fidelity": "compact_reference",
         },
     )
+
+
+def test_spatial_mask_uses_trailing_hw_when_time_equals_height() -> None:
+    values = np.arange(8 * 8 * 8, dtype=np.float64).reshape(8, 8, 8)
+    mask = np.zeros((8, 8), dtype=bool)
+    mask[1:7, 2:6] = True
+
+    selected = _masked_values(values, mask)
+
+    np.testing.assert_array_equal(selected, values[:, mask].reshape(-1))
 
 
 @pytest.mark.parametrize("family", PDE_FAMILIES)

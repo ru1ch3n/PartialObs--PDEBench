@@ -24,7 +24,7 @@ import numpy as np
 
 from .schema import Sample, json_safe
 
-QUALITY_SCHEMA_VERSION = "1.1"
+QUALITY_SCHEMA_VERSION = "1.2"
 BUILTIN_PDE_FAMILIES = (
     "darcy",
     "poisson",
@@ -404,7 +404,11 @@ def _masked_values(values: np.ndarray, mask: np.ndarray | None) -> np.ndarray:
     if mask is None:
         return array.reshape(-1)
     spatial_mask = np.asarray(mask, dtype=bool)
-    if (
+    if spatial_mask.ndim == 2 and tuple(array.shape[-2:]) == tuple(spatial_mask.shape):
+        expanded = spatial_mask
+        while expanded.ndim < array.ndim:
+            expanded = expanded[None, ...]
+    elif (
         spatial_mask.ndim == 2
         and array.ndim >= 3
         and tuple(array.shape[-3:-1]) == tuple(spatial_mask.shape)
@@ -1800,6 +1804,7 @@ def evaluate_sample_quality(
         for name in _SOLVER_PARAMETER_NAMES.get(family, ())
     }
     calibration_context = {
+        "quality_schema_version": QUALITY_SCHEMA_VERSION,
         "pde": family,
         "boundary": str(metadata.get("boundary", boundary)),
         "setting": metadata.get("setting"),
