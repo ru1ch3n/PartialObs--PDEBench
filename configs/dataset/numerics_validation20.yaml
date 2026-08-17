@@ -24,6 +24,11 @@ trajectory_steps_by_case:
   burgers/dirichlet/threshold_level_set: 513
   burgers/neumann/threshold_level_set: 513
   burgers/robin_obstacle/threshold_level_set: 513
+  # These two high-regime nonsmooth cases were the only T=257 failures in the
+  # 5,600-sample pass (0.0558 and 0.0600 at a frozen 0.05 gate).  Keep their
+  # appropriate Rusanov/spectral solvers and halve only the saved-frame dt.
+  burgers/neumann/front_ring_shock/high: 513
+  burgers/periodic/dipole_vortex_pair/high: 513
   # High-frequency vorticity needs denser saved frames for the continuous
   # equation-balance audit.  Exact first-transition replay remains separate.
   navier_stokes/periodic/multi_frequency_fourier: 65

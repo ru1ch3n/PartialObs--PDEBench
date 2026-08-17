@@ -83,6 +83,7 @@ Only after the demo passes:
 ```bash
 export PDEOBS_GENERATION_CONCURRENCY=20
 export PDEOBS_CPU_PARTITION=short-40core-shared
+export PDEOBS_GENERATION_TIME_LIMIT=00:30:00
 export PDEOBS_VALIDATION_CAMPAIGN="numerics-validation20-$(git rev-parse --short=8 HEAD)"
 bash hpc/seawulf/submit_validation20.sh
 ```
@@ -103,6 +104,9 @@ requesting 8 CPUs for one row wastes cores. Use more CPU capacity by running
 more independent array elements concurrently, while watching GPFS throughput
 and `MaxRSS`. The current tested starting point is 20 one-core writers on
 `short-40core-shared`; the script permits up to 40 after measurement.
+The 20-sample validation defaults to a 30-minute per-array-element walltime so
+it can use backfill slots. Do not copy that walltime to the true full tier;
+measure representative 667-sample shards first and set a separate limit.
 
 ### C. Approval boundary
 

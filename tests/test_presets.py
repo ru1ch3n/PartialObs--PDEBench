@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from pdeobs.config import load_config
-from pdeobs.generation import BOUNDARIES, PDE_FAMILIES
+from pdeobs.generation import BOUNDARIES, PDE_FAMILIES, jobs_from_config
 from pdeobs.presets import (
     build_benchmark_preset,
     build_experiment_preset,
@@ -27,6 +27,18 @@ def test_generation_preset_freezes_the_factorized_release_design() -> None:
     assert len(config["regimes"]) == 3
     assert config["tiers"]["full"] == 2000
     assert len(config["families"]) * len(config["boundaries"]) * len(config["settings"]) == 280
+
+
+def test_validation20_uses_dense_frames_only_for_failed_burgers_strata() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = load_config(root / "configs" / "dataset" / "numerics_validation20.yaml")
+    jobs = jobs_from_config(config, output_root="validation20-test", include_tier_dir=False)
+    selected = {(job.pde, job.boundary, job.setting, job.regime): job.time_steps for job in jobs}
+
+    assert selected[("burgers", "neumann", "front_ring_shock", "high")] == 513
+    assert selected[("burgers", "periodic", "dipole_vortex_pair", "high")] == 513
+    assert selected[("burgers", "neumann", "front_ring_shock", "medium")] == 257
+    assert selected[("burgers", "periodic", "dipole_vortex_pair", "medium")] == 257
 
 
 def test_experiment_preset_is_strict_and_uses_paper_aliases(tmp_path: Path) -> None:

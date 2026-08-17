@@ -53,6 +53,7 @@ fi
 
 concurrency="${PDEOBS_GENERATION_CONCURRENCY:-20}"
 partition="${PDEOBS_CPU_PARTITION:-short-96core-shared}"
+generation_time="${PDEOBS_GENERATION_TIME_LIMIT:-00:30:00}"
 if [[ ! "$concurrency" =~ ^[1-9][0-9]*$ ]] || (( concurrency > 40 )); then
   echo "PDEOBS_GENERATION_CONCURRENCY must be an integer from 1 through 40." >&2
   exit 2
@@ -77,6 +78,7 @@ if [[ ! -e "$campaign" ]]; then
     echo "sample_count=$sample_count"
     echo "concurrency=$concurrency"
     echo "partition=$partition"
+    echo "generation_time=$generation_time"
     echo "window_size=$window_size"
     echo "next_start=0"
     echo "publication_ready=false"
@@ -117,7 +119,7 @@ stop=$((start + window_size - 1))
 (( stop >= task_count )) && stop=$((task_count - 1))
 job="$(sbatch --parsable \
   --partition="$partition" \
-  --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --time=04:00:00 \
+  --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --time="$generation_time" \
   --array="${start}-${stop}%${concurrency}" \
   hpc/seawulf/generate_array.sbatch "$resolved" "$output" "$plan")"
 job="${job%%;*}"
