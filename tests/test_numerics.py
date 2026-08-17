@@ -66,6 +66,8 @@ def test_scalar_temporal_solver_never_uses_periodic_step_for_bounded_bc(
         assert "fourier" in integrator or "pseudospectral" in integrator
     else:
         assert "boundary_v2" in integrator
+    if family == "burgers":
+        assert output.parameters["max_frame_courant"] <= 0.35 * (1.0 + 1.0e-12)
 
 
 def test_periodic_navier_stokes_uses_fno_protocol_and_reports_forcing() -> None:

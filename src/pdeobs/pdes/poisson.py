@@ -49,8 +49,13 @@ def generate(
     _, _, dx, dy = grid((height, width))
     amplitude = AMPLITUDE_BY_REGIME[regime]
     source = amplitude * make_setting_field(setting, (height, width), make_rng(seed, 200))
-    if boundary in {"periodic", "neumann"}:
+    if boundary == "periodic":
         source -= float(np.mean(source))
+    elif boundary == "neumann":
+        # The bounded discrete operator solves for the interior nodes and has
+        # a constant nullspace.  Store the exact compatible forcing used by
+        # that operator so an independent residual audit sees the same BVP.
+        source -= float(np.mean(source[1:-1, 1:-1]))
     iterations = (
         int(solver_steps)
         if solver_steps is not None

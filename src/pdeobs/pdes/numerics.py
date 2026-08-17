@@ -103,6 +103,88 @@ def _variable_operator(
     )
 
 
+def _elliptic_matrix(
+    coefficient: np.ndarray,
+    boundary: str,
+    dx: float,
+    dy: float,
+    reaction: float,
+) -> sparse.csr_matrix:
+    """Assemble the symmetric face-flux operator with the BC in its stencil."""
+
+    height, width = coefficient.shape
+    periodic = boundary == "periodic"
+    if periodic:
+        rows_count, cols_count = height, width
+    else:
+        rows_count, cols_count = height - 2, width - 2
+        if rows_count < 1 or cols_count < 1:
+            raise ValueError("bounded elliptic solve needs at least one interior cell")
+
+    def unknown(row: int, col: int) -> int:
+        if periodic:
+            return (row % height) * width + (col % width)
+        return (row - 1) * cols_count + (col - 1)
+
+    row_entries: list[int] = []
+    col_entries: list[int] = []
+    values: list[float] = []
+    robin_factor = 0.15 / max(0.15 + 1.0 / width, 1.0e-12)
+    row_range = range(height) if periodic else range(1, height - 1)
+    col_range = range(width) if periodic else range(1, width - 1)
+    for row in row_range:
+        for col in col_range:
+            center = unknown(row, col)
+            diagonal = float(reaction)
+            for dr, dc, spacing in (
+                (0, -1, dx),
+                (0, 1, dx),
+                (-1, 0, dy),
+                (1, 0, dy),
+            ):
+                neighbor_row, neighbor_col = row + dr, col + dc
+                if periodic:
+                    wrapped_row, wrapped_col = neighbor_row % height, neighbor_col % width
+                    face = 0.5 * (
+                        coefficient[row, col] + coefficient[wrapped_row, wrapped_col]
+                    ) / (spacing * spacing)
+                    diagonal += face
+                    row_entries.append(center)
+                    col_entries.append(unknown(wrapped_row, wrapped_col))
+                    values.append(-face)
+                    continue
+
+                face = 0.5 * (
+                    coefficient[row, col] + coefficient[neighbor_row, neighbor_col]
+                ) / (spacing * spacing)
+                neighbor_is_interior = (
+                    1 <= neighbor_row < height - 1 and 1 <= neighbor_col < width - 1
+                )
+                if neighbor_is_interior:
+                    diagonal += face
+                    row_entries.append(center)
+                    col_entries.append(unknown(neighbor_row, neighbor_col))
+                    values.append(-face)
+                elif boundary == "dirichlet":
+                    diagonal += face
+                elif boundary == "neumann":
+                    # Homogeneous normal derivative: the ghost/boundary value
+                    # equals this adjacent interior unknown, so this face adds zero.
+                    continue
+                elif boundary == "robin":
+                    # B3 has horizontal Dirichlet walls and homogeneous Robin
+                    # on the vertical sides, matching apply_scalar_boundary.
+                    diagonal += face if dr else face * (1.0 - robin_factor)
+                else:  # pragma: no cover - normalize_boundary rejects this earlier
+                    raise ValueError(f"unsupported bounded boundary {boundary!r}")
+            row_entries.append(center)
+            col_entries.append(center)
+            values.append(diagonal)
+
+    size = rows_count * cols_count
+    return sparse.csr_matrix((values, (row_entries, col_entries)), shape=(size, size))
+
+
 def solve_elliptic(
     source: FloatArray,
     boundary: str,
@@ -161,28 +243,19 @@ def solve_elliptic(
             return values[1:-1, 1:-1].reshape(-1)
 
     nullspace = reaction == 0.0 and boundary in {"periodic", "neumann"}
-
-    def matvec(vector: np.ndarray) -> np.ndarray:
-        values = unpack(vector)
-        result = _variable_operator(values, coeff, boundary, dx, dy) + reaction * values
-        packed = pack(result)
-        if nullspace:
-            packed = packed + float(np.mean(vector))
-        return packed
-
-    operator = spla.LinearOperator(
-        (vector_size, vector_size), matvec=matvec, dtype=np.dtype(np.float64)
-    )
-    diagonal = (
-        2.0 * coeff[1:-1, 1:-1] / (dx * dx)
-        + 2.0 * coeff[1:-1, 1:-1] / (dy * dy)
-        + abs(float(reaction))
-    )
-    if periodic:
-        diagonal = (
-            2.0 * coeff / (dx * dx) + 2.0 * coeff / (dy * dy) + abs(float(reaction))
+    matrix = _elliptic_matrix(coeff, boundary, dx, dy, reaction)
+    if matrix.shape != (vector_size, vector_size):  # pragma: no cover - invariant
+        raise RuntimeError("elliptic matrix size does not match packed unknowns")
+    if nullspace:
+        # Add a rank-one mean constraint without making the sparse matrix dense.
+        operator: sparse.spmatrix | spla.LinearOperator = spla.LinearOperator(
+            matrix.shape,
+            matvec=lambda vector: matrix @ vector + float(np.mean(vector)),
+            dtype=np.dtype(np.float64),
         )
-    diagonal = np.maximum(diagonal.reshape(-1), 1.0e-12)
+    else:
+        operator = matrix
+    diagonal = np.maximum(np.abs(matrix.diagonal()), 1.0e-12)
     preconditioner = spla.LinearOperator(
         (vector_size, vector_size), matvec=lambda x: x / diagonal, dtype=np.dtype(np.float64)
     )
@@ -218,7 +291,7 @@ def solve_elliptic(
         solution -= float(np.mean(solution))
         if not periodic:
             solution = _bounded_embed(solution[1:-1, 1:-1], shape, boundary)
-    residual = pack(_variable_operator(solution, coeff, boundary, dx, dy) + reaction * solution)
+    residual = matrix @ np.asarray(solution_vector, dtype=np.float64)
     relative = float(
         np.linalg.norm(residual - rhs_vector)
         / max(np.linalg.norm(rhs_vector), np.finfo(np.float64).eps)
@@ -293,6 +366,31 @@ def _spectral_advection(values: np.ndarray, dx: float, dy: float) -> np.ndarray:
     return np.fft.ifft2(np.fft.fft2(nonlinear) * dealias).real
 
 
+def _rusanov_burgers_advection(
+    values: np.ndarray, dx: float, dy: float
+) -> np.ndarray:
+    """Return conservative bounded-grid Burgers advection using Rusanov fluxes."""
+
+    state = np.asarray(values, dtype=np.float64)
+    padded = np.pad(state, 1, mode="edge")
+    center = padded[1:-1, 1:-1]
+    east, west = padded[1:-1, 2:], padded[1:-1, :-2]
+    north, south = padded[2:, 1:-1], padded[:-2, 1:-1]
+
+    def flux(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        physical = 0.25 * (left * left + right * right)
+        speed = np.maximum(np.abs(left), np.abs(right))
+        return physical - 0.5 * speed * (right - left)
+
+    east_flux = flux(center, east)
+    west_flux = flux(west, center)
+    north_flux = flux(center, north)
+    south_flux = flux(south, center)
+    return -(
+        (east_flux - west_flux) / dx + (north_flux - south_flux) / dy
+    )
+
+
 def advance_burgers(
     values: FloatArray,
     viscosity: float,
@@ -305,13 +403,17 @@ def advance_burgers(
 
     state = np.asarray(values, dtype=np.float64).copy()
     boundary = normalize_boundary(boundary)
-    speed = max(float(np.max(np.abs(state))), 1.0e-8)
-    substeps = max(1, int(np.ceil(frame_dt * speed / (0.35 * min(dx, dy)))))
-    dt = frame_dt / substeps
+    if viscosity < 0.0 or frame_dt < 0.0:
+        raise ValueError("viscosity and frame_dt must be non-negative")
+    remaining = float(frame_dt)
+    substeps = 0
     max_courant = 0.0
     maximum_diffusion_iterations = 0
-    for _ in range(substeps):
-        courant = float(np.max(np.abs(state))) * dt / min(dx, dy)
+    while remaining > np.finfo(np.float64).eps * max(1.0, frame_dt):
+        speed = max(float(np.max(np.abs(state))), 1.0e-12)
+        stable_dt = 0.35 / (speed * (1.0 / dx + 1.0 / dy))
+        dt = min(remaining, stable_dt)
+        courant = speed * dt * (1.0 / dx + 1.0 / dy)
         max_courant = max(max_courant, courant)
         if boundary == "periodic":
             k1 = -_spectral_advection(state, dx, dy)
@@ -319,17 +421,21 @@ def advance_burgers(
             k2 = -_spectral_advection(predictor, dx, dy)
             state = state + 0.5 * dt * (k1 + k2)
         else:
-            gx, gy = gradient(state, boundary, dx, dy)
-            k1 = -state * (gx + gy)
+            k1 = _rusanov_burgers_advection(state, dx, dy)
             predictor = state + dt * k1
             apply_scalar_boundary(predictor, boundary)
-            pgx, pgy = gradient(predictor, boundary, dx, dy)
-            k2 = -predictor * (pgx + pgy)
+            k2 = _rusanov_burgers_advection(predictor, dx, dy)
             state = state + 0.5 * dt * (k1 + k2)
             apply_scalar_boundary(state, boundary)
         state, info = crank_nicolson_diffusion(
             state, viscosity, dt, dx, dy, boundary
         )
+        if not np.all(np.isfinite(state)):
+            raise RuntimeError("Burgers integrator produced non-finite values")
+        remaining = max(0.0, remaining - dt)
+        substeps += 1
+        if substeps > 10000:
+            raise RuntimeError("Burgers CFL controller exceeded 10,000 substeps")
         maximum_diffusion_iterations = max(maximum_diffusion_iterations, info.iterations)
     return state, {
         "substeps": substeps,

@@ -43,8 +43,9 @@ def generate(
 ) -> PDEOutput:
     """Generate ``u_t + u(u_x+u_y) = viscosity*Laplace(u)``.
 
-    Semi-Lagrangian advection and spectral diffusion keep the compact solver
-    stable at the small resolutions intended for fixtures and smoke datasets.
+    Periodic cases use dealiased pseudospectral advection.  Bounded cases use
+    conservative Rusanov fluxes with SSP-RK2.  Both routes adapt substeps to a
+    two-dimensional CFL bound before applying the diffusion update.
     """
 
     boundary = normalize_boundary(boundary)
