@@ -39,8 +39,10 @@ They may vary by PDE, boundary, setting, and regime. Observation masks are not
 solver inputs: every complete ground-truth field/trajectory is generated and
 checksummed first, and masks are deterministic dataset views applied later.
 For example, only the low/medium free-slip Navier--Stokes multi-frequency
-strata use `T=129` after `T=65` narrowly missed the frozen saved-frame residual
-gate; the high regime and other topology-matched solvers remain unchanged.
+strata use `T=257`/`T=129` after `T=65` narrowly missed the frozen saved-frame
+residual gate. A same-seed SeaWulf refinement reduced the low-regime loss to
+`0.0179` at `T=257`; the high regime and other topology-matched solvers remain
+unchanged.
 
 Primary references:
 

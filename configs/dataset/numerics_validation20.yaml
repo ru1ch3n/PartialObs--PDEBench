@@ -35,8 +35,9 @@ trajectory_steps_by_case:
   navier_stokes/neumann/multi_frequency_fourier: 65
   # The low/medium free-slip multi-frequency cases narrowly exceeded the
   # frozen 0.05 saved-frame residual gate at T=65 (0.0588 and 0.0546), while
-  # replay, divergence, and boundary checks passed. Halve only their saved dt.
-  navier_stokes/neumann/multi_frequency_fourier/low: 129
+  # replay, divergence, and boundary checks passed. A same-seed SeaWulf
+  # refinement reached 0.0179 at T=257 for low; medium passed at T=129.
+  navier_stokes/neumann/multi_frequency_fourier/low: 257
   navier_stokes/neumann/multi_frequency_fourier/medium: 129
   navier_stokes/robin_obstacle/multi_frequency_fourier: 513
   navier_stokes/periodic: 33

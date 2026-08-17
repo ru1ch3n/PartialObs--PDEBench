@@ -47,7 +47,7 @@ def test_validation20_densifies_only_failed_free_slip_ns_regimes() -> None:
     jobs = jobs_from_config(config, output_root="validation20-test", include_tier_dir=False)
     selected = {(job.pde, job.boundary, job.setting, job.regime): job.time_steps for job in jobs}
 
-    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "low")] == 129
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "low")] == 257
     assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "medium")] == 129
     assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "high")] == 65
     assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "low")] == 65
