@@ -21,8 +21,8 @@ from .common import (
     normalize_setting,
     parse_resolution,
     resolve_time_steps,
-    spectral_diffuse,
 )
+from .numerics import crank_nicolson_diffusion
 
 FAMILY = "heat"
 DEFAULT_TIME_STEPS = 9
@@ -55,12 +55,19 @@ def generate(
     apply_scalar_boundary(initial, boundary)
 
     states = [initial.copy()]
+    maximum_solver_iterations = 0
+    maximum_solver_residual = 0.0
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
         state = initial.copy()
         for _ in range(1, steps):
-            state = spectral_diffuse(state, diffusivity, frame_dt, dx, dy)
-            apply_scalar_boundary(state, boundary)
+            state, solver = crank_nicolson_diffusion(
+                state, diffusivity, frame_dt, dx, dy, boundary
+            )
+            maximum_solver_iterations = max(maximum_solver_iterations, solver.iterations)
+            maximum_solver_residual = max(
+                maximum_solver_residual, solver.relative_residual
+            )
             states.append(state.copy())
     trajectory = add_channel(np.stack(states, axis=0))
     geometry = make_geometry(
@@ -82,7 +89,14 @@ def generate(
             "diffusivity": diffusivity,
             "final_time": float(final_time),
             "time_steps": steps,
-            "integrator_id": "spectral_diffusion_frame_map_v1",
+            "linear_solver_iterations_max": maximum_solver_iterations,
+            "linear_solver_relative_residual_max": maximum_solver_residual,
+            "integrator_id": (
+                "fourier_exact_diffusion_v2"
+                if boundary == "periodic"
+                else "fd2_crank_nicolson_boundary_v2"
+            ),
+            "quality_residual_contract": "pdeobs.quality.heat.fd2_saved_frame_v1",
         },
         dtype=dtype,
     )

@@ -8,6 +8,7 @@ learning under partial observation.**
 [benchmark-paper contract](docs/BENCHMARK_PAPER.md) |
 [observation-training protocol](docs/OBSERVATION_TRAINING_PROTOCOL.md) |
 [reference protocol](docs/PROTOCOL.md) |
+[numerical solver gate](docs/NUMERICAL_VALIDATION.md) |
 [extension guide](docs/EXTENDING.md) |
 [Linux server guide](docs/SERVER.md) |
 [SeaWulf guide](hpc/seawulf/README.md)
@@ -25,12 +26,15 @@ this repository.
 > claims are explicitly separate projects. Run `pdeobs protocol --check` to
 > detect drift between the frozen paper contract and the default data config.
 
-> **Scientific status:** version 0.1 contains compact, deterministic reference
-> solvers and baselines. They are suitable for pipeline development, CI, and
-> method prototyping. They are **not yet convergence-validated paper-data
-> solvers**. A scientific release must replace or validate them against trusted
-> high-resolution codes and publish the residual/convergence suite described in
-> [the numerical validation gate](docs/NUMERICAL_VALIDATION.md).
+> **Scientific status:** the generator is undergoing numerical revalidation.
+> Periodic solvers now follow the FNO/DiffusionPDE spectral protocols and
+> bounded solvers use boundary-consistent finite-difference/finite-volume or
+> pressure-projection operators. They are **not paper ground truth until the
+> checked-in convergence gate passes**. The active campaign is data-only: first
+> the seven-PDE demo, then 20 samples for every factor combination (5,600 total).
+> No model training and no 560,000-sample full generation should be submitted
+> before that report is reviewed. See the
+> [numerical solver gate](docs/NUMERICAL_VALIDATION.md).
 
 ## What is implemented
 
@@ -105,6 +109,25 @@ pdeobs generate --tier tiny --root ./data --num-workers 4
 
 Generation is deterministic and resumable. Existing shards are skipped only
 after their completion record and checksum pass validation.
+
+For the current numerical-validation phase, use the dedicated configs instead
+of the paper tiers:
+
+```bash
+# Seven PDEs, periodic demo.
+pdeobs generate \
+  --config configs/dataset/numerics_demo.yaml \
+  --output datasets/numerics-demo
+
+# Complete 280-factor coverage, 20 samples per macro case, 5,600 total.
+# Use the SeaWulf submission workflow rather than running this on a laptop.
+pdeobs plan \
+  --config configs/dataset/numerics_validation20.yaml \
+  --output datasets/plans/numerics-validation20.jsonl
+```
+
+The exact scratch-only SeaWulf commands, CPU policy, dependency windows, and
+quality-report paths are in the [SeaWulf guide](hpc/seawulf/README.md).
 
 For a tailored PDE/boundary/setting slice, use the
 [interactive Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/).

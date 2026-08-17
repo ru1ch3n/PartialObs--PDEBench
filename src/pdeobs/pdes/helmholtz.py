@@ -10,7 +10,6 @@ from .common import (
     PDEOutput,
     Resolution,
     add_channel,
-    apply_scalar_boundary,
     build_output,
     grid,
     make_geometry,
@@ -22,34 +21,11 @@ from .common import (
     parse_resolution,
     resolve_time_steps,
 )
+from .numerics import solve_elliptic
 
 FAMILY = "helmholtz"
 DEFAULT_TIME_STEPS = 1
-WAVENUMBER_BY_REGIME = {"low": 6.0, "medium": 12.0, "high": 18.0}
-
-
-def _damped_helmholtz(
-    source: np.ndarray,
-    wavenumber: float,
-    dx: float,
-    dy: float,
-    boundary: str,
-    damping_ratio: float,
-) -> np.ndarray:
-    """Apply a regularized spectral inverse of ``(-Laplace-k^2)``."""
-
-    height, width = source.shape
-    ky = 2.0 * np.pi * np.fft.fftfreq(height, d=dy)
-    kx = 2.0 * np.pi * np.fft.fftfreq(width, d=dx)
-    kkx, kky = np.meshgrid(kx, ky)
-    denominator = kkx**2 + kky**2 - wavenumber**2
-    damping = max(damping_ratio * wavenumber**2, 1.0e-6)
-    # The real part of 1 / (denominator + i*damping) gives a bounded,
-    # resonance-aware response while keeping the benchmark arrays real.
-    transfer = denominator / (denominator**2 + damping**2)
-    solution = np.fft.ifft2(np.fft.fft2(source) * transfer).real
-    apply_scalar_boundary(solution, boundary)
-    return solution
+WAVENUMBER_BY_REGIME = {"low": 0.5, "medium": 1.0, "high": 2.0}
 
 
 def generate(
@@ -60,30 +36,34 @@ def generate(
     resolution: Resolution = 32,
     time_steps: int | None = None,
     *,
-    damping_ratio: float = 0.08,
+    damping_ratio: float = 0.0,
+    solver_maxiter: int = 6000,
     dtype: Any = np.float32,
 ) -> PDEOutput:
-    """Generate a source and a finite, resonance-aware Helmholtz response."""
+    """Solve the nominal Helmholtz BVP with a second-order discrete operator.
+
+    ``damping_ratio`` is retained as a compatibility argument but must be zero;
+    the old real part of a damped periodic transfer was not the stated BVP.
+    """
 
     boundary = normalize_boundary(boundary)
     setting = normalize_setting(setting)
     regime = normalize_regime(regime)
     resolve_time_steps(time_steps, temporal=False)
     height, width = parse_resolution(resolution)
-    xx, yy, dx, dy = grid((height, width))
+    _, _, dx, dy = grid((height, width))
+    if float(damping_ratio) != 0.0:
+        raise ValueError("the validated Helmholtz path solves the nominal real BVP; damping=0")
     source = make_setting_field(setting, (height, width), make_rng(seed, 300))
-    if boundary == "dirichlet":
-        source *= np.sin(np.pi * xx) * np.sin(np.pi * yy)
-    elif boundary == "robin":
-        source *= np.sin(np.pi * yy)
     wavenumber = WAVENUMBER_BY_REGIME[regime]
-    solution = _damped_helmholtz(
+    solution, solver = solve_elliptic(
         source,
-        wavenumber,
+        boundary,
         dx,
         dy,
-        boundary,
-        float(damping_ratio),
+        reaction=-(wavenumber**2),
+        rtol=1.0e-9,
+        maxiter=int(solver_maxiter),
     )
     geometry = make_geometry(
         boundary,
@@ -102,8 +82,13 @@ def generate(
         geometry=add_channel(geometry),
         parameters={
             "wavenumber": wavenumber,
-            "damping_ratio": float(damping_ratio),
-            "solver_id": "regularized_real_spectral_transfer_v1",
+            "damping_ratio": 0.0,
+            "solver_steps": solver.iterations,
+            "solver_maxiter": int(solver_maxiter),
+            "solver_rtol": 1.0e-9,
+            "solver_relative_residual": solver.relative_residual,
+            "solver_id": "fd2_helmholtz_krylov_v2",
+            "quality_residual_contract": "pdeobs.quality.helmholtz.fd2_boundary_v1",
         },
         dtype=dtype,
     )

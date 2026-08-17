@@ -259,30 +259,18 @@ def test_all_solid_geometry_fails_active_domain_and_cannot_pass_publication(
 
 def test_helmholtz_report_is_nominal_equation_loss_not_a_validation_claim(periodic_samples):
     sample = periodic_samples["helmholtz"]
-    assert sample.metadata["parameters"]["solver_id"] == "regularized_real_spectral_transfer_v1"
+    assert sample.metadata["parameters"]["solver_id"] == "fd2_helmholtz_krylov_v2"
 
     report = evaluate_sample_quality(sample)
 
     assert report["operator"] == "(-laplace-k^2)u=f"
     assert report["pde_loss"]["interpretation"].startswith("nominal_equation_residual")
-    assert np.isfinite(report["metrics"]["helmholtz_transfer_loss_normalized"])
+    assert "helmholtz_transfer_loss_normalized" not in report["metrics"]
+    assert report["pde_loss"]["status"] == "measured"
     assert report["checks"]["pde_loss"] == "reported"
     assert report["status"] == "warning"
     assert report["publication_ready"] is False
 
-    nominal_parameters = {
-        **sample.metadata["parameters"],
-        "solver_id": "independent_nominal_helmholtz_v1",
-    }
-    nominal = Sample(
-        sample.condition,
-        sample.trajectory,
-        sample.geometry,
-        {**sample.metadata, "parameters": nominal_parameters},
-    )
-    nominal_report = evaluate_sample_quality(nominal)
-    assert nominal_report["pde_loss"]["available"] is True
-    assert "helmholtz_transfer_loss_normalized" not in nominal_report["metrics"]
 
 
 def test_bounded_navier_stokes_reports_curl_and_divergence_without_paper_ready_claim():

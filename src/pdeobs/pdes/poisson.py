@@ -20,8 +20,8 @@ from .common import (
     normalize_setting,
     parse_resolution,
     resolve_time_steps,
-    solve_poisson_like,
 )
+from .numerics import solve_elliptic
 
 FAMILY = "poisson"
 DEFAULT_TIME_STEPS = 1
@@ -56,7 +56,14 @@ def generate(
         if solver_steps is not None
         else max(120, min(360, 6 * max(height, width)))
     )
-    solution = solve_poisson_like(source, boundary, dx, dy, iterations=iterations)
+    solution, solver = solve_elliptic(
+        source,
+        boundary,
+        dx,
+        dy,
+        rtol=1.0e-9,
+        maxiter=max(iterations, 4000),
+    )
     geometry = make_geometry(
         boundary,
         (height, width),
@@ -74,8 +81,12 @@ def generate(
         geometry=add_channel(geometry),
         parameters={
             "source_amplitude": amplitude,
-            "solver_steps": iterations,
-            "solver_id": "weighted_jacobi_flux_v1",
+            "solver_steps": solver.iterations,
+            "solver_maxiter": max(iterations, 4000),
+            "solver_rtol": 1.0e-9,
+            "solver_relative_residual": solver.relative_residual,
+            "solver_id": "fd2_flux_krylov_v2",
+            "quality_residual_contract": "pdeobs.quality.poisson.fd2_boundary_v1",
         },
         dtype=dtype,
     )

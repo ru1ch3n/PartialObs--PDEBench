@@ -21,8 +21,8 @@ from .common import (
     normalize_setting,
     parse_resolution,
     resolve_time_steps,
-    spectral_diffuse,
 )
+from .numerics import crank_nicolson_diffusion
 
 FAMILY = "reaction_diffusion"
 DEFAULT_TIME_STEPS = 9
@@ -59,7 +59,8 @@ def generate(
     apply_scalar_boundary(initial, boundary)
 
     states = [initial.copy()]
-    clip_count = 0
+    maximum_solver_iterations = 0
+    maximum_solver_residual = 0.0
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
         substeps = max(1, int(np.ceil(reaction_rate * frame_dt / 0.18)))
@@ -67,13 +68,30 @@ def generate(
         state = initial.copy()
         for _ in range(1, steps):
             for _ in range(substeps):
-                state += 0.5 * dt * reaction_rate * (state - state**3)
-                clip_count += int(np.count_nonzero(np.abs(state) > 1.25))
-                state = np.clip(state, -1.25, 1.25)
-                state = spectral_diffuse(state, float(diffusivity), dt, dx, dy)
-                state += 0.5 * dt * reaction_rate * (state - state**3)
-                clip_count += int(np.count_nonzero(np.abs(state) > 1.25))
-                state = np.clip(state, -1.25, 1.25)
+                half_decay = np.exp(-reaction_rate * dt)
+                denominator = np.sqrt(
+                    np.maximum(
+                        state**2 + (1.0 - state**2) * half_decay,
+                        np.finfo(np.float64).eps,
+                    )
+                )
+                state = state / denominator
+                state, solver = crank_nicolson_diffusion(
+                    state, float(diffusivity), dt, dx, dy, boundary
+                )
+                maximum_solver_iterations = max(
+                    maximum_solver_iterations, solver.iterations
+                )
+                maximum_solver_residual = max(
+                    maximum_solver_residual, solver.relative_residual
+                )
+                denominator = np.sqrt(
+                    np.maximum(
+                        state**2 + (1.0 - state**2) * half_decay,
+                        np.finfo(np.float64).eps,
+                    )
+                )
+                state = state / denominator
                 apply_scalar_boundary(state, boundary)
             states.append(state.copy())
     else:
@@ -101,8 +119,17 @@ def generate(
             "final_time": float(final_time),
             "time_steps": steps,
             "substeps_per_frame": substeps,
-            "clip_count": clip_count,
-            "integrator_id": "strang_reaction_spectral_diffusion_v1",
+            "clip_count": 0,
+            "linear_solver_iterations_max": maximum_solver_iterations,
+            "linear_solver_relative_residual_max": maximum_solver_residual,
+            "integrator_id": (
+                "strang_exact_reaction_fourier_diffusion_v2"
+                if boundary == "periodic"
+                else "strang_exact_reaction_fd2_cn_boundary_v2"
+            ),
+            "quality_residual_contract": (
+                "pdeobs.quality.reaction_diffusion.fd2_saved_frame_v1"
+            ),
         },
         dtype=dtype,
     )

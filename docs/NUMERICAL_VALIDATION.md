@@ -1,4 +1,59 @@
-# Numerical validation gate
+# Numerical solvers and validation gate
+
+The dataset-generation phase is intentionally separated from every model-
+training phase. No training job is part of the workflow on this page.
+
+## Numerical protocol under validation
+
+The previous compact bounded solvers applied a periodic Fourier interior step
+and then overwrote boundary cells. That is not a consistent bounded-domain
+discretization and is no longer the numerical protocol:
+
+- periodic Navier--Stokes uses the FNO/DiffusionPDE vorticity--streamfunction
+  pseudospectral method, 2/3 dealiasing, and a Crank--Nicolson viscosity update;
+- periodic scalar diffusion uses its Fourier solution operator;
+- bounded scalar elliptic/diffusion problems use second-order flux/finite-
+  difference operators whose Dirichlet, Neumann, or Robin equations are part of
+  the solve;
+- Poisson and Darcy stop on a relative residual tolerance instead of a fixed
+  Jacobi count;
+- Helmholtz solves the nominal real BVP. It no longer substitutes the real
+  part of a damped periodic transfer;
+- bounded Navier--Stokes uses staggered face velocities, a pressure-Poisson
+  solve, and a MAC projection. Periodic Biot--Savart reconstruction is not
+  used as a bounded solver;
+- nonlinear temporal solvers use substeps and record their Courant number,
+  iteration counts, convergence residuals, and any clipping.
+
+The FNO reference directly covers Burgers, Darcy, and periodic Navier--Stokes.
+DiffusionPDE uses the same family of generators, adds second-order finite
+differences for Poisson/Helmholtz, and describes MAC pressure projection for
+bounded Navier--Stokes. Our four-boundary, ten-setting matrix is an explicit
+extension and must therefore pass its own convergence study; an upstream name
+is not validation by itself.
+
+Primary references:
+
+- [FNO data-generation code](https://github.com/ixScience/fourier_neural_operator/tree/master/data_generation)
+- [FNO periodic Navier--Stokes solver](https://github.com/ixScience/fourier_neural_operator/blob/master/data_generation/navier_stokes/ns_2d.py)
+- [DiffusionPDE official repository](https://github.com/jhhuangchloe/DiffusionPDE)
+- [DiffusionPDE paper and data-generation appendix](https://openreview.net/pdf?id=z0I2SbjN0R)
+
+No upstream source file is vendored. See `THIRD_PARTY_NOTICES.md` for license
+and attribution boundaries.
+
+## Two-stage SeaWulf gate
+
+1. `configs/dataset/numerics_demo.yaml` exercises all seven PDEs on a small
+   periodic smoke matrix.
+2. `configs/dataset/numerics_validation20.yaml` covers all 280 PDE x boundary x
+   setting macro cases at 20 samples each: 5,600 samples and 840 regime shards.
+
+The 5,600-sample campaign is full **factor coverage**, not the 560,000-sample
+paper tier. Its aggregate must report all seven normalized PDE losses,
+boundary losses, divergence where applicable, missing/invalid quality counts,
+and worst sample IDs. The true `full=2000` campaign remains blocked until the
+report and refinement evidence are reviewed.
 
 The bundled PDE generators are compact development references. This checklist
 defines the minimum gate before generated arrays can be called PDE-OBS paper
@@ -55,5 +110,5 @@ that a discretization is scientifically accurate. The release must additionally
 include a strict quality audit with all seven PDE families, calibrated thresholds,
 and validated solver fidelities; see [Dataset quality control](QUALITY_CONTROL.md).
 
-Until this gate is completed, use the checked-in solvers for smoke data, method
-development, and orchestration tests only.
+Until this gate is completed, generated data are numerical-validation artifacts,
+not paper ground truth and not a public dataset release.

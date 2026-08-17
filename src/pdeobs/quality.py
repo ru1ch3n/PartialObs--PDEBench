@@ -624,7 +624,26 @@ def _temporal_pde_loss(
     v_mid = 0.5 * (velocity_y[:-1] + velocity_y[1:])
     advection = u_mid * omega_x + v_mid * omega_y
     diffusion = viscosity * _laplacian(midpoint, boundary, dx, dy)
-    residual = omega_t + advection - diffusion
+    forcing_id = parameters.get("forcing_id", "none")
+    if forcing_id == "fno_sine_cosine_v1":
+        height, width = midpoint.shape[1:3]
+        x = (np.arange(width, dtype=np.float64) + 0.5) / width
+        y = (np.arange(height, dtype=np.float64) + 0.5) / height
+        xx, yy = np.meshgrid(x, y)
+        forcing_amplitude = _required_finite_parameter(
+            parameters, "forcing_amplitude", minimum=0.0
+        )
+        forcing = forcing_amplitude * (
+            np.sin(2.0 * np.pi * (xx + yy))
+            + np.cos(2.0 * np.pi * (xx + yy))
+        )
+        residual = omega_t + advection - diffusion - forcing
+        components = (omega_t, advection, diffusion, forcing)
+    elif forcing_id in {None, "none"}:
+        residual = omega_t + advection - diffusion
+        components = (omega_t, advection, diffusion)
+    else:
+        raise QualityError(f"unsupported Navier-Stokes forcing_id {forcing_id!r}")
 
     du_dx, _ = _gradient(velocity_x, boundary, dx, dy)
     _, dv_dy = _gradient(velocity_y, boundary, dx, dy)
@@ -650,7 +669,7 @@ def _temporal_pde_loss(
     )
     return (
         "omega_t+u*omega_x+v*omega_y=nu*laplace(omega)",
-        _residual_metrics(residual, (omega_t, advection, diffusion), fluid),
+        _residual_metrics(residual, components, fluid),
         physics,
     )
 
@@ -913,15 +932,11 @@ def evaluate_sample_quality(
             "Bounded velocity storage permits a curl-reconstructed interior diagnostic; "
             "pressure and the hidden transported vorticity are not stored."
         )
-    if boundary != "periodic" and family in {
-        "heat",
-        "reaction_diffusion",
-        "burgers",
-        "navier_stokes",
-    }:
+    if boundary != "periodic" and family == "navier_stokes":
         notes.append(
-            "The compact bounded generator uses a periodic spectral interior step plus "
-            "boundary enforcement; this report is not a paper-ground-truth validation."
+            "The bounded solver uses a MAC pressure projection.  The stored velocity-only "
+            "state still permits only a curl-reconstructed PDE diagnostic; pressure is not "
+            "part of the canonical state."
         )
 
     metrics: dict[str, float | None] = {

@@ -13,6 +13,9 @@ The checked-in configurations are executable reference protocols:
 - `dataset/default.yaml`: the complete seven-family, four-boundary, ten-setting protocol.
   Its mandatory `quality` block embeds all seven family residual/loss reports;
   the default is report-only until scientific thresholds are calibrated.
+- `dataset/numerics_demo.yaml`: a seven-PDE periodic numerical smoke test.
+- `dataset/numerics_validation20.yaml`: complete 280-factor coverage at 20
+  samples per macro case (5,600 samples); this is not the paper full tier.
 - `dataset/smoke.yaml`: a tiny local or SeaWulf preflight run.
 - `dataset/recovery_signal.yaml` and `dataset/rollout_signal.yaml`: focused
   34-sample cases with strict train/validation/test coverage for the default

@@ -1,0 +1,20 @@
+include: default.yaml
+
+name: pdeobs-numerics-demo
+tier: tiny
+families:
+  - darcy
+  - poisson
+  - helmholtz
+  - heat
+  - reaction_diffusion
+  - burgers
+  - navier_stokes
+boundaries: [periodic]
+settings: [smooth_grf]
+
+output:
+  root: ${PDEOBS_DATA:-datasets}/numerics-demo
+  atomic: true
+  checksum: sha256
+

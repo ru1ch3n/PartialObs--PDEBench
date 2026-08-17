@@ -1,0 +1,13 @@
+include: default.yaml
+
+# Full factor coverage at 20 samples per PDE x boundary x setting macro case.
+# This is a 5,600-sample numerical validation campaign, not the 560,000-sample
+# paper tier.  The regime allocation is the nested 7/7/6 debug-tier prefix.
+name: pdeobs-numerics-validation20
+tier: debug
+
+output:
+  root: ${PDEOBS_DATA:-datasets}/numerics-validation20
+  atomic: true
+  checksum: sha256
+

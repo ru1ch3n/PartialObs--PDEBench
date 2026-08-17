@@ -20,8 +20,8 @@ from .common import (
     normalize_setting,
     parse_resolution,
     resolve_time_steps,
-    solve_poisson_like,
 )
+from .numerics import solve_elliptic
 
 FAMILY = "darcy"
 DEFAULT_TIME_STEPS = 1
@@ -83,13 +83,14 @@ def generate(
         if solver_steps is not None
         else max(120, min(360, 6 * max(height, width)))
     )
-    solution = solve_poisson_like(
+    solution, solver = solve_elliptic(
         forcing,
         boundary,
         dx,
         dy,
         coefficient=coefficient,
-        iterations=iterations,
+        rtol=1.0e-9,
+        maxiter=max(iterations, 6000),
     )
     geometry = make_geometry(
         boundary,
@@ -111,10 +112,14 @@ def generate(
             "coefficient_contrast": contrast,
             "requested_coefficient_contrast": contrast,
             "realized_coefficient_contrast": realized_contrast,
-            "solver_steps": iterations,
+            "solver_steps": solver.iterations,
+            "solver_maxiter": max(iterations, 6000),
+            "solver_rtol": 1.0e-9,
+            "solver_relative_residual": solver.relative_residual,
             "forcing_amplitude": 1.0,
             "forcing_id": "unit_square_sine_mix_v1",
-            "solver_id": "weighted_jacobi_flux_v1",
+            "solver_id": "finite_volume_flux_krylov_v2",
+            "quality_residual_contract": "pdeobs.quality.darcy.fv2_boundary_v1",
         },
         dtype=dtype,
     )

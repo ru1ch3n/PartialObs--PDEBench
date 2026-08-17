@@ -4,6 +4,91 @@ These launchers target Stony Brook's current SeaWulf Slurm environment. Verify
 the queue and module names before a large campaign because cluster policy can
 change.
 
+## Current phase: dataset generation only
+
+The current campaign does **not** submit model training. First validate the
+revised numerical solvers with 20 samples for every PDE x boundary x setting
+combination. Do not submit the 560,000-sample paper tier until its PDE-loss and
+refinement reports are accepted. See
+[`docs/NUMERICAL_VALIDATION.md`](../../docs/NUMERICAL_VALIDATION.md).
+
+For a scratch-only working layout (checkout, environment, caches, data, runs,
+and logs), use:
+
+```bash
+export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"
+export PDEOBS_REPO="$PDEOBS_BASE/PartialObs--PDEBench"
+export PDEOBS_DATA="$PDEOBS_BASE/data"
+export PDEOBS_RUNS="$PDEOBS_BASE/runs"
+export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
+export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
+export CONDA_PKGS_DIRS="$PDEOBS_BASE/conda-pkgs"
+export PIP_CACHE_DIR="$PDEOBS_BASE/pip-cache"
+export XDG_CACHE_HOME="$PDEOBS_BASE/cache"
+mkdir -p "$PDEOBS_DATA/plans" "$PDEOBS_RUNS" logs \
+  "$(dirname "$PDEOBS_ENV")" "$CONDA_PKGS_DIRS" "$PIP_CACHE_DIR" "$XDG_CACHE_HOME"
+```
+
+Scratch is not backed up and is purged under current site policy. Push code to
+GitHub before submission and copy accepted reports/data to independent archival
+storage before the purge window.
+
+### A. Seven-PDE numerical demo
+
+Use the resolved configuration written beside the plan; using
+`configs/dataset/default.yaml` after a tier override would fail provenance
+matching.
+
+```bash
+"$PDEOBS_ENV/bin/python" -m pdeobs plan \
+  --config configs/dataset/numerics_demo.yaml \
+  --output "$PDEOBS_DATA/plans/numerics-demo.jsonl"
+
+demo_job="$(sbatch --parsable --cpus-per-task=1 --mem=4G \
+  --array=0-20%7 hpc/seawulf/generate_array.sbatch \
+  "$PDEOBS_DATA/plans/numerics-demo.resolved.yaml" \
+  "$PDEOBS_DATA/numerics-demo" \
+  "$PDEOBS_DATA/plans/numerics-demo.jsonl")"
+demo_job="${demo_job%%;*}"
+
+demo_check="$(sbatch --parsable --cpus-per-task=1 --mem=8G \
+  --dependency="afterok:$demo_job" hpc/seawulf/aggregate_cpu.sbatch \
+  "$PDEOBS_DATA/numerics-demo" \
+  "$PDEOBS_DATA/numerics-demo/summary.json" \
+  "$PDEOBS_DATA/plans/numerics-demo.jsonl" \
+  --quality-strict --require-all-pdes)"
+demo_check="${demo_check%%;*}"
+squeue -j "$demo_job,$demo_check"
+```
+
+Inspect `summary.json`, `summary.quality.json`, `summary.quality.csv`, every
+`*.quality-failures.jsonl`, Slurm logs, `sacct`, and `seff`. A successful job
+state alone is not scientific acceptance.
+
+### B. Complete 20-sample factor validation
+
+Only after the demo passes:
+
+```bash
+export PDEOBS_GENERATION_CONCURRENCY=20
+bash hpc/seawulf/submit_validation20.sh
+```
+
+The script verifies exactly 840 generation rows and 5,600 samples, submits nine
+dependency-chained windows of at most 100 single-core tasks, then submits one
+strict aggregate job. It writes
+`$PDEOBS_DATA/numerics-validation20.campaign.txt`. No training job is submitted.
+Use `PDEOBS_GENERATION_CONCURRENCY=8` for the first filesystem pilot if the
+current queue or GPFS load is high; increase only after `seff`/throughput data.
+
+### C. Approval boundary
+
+There is intentionally no automatic command on this page that converts the
+validation run into the true full campaign. Review the per-PDE and per-stratum
+losses, convergence trends, divergence, BC errors, failures, and checksums
+first. A later approved full plan must keep a separate output directory and
+must pin the accepted commit and threshold/evidence table.
+
 ## 1. Clone an exact Git revision
 
 From your local computer, connect to the Milan login node. Then clone and pin

@@ -13,6 +13,7 @@ from .common import (
     apply_scalar_boundary,
     apply_velocity_boundary,
     build_output,
+    gradient,
     grid,
     make_geometry,
     make_rng,
@@ -22,10 +23,8 @@ from .common import (
     normalize_setting,
     parse_resolution,
     resolve_time_steps,
-    semi_lagrangian,
-    spectral_diffuse,
-    stream_velocity,
 )
+from .numerics import advance_bounded_velocity, advance_periodic_vorticity
 
 FAMILY = "navier_stokes"
 DEFAULT_TIME_STEPS = 9
@@ -43,14 +42,22 @@ def _interior_obstacle(geometry: np.ndarray) -> np.ndarray:
 
 
 def _velocity_state(
-    vorticity: np.ndarray,
+    latent: np.ndarray,
     boundary: str,
     geometry: np.ndarray,
     dx: float,
     dy: float,
     inflow_speed: float,
 ) -> np.ndarray:
-    velocity_x, velocity_y = stream_velocity(vorticity, dx, dy)
+    # A bounded streamfunction construction gives a discretely compatible
+    # initial velocity without invoking the periodic Biot--Savart inverse.
+    height, width = latent.shape
+    x = (np.arange(width, dtype=np.float64) + 0.5) / width
+    y = (np.arange(height, dtype=np.float64) + 0.5) / height
+    xx, yy = np.meshgrid(x, y)
+    streamfunction = latent * np.sin(np.pi * xx) * np.sin(np.pi * yy)
+    psi_x, psi_y = gradient(streamfunction, "dirichlet", dx, dy)
+    velocity_x, velocity_y = psi_y, -psi_x
     velocity = np.stack((velocity_x, velocity_y), axis=-1)
     apply_velocity_boundary(
         velocity,
@@ -73,12 +80,13 @@ def generate(
     inflow_speed: float = 0.75,
     dtype: Any = np.float32,
 ) -> PDEOutput:
-    """Generate a vorticity-form incompressible flow trajectory.
+    """Generate an incompressible flow with topology-matched solvers.
 
     Periodic samples expose scalar vorticity, matching spectral flow
     benchmarks.  Wall and B3 obstacle/inflow samples expose two velocity
-    channels.  Internally all cases use stable semi-Lagrangian vorticity
-    transport with a divergence-free spectral velocity reconstruction.
+    channels.  Periodic samples use the FNO-style dealiased vorticity
+    pseudospectral integrator.  Bounded samples use a staggered pressure
+    projection; no periodic update is hidden under their wall values.
     """
 
     boundary = normalize_boundary(boundary)
@@ -109,71 +117,69 @@ def generate(
         family=FAMILY,
         rng=make_rng(seed, 701),
     )
-    obstacle = (
-        _interior_obstacle(geometry) if boundary == "robin" else np.zeros_like(geometry, dtype=bool)
-    )
-    if np.any(obstacle):
-        vorticity[obstacle] = 0.0
-
-    def encode(state: np.ndarray) -> np.ndarray:
-        if boundary == "periodic":
-            return add_channel(state.copy())
-        return _velocity_state(state, boundary, geometry, dx, dy, float(inflow_speed))
-
-    initial_encoded = encode(vorticity)
+    obstacle = _interior_obstacle(geometry)
+    if boundary == "periodic":
+        initial_encoded = add_channel(vorticity.copy())
+    else:
+        initial_encoded = _velocity_state(
+            vorticity, boundary, geometry, dx, dy, float(inflow_speed)
+        )
+        initial_encoded[obstacle] = 0.0
     encoded_states = [initial_encoded.copy()]
     total_substeps = 0
     substeps_per_frame: list[int] = []
     max_courant = 0.0
-    substep_cap_hits = 0
-    clip_count = 0
+    pressure_iterations_max = 0
+    pressure_relative_residual_max = 0.0
+    divergence_loss_normalized_solver = 0.0
+    xx, yy, _, _ = grid((height, width))
+    forcing = 0.1 * (
+        np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy))
+    )
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
-        for _ in range(1, steps):
-            velocity_x, velocity_y = stream_velocity(vorticity, dx, dy)
-            velocity = np.stack((velocity_x, velocity_y), axis=-1)
-            apply_velocity_boundary(
-                velocity,
-                boundary,
-                geometry=add_channel(geometry),
-                inflow_speed=float(inflow_speed),
-            )
-            speed = np.sqrt(velocity[..., 0] ** 2 + velocity[..., 1] ** 2)
-            courant = float(np.max(speed)) * frame_dt / min(dx, dy)
-            substeps = max(1, min(24, int(np.ceil(courant / 0.75))))
-            max_courant = max(max_courant, courant)
-            substeps_per_frame.append(substeps)
-            substep_cap_hits += int(substeps == 24)
-            dt = frame_dt / substeps
-            total_substeps += substeps
-            for _ in range(substeps):
-                velocity_x, velocity_y = stream_velocity(vorticity, dx, dy)
-                velocity = np.stack((velocity_x, velocity_y), axis=-1)
-                apply_velocity_boundary(
-                    velocity,
-                    boundary,
-                    geometry=add_channel(geometry),
-                    inflow_speed=float(inflow_speed),
+        if boundary == "periodic":
+            for _ in range(1, steps):
+                vorticity, substeps = advance_periodic_vorticity(
+                    vorticity, forcing, viscosity, frame_dt, dx, dy
                 )
-                vorticity = semi_lagrangian(
-                    vorticity,
-                    velocity[..., 0],
-                    velocity[..., 1],
-                    dt,
+                total_substeps += substeps
+                substeps_per_frame.append(substeps)
+                encoded_states.append(add_channel(vorticity.copy()))
+        else:
+            velocity = initial_encoded.copy()
+            for _ in range(1, steps):
+                speed = np.linalg.norm(velocity, axis=-1)
+                max_courant = max(
+                    max_courant,
+                    float(np.max(speed)) * frame_dt / min(dx, dy),
+                )
+                velocity, diagnostics = advance_bounded_velocity(
+                    velocity,
+                    geometry,
+                    viscosity,
+                    frame_dt,
                     dx,
                     dy,
                     boundary,
+                    inflow_speed=float(inflow_speed),
                 )
-                vorticity = spectral_diffuse(vorticity, viscosity, dt, dx, dy)
-                clip_count += int(np.count_nonzero(np.abs(vorticity) > 20.0))
-                vorticity = np.clip(vorticity, -20.0, 20.0)
-                if boundary == "periodic":
-                    vorticity -= float(np.mean(vorticity))
-                else:
-                    apply_scalar_boundary(vorticity, boundary)
-                if np.any(obstacle):
-                    vorticity[obstacle] = 0.0
-            encoded_states.append(encode(vorticity))
+                substeps = int(diagnostics["substeps"])
+                total_substeps += substeps
+                substeps_per_frame.append(substeps)
+                pressure_iterations_max = max(
+                    pressure_iterations_max,
+                    int(diagnostics["pressure_iterations_max"]),
+                )
+                pressure_relative_residual_max = max(
+                    pressure_relative_residual_max,
+                    float(diagnostics["pressure_relative_residual_max"]),
+                )
+                divergence_loss_normalized_solver = max(
+                    divergence_loss_normalized_solver,
+                    float(diagnostics["divergence_loss_normalized_solver"]),
+                )
+                encoded_states.append(velocity.copy())
 
     trajectory = np.stack(encoded_states, axis=0)
     return build_output(
@@ -195,9 +201,23 @@ def generate(
             "total_substeps": total_substeps,
             "substeps_per_frame": substeps_per_frame,
             "max_frame_courant": max_courant,
-            "substep_cap_hits": substep_cap_hits,
-            "clip_count": clip_count,
-            "integrator_id": "vorticity_semi_lagrangian_spectral_diffusion_v1",
+            "substep_cap_hits": 0,
+            "clip_count": 0,
+            "pressure_iterations_max": pressure_iterations_max,
+            "pressure_relative_residual_max": pressure_relative_residual_max,
+            "divergence_loss_normalized_solver": divergence_loss_normalized_solver,
+            "forcing_id": "fno_sine_cosine_v1" if boundary == "periodic" else "none",
+            "forcing_amplitude": 0.1 if boundary == "periodic" else 0.0,
+            "integrator_id": (
+                "fno_dealiased_vorticity_cn_v2"
+                if boundary == "periodic"
+                else "mac_projection_fd2_v2"
+            ),
+            "quality_residual_contract": (
+                "pdeobs.quality.navier_stokes.vorticity_forced_fd2_v2"
+                if boundary == "periodic"
+                else "pdeobs.quality.navier_stokes.velocity_curl_partial_v2"
+            ),
             "state_channels": int(trajectory.shape[-1]),
         },
         dtype=dtype,
