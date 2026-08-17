@@ -31,6 +31,10 @@ jobs:
         run: bash -n hpc/seawulf/*.sh hpc/seawulf/*.sbatch
       - name: Validate research records
         run: python scripts/validate_papers.py
+      - name: Verify generated benchmark website is current
+        run: |
+          python scripts/generate_research_site.py
+          git diff --exit-code -- docs
       - name: Test
         run: pytest
       - name: Build wheel

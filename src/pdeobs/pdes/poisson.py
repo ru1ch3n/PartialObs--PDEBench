@@ -72,7 +72,11 @@ def generate(
         condition=add_channel(source),
         trajectory=add_channel(solution)[None, ...],
         geometry=add_channel(geometry),
-        parameters={"source_amplitude": amplitude, "solver_steps": iterations},
+        parameters={
+            "source_amplitude": amplitude,
+            "solver_steps": iterations,
+            "solver_id": "weighted_jacobi_flux_v1",
+        },
         dtype=dtype,
     )
 

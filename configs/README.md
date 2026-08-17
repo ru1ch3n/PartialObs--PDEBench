@@ -11,6 +11,8 @@ cleared (for example `method.kwargs: null`).
 The checked-in configurations are executable reference protocols:
 
 - `dataset/default.yaml`: the complete seven-family, four-boundary, ten-setting protocol.
+  Its mandatory `quality` block embeds all seven family residual/loss reports;
+  the default is report-only until scientific thresholds are calibrated.
 - `dataset/smoke.yaml`: a tiny local or SeaWulf preflight run.
 - `dataset/recovery_signal.yaml` and `dataset/rollout_signal.yaml`: focused
   34-sample cases with strict train/validation/test coverage for the default
@@ -34,7 +36,12 @@ The checked-in configurations are executable reference protocols:
 - `experiment/recovery_fno_{boundary,setting,parameter,combination}_ood.yaml`:
   leak-free factor-specific OOD training/evaluation configs.
 - `experiment/recovery_fno_mask_ood.yaml`: 3% random training mask evaluated
-  against every official ratio/pattern view.
+  against every official ratio/pattern view. This is the secondary mask-transfer
+  analysis, not the nine separately trained matched-mask IID table.
+- `campaign/core_observation_medium.yaml`: machine-readable planning manifest
+  for the ten-slot, seven-PDE, nine-observation medium-tier comparison. It is
+  deliberately not an executable benchmark config: six requested external
+  adapters are absent, and planning-only rows must never be submitted as jobs.
 - `analysis/difficulty.yaml`: metric direction, grouping, and failure-ranking defaults.
 - `cluster/seawulf.yaml`: documentation-only snapshot of the checked-in Slurm
   defaults. The launchers do not consume this YAML; use `sbatch` overrides or

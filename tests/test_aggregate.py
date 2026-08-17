@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import h5py
 import numpy as np
 import pytest
 
-from pdeobs.aggregate import ShardValidationError, summarize_dataset, validate_hdf5_shard
+from pdeobs.aggregate import (
+    ShardValidationError,
+    aggregate_path,
+    summarize_dataset,
+    validate_hdf5_shard,
+)
+from pdeobs.quality import evaluate_sample_quality
 from pdeobs.schema import Sample
 from pdeobs.storage import AtomicHDF5ShardWriter, shard_sidecars, write_jsonl_manifest
 
 
-def _write_valid_shard(path: Path, *, count: int = 2) -> Path:
+def _write_valid_shard(path: Path, *, count: int = 2, quality: bool = False) -> Path:
     spec = {
         "pde": "poisson",
         "boundary": "periodic",
@@ -31,22 +38,33 @@ def _write_valid_shard(path: Path, *, count: int = 2) -> Path:
     }
     with AtomicHDF5ShardWriter(path, expected_count=count, spec=spec) as writer:
         for index in range(count):
-            writer.append(
-                Sample(
-                    condition=np.full((4, 4), index, dtype=np.float32),
-                    trajectory=np.full((1, 4, 4), index + 1, dtype=np.float32),
-                    geometry=np.zeros((4, 4), dtype=np.float32),
-                    metadata={
-                        "sample_id": f"{path.stem}-sample-{index}",
-                        "pde": "poisson",
-                        "boundary": "periodic",
-                        "setting": "smooth_grf",
-                        "regime": "low",
-                        "split": "train",
-                        "seed": index,
+            sample = Sample(
+                condition=np.full((4, 4), index, dtype=np.float32),
+                trajectory=np.full((1, 4, 4), index + 1, dtype=np.float32),
+                geometry=np.zeros((4, 4), dtype=np.float32),
+                metadata={
+                    "sample_id": f"{path.stem}-sample-{index}",
+                    "schema_version": "1.0",
+                    "pde": "poisson",
+                    "boundary": "periodic",
+                    "setting": "smooth_grf",
+                    "regime": "low",
+                    "state_representation": "scalar",
+                    "resolution": [4, 4],
+                    "T": 1,
+                    "split": "train",
+                    "seed": index,
+                    "parameters": {
+                        "domain_id": "unit_square_cell_centered_v1",
+                        "boundary_operator_id": "pdeobs.periodic.compact_v1",
+                        "geometry_protocol_id": "pdeobs.geometry.empty_periodic_v1",
                     },
-                )
+                    "solver_fidelity": "compact_reference",
+                },
             )
+            if quality:
+                sample.metadata["quality"] = evaluate_sample_quality(sample)
+            writer.append(sample)
     return path
 
 
@@ -60,6 +78,44 @@ def test_validate_and_summarize_small_shard(tmp_path: Path) -> None:
     assert summary["shard_count"] == 1
     assert summary["sample_count"] == 2
     assert summary["samples_by_family"] == {"poisson": 2}
+
+
+def test_quality_sidecar_dataset_summary_and_aggregate_outputs(tmp_path: Path) -> None:
+    path = _write_valid_shard(tmp_path / "fixture.h5", quality=True)
+
+    result = validate_hdf5_shard(path)
+    summary = summarize_dataset(tmp_path, validate=True)
+    output = tmp_path / "summary.json"
+    payload = aggregate_path(tmp_path, output, validate_shards=True)
+
+    assert shard_sidecars(path)["quality"].is_file()
+    assert result["quality"]["record_count"] == 2
+    assert summary["quality"]["pde_losses"]["poisson"]["sample_count"] == 2
+    assert payload["quality_gate"]["status"] == "warning"
+    assert output.with_suffix(".quality.json").is_file()
+    assert output.with_suffix(".quality.csv").is_file()
+
+
+def test_strict_quality_gate_rejects_missing_records_and_detects_tampering(
+    tmp_path: Path,
+) -> None:
+    legacy = _write_valid_shard(tmp_path / "legacy" / "fixture.h5")
+    payload = aggregate_path(
+        legacy.parent,
+        legacy.parent / "summary.json",
+        validate_shards=True,
+        quality_strict=True,
+    )
+    assert payload["quality_gate"]["status"] == "fail"
+    assert any("coverage" in reason for reason in payload["quality_gate"]["reasons"])
+
+    measured = _write_valid_shard(tmp_path / "measured" / "fixture.h5", quality=True)
+    quality_path = shard_sidecars(measured)["quality"]
+    quality_payload = json.loads(quality_path.read_text(encoding="utf-8"))
+    quality_payload["quality"]["record_count"] = 999
+    quality_path.write_text(json.dumps(quality_payload), encoding="utf-8")
+    with pytest.raises(ShardValidationError, match="quality JSON sidecar"):
+        validate_hdf5_shard(measured)
 
 
 def test_strict_summary_rejects_zero_shards(tmp_path: Path) -> None:

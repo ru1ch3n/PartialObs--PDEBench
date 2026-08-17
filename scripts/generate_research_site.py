@@ -13,6 +13,7 @@ It writes:
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
+  - docs/builder/index.html             (interactive benchmark command builder)
   - docs/server/index.html              (Linux + SeaWulf run guide)
   - docs/contribute/index.html          (how to add/curate papers)
 
@@ -22,16 +23,13 @@ This repo uses GitHub Pages with /docs as the site root.
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import re
+import shutil
+import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import quote
-
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DOCS = REPO_ROOT / "docs"
@@ -284,7 +282,6 @@ flowchart TD
 """.strip("\n")
 
 
-
 # Class-level math templates. Used when a paper doesn't provide a manually curated
 # `core_math` section.
 METHOD_MATH: Dict[str, List[str]] = {
@@ -317,10 +314,10 @@ METHOD_MATH: Dict[str, List[str]] = {
 }
 
 
-
 # ---------------------------
 # Auto-tagging helpers
 # ---------------------------
+
 
 def html_escape_pre(s: str) -> str:
     """Escape text for <pre> blocks.
@@ -434,7 +431,9 @@ def infer_pdes(p: Dict[str, Any]) -> List[str]:
     if not tags:
         if has_any("weather", "climate", "atmospheric", "era5", "nwp", "forecast"):
             tags.append("Atmospheric dynamics (primitive equations)")
-        elif has_any("hemodynamics", "cfd", "turbulence") or ("fluid" in t and "fluid" not in "differential"):
+        elif has_any("hemodynamics", "cfd", "turbulence") or (
+            "fluid" in t and "fluid" not in "differential"
+        ):
             tags.append("Fluid dynamics")
         elif has_any("elasticity", "solid mechanics", "fracture", "fatigue", "plasticity"):
             tags.append("Solid mechanics")
@@ -464,20 +463,107 @@ def infer_tasks(p: Dict[str, Any]) -> List[str]:
     add("Benchmark / dataset", "benchmark", "dataset", "arena", "pdebench")
     add("Software / toolkit", "software", "library", "package", "toolbox", "toolkit", "framework")
 
-    add("Training acceleration / stabilization", "accelerat", "fast", "efficient", "speed", "precondition", "natural gradient", "optimizer", "conflict", "loss balancing", "curriculum", "adaptive weight", "kronecker")
-    add("Theory / analysis", "analysis", "convergence", "error", "generalization", "bounds", "mismatch", "failure mode", "loss landscape", "theory")
-    add("Adaptive sampling / active learning", "active learning", "adaptive sampling", "residual-based", "causal sampling", "importance sampling")
-    add("Uncertainty quantification", "uncertainty", "bayesian", "probabilistic", "gaussian process", "uq")
+    add(
+        "Training acceleration / stabilization",
+        "accelerat",
+        "fast",
+        "efficient",
+        "speed",
+        "precondition",
+        "natural gradient",
+        "optimizer",
+        "conflict",
+        "loss balancing",
+        "curriculum",
+        "adaptive weight",
+        "kronecker",
+    )
+    add(
+        "Theory / analysis",
+        "analysis",
+        "convergence",
+        "error",
+        "generalization",
+        "bounds",
+        "mismatch",
+        "failure mode",
+        "loss landscape",
+        "theory",
+    )
+    add(
+        "Adaptive sampling / active learning",
+        "active learning",
+        "adaptive sampling",
+        "residual-based",
+        "causal sampling",
+        "importance sampling",
+    )
+    add(
+        "Uncertainty quantification",
+        "uncertainty",
+        "bayesian",
+        "probabilistic",
+        "gaussian process",
+        "uq",
+    )
 
-    add("Inverse problem / reconstruction", "inverse", "reconstruction", "tomography", "data assimilation", "identification", "parameter estimation", "unknown coefficient")
-    add("PDE discovery / identification", "discover", "discovery", "learning pdes", "pde-net", "sindy", "model discovery", "equation")
+    add(
+        "Inverse problem / reconstruction",
+        "inverse",
+        "reconstruction",
+        "tomography",
+        "data assimilation",
+        "identification",
+        "parameter estimation",
+        "unknown coefficient",
+    )
+    add(
+        "PDE discovery / identification",
+        "discover",
+        "discovery",
+        "learning pdes",
+        "pde-net",
+        "sindy",
+        "model discovery",
+        "equation",
+    )
 
-    add("Forward prediction / rollout", "forecast", "prediction", "predicting", "rollout", "simulation", "time-dependent", "long-term")
-    add("Operator learning / surrogate modeling", "operator", "neural operator", "deeponet", "fourier neural operator", "fno")
+    add(
+        "Forward prediction / rollout",
+        "forecast",
+        "prediction",
+        "predicting",
+        "rollout",
+        "simulation",
+        "time-dependent",
+        "long-term",
+    )
+    add(
+        "Operator learning / surrogate modeling",
+        "operator",
+        "neural operator",
+        "deeponet",
+        "fourier neural operator",
+        "fno",
+    )
 
-    add("Generative reconstruction / inpainting", "diffusion", "generative", "inpainting", "sampling", "posterior")
+    add(
+        "Generative reconstruction / inpainting",
+        "diffusion",
+        "generative",
+        "inpainting",
+        "sampling",
+        "posterior",
+    )
     add("Graph / mesh simulation", "graph", "mesh")
-    add("Neural ODE/SDE modeling", "neural ode", "neural odes", "sde", "stochastic differential", "controlled differential")
+    add(
+        "Neural ODE/SDE modeling",
+        "neural ode",
+        "neural odes",
+        "sde",
+        "stochastic differential",
+        "controlled differential",
+    )
 
     # Category keywords from upstream lists
     if "accerleration" in text or "acceleration" in text:
@@ -523,9 +609,27 @@ def infer_method_class(p: Dict[str, Any]) -> str:
 
     if any(k in text for k in ["diffusion", "score-based", "score based", "denoising", "sde"]):
         return "Diffusion"
-    if any(k in text for k in ["neural operator", "operator learning", "deeponet", "fno", "fourier neural operator"]):
+    if any(
+        k in text
+        for k in [
+            "neural operator",
+            "operator learning",
+            "deeponet",
+            "fno",
+            "fourier neural operator",
+        ]
+    ):
         return "Operator learning"
-    if any(k in text for k in ["pinn", "physics-informed", "physics informed", "physics-constrained", "physics constrained"]):
+    if any(
+        k in text
+        for k in [
+            "pinn",
+            "physics-informed",
+            "physics informed",
+            "physics-constrained",
+            "physics constrained",
+        ]
+    ):
         return "PINN / physics-constrained"
     if any(k in text for k in ["graph", "mesh", "gns", "meshgraph", "mgno", "message passing"]):
         return "Graph / mesh"
@@ -559,6 +663,7 @@ def get_display_list(p: Dict[str, Any], key: str) -> Tuple[List[str], bool]:
     if manual:
         return manual, False
     return auto, bool(auto)
+
 
 def load_db() -> List[Dict[str, Any]]:
     """Load the paper database.
@@ -621,11 +726,24 @@ def load_db() -> List[Dict[str, Any]]:
             p["auto"] = auto
 
         # Normalize a few optional structured fields (curated only)
-        for key in ["contrib", "benefits", "theory", "setting", "data_setting", "model_setting", "training_setting", "interesting"]:
+        for key in [
+            "contrib",
+            "benefits",
+            "theory",
+            "setting",
+            "data_setting",
+            "model_setting",
+            "training_setting",
+            "interesting",
+        ]:
             if key in p:
                 p[key] = _as_list(p.get(key))
 
-        if "results_tables" in p and p["results_tables"] is not None and not isinstance(p["results_tables"], list):
+        if (
+            "results_tables" in p
+            and p["results_tables"] is not None
+            and not isinstance(p["results_tables"], list)
+        ):
             p["results_tables"] = _as_list(p["results_tables"])
 
         # Year type
@@ -688,19 +806,23 @@ def load_db() -> List[Dict[str, Any]]:
             if not cur:
                 continue
 
-            base = by_slug.get(cur_slug, {"slug": cur_slug, "status": "index", "auto": {"pdes": [], "tasks": []}, "links": {}})
+            base = by_slug.get(
+                cur_slug,
+                {
+                    "slug": cur_slug,
+                    "status": "index",
+                    "auto": {"pdes": [], "tasks": []},
+                    "links": {},
+                },
+            )
             base.update(cur)
             by_slug[cur_slug] = base
 
     return list(by_slug.values())
 
+
 def html_escape(s: str) -> str:
-    return (
-        s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-    )
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
 def ul(items: List[str]) -> str:
@@ -711,7 +833,7 @@ def ul(items: List[str]) -> str:
 
 
 def placeholder(text: str = "Not extracted yet.") -> str:
-    return f"<p class=\"muted\">{html_escape(text)}</p>"
+    return f'<p class="muted">{html_escape(text)}</p>'
 
 
 def ul_or_placeholder(items: List[str], text: str = "Not extracted yet.") -> str:
@@ -731,23 +853,24 @@ def render_math_block(lines: List[str]) -> str:
 def badges(items: List[str]) -> str:
     if not items:
         return ""
-    spans = "\n".join(f"<span class=\"badge\">{html_escape(i)}</span>" for i in items)
-    return f"<div class=\"badges\">\n{spans}\n</div>"
+    spans = "\n".join(f'<span class="badge">{html_escape(i)}</span>' for i in items)
+    return f'<div class="badges">\n{spans}\n</div>'
 
 
 def nav(root: str, current: str) -> str:
-    # current: one of "home", "research", "pde", "baselines", "benchmark", "run", "contribute"
+    # current: one of home, research, pde, baselines, benchmark, builder, run, contribute
     def a(href: str, label: str, key: str) -> str:
         aria = ' aria-current="page"' if key == current else ""
-        return f"<a href=\"{href}\"{aria}>{label}</a>"
+        return f'<a href="{href}"{aria}>{label}</a>'
 
     return (
-        "<nav class=\"nav\">"
+        '<nav class="nav">'
         + a(f"{root}index.html", "Home", "home")
         + a(f"{root}research/", "Research", "research")
         + a(f"{root}pde-problems/", "PDE problems", "pde")
         + a(f"{root}baselines/", "Baselines", "baselines")
         + a(f"{root}benchmark/", "Benchmark", "benchmark")
+        + a(f"{root}builder/", "Builder", "builder")
         + a(f"{root}server/", "Run", "run")
         + a(f"{root}contribute/", "Contribute", "contribute")
         + "</nav>"
@@ -766,7 +889,6 @@ def page(
     extra_head: str = "",
     body_html: str,
 ) -> str:
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -774,7 +896,7 @@ def page(
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
   <title>{html_escape(title)}</title>
-  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-13\" />
+  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-16\" />
   {extra_head}
 </head>
 
@@ -799,7 +921,7 @@ def page(
     {body_html}
 
     <footer class=\"footer\">
-      <div class=\"muted\">Last generated: {now}</div>
+      <div class=\"muted\">Generated deterministically from repository sources.</div>
     </footer>
   </main>
 </body>
@@ -819,33 +941,32 @@ def paper_link(p: Dict[str, Any], root_to_docs: str) -> str:
     return f"{root_to_docs}research/paper/?slug={p['slug']}"
 
 
-
 def render_paper_page(p: Dict[str, Any]) -> str:
     root = "../../"  # from docs/research/<slug>/index.html to docs/
     links = p.get("links", {}) or {}
     meta_lines = []
     if links.get("paper"):
         meta_lines.append(
-            f"<div><b>Paper:</b> <a class=\"meta-link\" href=\"{links['paper']}\" target=\"_blank\" rel=\"noopener noreferrer\">{html_escape(links.get('paper_label','link'))}</a></div>"
+            f'<div><b>Paper:</b> <a class="meta-link" href="{links["paper"]}" target="_blank" rel="noopener noreferrer">{html_escape(links.get("paper_label", "link"))}</a></div>'
         )
     if links.get("code"):
         meta_lines.append(
-            f"<div><b>Code:</b> <a class=\"meta-link\" href=\"{links['code']}\" target=\"_blank\" rel=\"noopener noreferrer\">repository</a></div>"
+            f'<div><b>Code:</b> <a class="meta-link" href="{links["code"]}" target="_blank" rel="noopener noreferrer">repository</a></div>'
         )
     if links.get("project"):
         meta_lines.append(
-            f"<div><b>Project:</b> <a class=\"meta-link\" href=\"{links['project']}\" target=\"_blank\" rel=\"noopener noreferrer\">project page</a></div>"
+            f'<div><b>Project:</b> <a class="meta-link" href="{links["project"]}" target="_blank" rel="noopener noreferrer">project page</a></div>'
         )
 
     meta_html = "\n".join(meta_lines)
-    hero_meta = f"<div class=\"meta\">{meta_html}</div>" if meta_lines else ""
+    hero_meta = f'<div class="meta">{meta_html}</div>' if meta_lines else ""
 
     quick = p.get("quick_facts", [])
     hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Quick facts</div>"
-        f"  <p class=\"muted\" style=\"margin-top:8px;\">{'<br/>'.join(quick)}</p>"
-        f"  <p style=\"margin:10px 0 0;\"><a href=\"../index.html\">← Research</a> · <a href=\"../../index.html\">Home</a></p>"
+        '<div class="hero-card">'
+        '  <div class="smallcaps">Quick facts</div>'
+        f'  <p class="muted" style="margin-top:8px;">{"<br/>".join(quick)}</p>'
+        f'  <p style="margin:10px 0 0;"><a href="../index.html">← Research</a> · <a href="../../index.html">Home</a></p>'
         "</div>"
     )
 
@@ -854,10 +975,10 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     # Curation status + source path
     status = str(p.get("status", "index"))
-    curation_path = p.get("_curation_path") or f"data/curations/{p.get('slug','<slug>')}.json"
+    curation_path = p.get("_curation_path") or f"data/curations/{p.get('slug', '<slug>')}.json"
     if status != "curated":
         sections.append(
-            "<div class=\"note\">"
+            '<div class="note">'
             "This page is currently an <b>index-only</b> placeholder. "
             "To improve it, edit the JSON file: "
             f"<code>{html_escape(str(curation_path))}</code> "
@@ -867,26 +988,27 @@ def render_paper_page(p: Dict[str, Any]) -> str:
 
     tldr = (p.get("tldr") or "").strip()
     if not tldr:
-        tldr_html = "<p class=\"muted\">Not curated yet. Add a 2–4 sentence TL;DR in the JSON file.</p>"
+        tldr_html = (
+            '<p class="muted">Not curated yet. Add a 2–4 sentence TL;DR in the JSON file.</p>'
+        )
     else:
         tldr_html = f"<p>{html_escape(tldr)}</p>"
-    sections.append(f"<section id=\"tldr\"><h2>TL;DR</h2>{tldr_html}</section>")
-
+    sections.append(f'<section id="tldr"><h2>TL;DR</h2>{tldr_html}</section>')
 
     # Problem statement (optional but strongly recommended for curated pages)
     problem = (p.get("problem") or "").strip()
     if not problem:
-        problem_html = "<p class=\"muted\">Add <code>problem:</code> to explain what the paper is trying to solve.</p>"
+        problem_html = '<p class="muted">Add <code>problem:</code> to explain what the paper is trying to solve.</p>'
     else:
         problem_html = f"<p>{html_escape(problem)}</p>"
-    sections.append(f"<section id=\"problem\"><h2>Problem</h2>{problem_html}</section>")
+    sections.append(f'<section id="problem"><h2>Problem</h2>{problem_html}</section>')
 
     # Benefits vs others (optional; use bullet points)
     benefits = p.get("benefits") or p.get("advantages") or []
     if isinstance(benefits, str):
         benefits = [benefits]
     sections.append(
-        "<section id=\"benefits\"><h2>Benefits vs others</h2>"
+        '<section id="benefits"><h2>Benefits vs others</h2>'
         + ul_or_placeholder(
             benefits,
             "Add <code>benefits:</code> as a bullet list (e.g., accuracy, speed, data efficiency, stability, generalization).",
@@ -897,25 +1019,32 @@ def render_paper_page(p: Dict[str, Any]) -> str:
     # Interesting notes (optional)
     interesting = p.get("interesting") or p.get("notes") or ""
     if isinstance(interesting, list):
-        interesting_html = ul_or_placeholder(interesting, "Add <code>interesting:</code> as bullet points.")
+        interesting_html = ul_or_placeholder(
+            interesting, "Add <code>interesting:</code> as bullet points."
+        )
     else:
         interesting = str(interesting).strip()
-        interesting_html = f"<p>{html_escape(interesting)}</p>" if interesting else "<p class=\"muted\">(Optional) Add <code>interesting:</code>.</p>"
-    sections.append(f"<section id=\"interesting\"><h2>Interesting detail</h2>{interesting_html}</section>")
-
+        interesting_html = (
+            f"<p>{html_escape(interesting)}</p>"
+            if interesting
+            else '<p class="muted">(Optional) Add <code>interesting:</code>.</p>'
+        )
+    sections.append(
+        f'<section id="interesting"><h2>Interesting detail</h2>{interesting_html}</section>'
+    )
 
     # Core method (math) + theory
     method_class = p.get("method_class", "SciML")
     math_lines = p.get("core_math", []) or METHOD_MATH.get(method_class, []) or METHOD_MATH["SciML"]
     sections.append(
-        "<section id=\"core-math\"><h2>Core method (math)</h2>"
-        f"<p class=\"muted\">Template for <b>{html_escape(method_class)}</b>. Paper-specific equations are added when manually curated.</p>"
+        '<section id="core-math"><h2>Core method (math)</h2>'
+        f'<p class="muted">Template for <b>{html_escape(method_class)}</b>. Paper-specific equations are added when manually curated.</p>'
         + (render_math_block(math_lines) if math_lines else placeholder("No template available."))
         + "</section>"
     )
 
     sections.append(
-        "<section id=\"theory\"><h2>Main theoretical contribution</h2>"
+        '<section id="theory"><h2>Main theoretical contribution</h2>'
         + ul_or_placeholder(
             p.get("theory", []),
             "Not curated yet. Add bullet points under <code>theory</code> in JSON.",
@@ -924,14 +1053,13 @@ def render_paper_page(p: Dict[str, Any]) -> str:
     )
 
     sections.append(
-        "<section id=\"contribution\"><h2>Main contribution</h2>"
+        '<section id="contribution"><h2>Main contribution</h2>'
         + ul_or_placeholder(
             p.get("contrib", []),
             "Not curated yet. Add bullet points under <code>contrib</code> in JSON.",
         )
         + "</section>"
     )
-
 
     # Main results (optional: quick headline summary)
     main_results = p.get("main_results") or []
@@ -944,14 +1072,14 @@ def render_paper_page(p: Dict[str, Any]) -> str:
             for r in main_results:
                 rows.append(
                     "<tr>"
-                    f"<td>{html_escape(str(r.get('metric','')))}</td>"
-                    f"<td>{html_escape(str(r.get('value','')))}</td>"
-                    f"<td>{html_escape(str(r.get('dataset','')))}</td>"
-                    f"<td>{html_escape(str(r.get('compared_to','')))}</td>"
+                    f"<td>{html_escape(str(r.get('metric', '')))}</td>"
+                    f"<td>{html_escape(str(r.get('value', '')))}</td>"
+                    f"<td>{html_escape(str(r.get('dataset', '')))}</td>"
+                    f"<td>{html_escape(str(r.get('compared_to', '')))}</td>"
                     "</tr>"
                 )
             main_results_html = (
-                "<div class=\"tablewrap\"><table>"
+                '<div class="tablewrap"><table>'
                 "<thead><tr><th>Metric</th><th>Value</th><th>Dataset</th><th>Compared to</th></tr></thead>"
                 "<tbody>" + "".join(rows) + "</tbody></table></div>"
             )
@@ -961,10 +1089,10 @@ def render_paper_page(p: Dict[str, Any]) -> str:
                 "Add <code>main_results</code> as a list (either dict rows or strings).",
             )
     else:
-        main_results_html = "<p class=\"muted\">(Optional) Add <code>main_results</code> for a quick headline summary.</p>"
+        main_results_html = '<p class="muted">(Optional) Add <code>main_results</code> for a quick headline summary.</p>'
 
     sections.append(
-        "<section id=\"main-results\"><h2>Main results (headline)</h2>"
+        '<section id="main-results"><h2>Main results (headline)</h2>'
         + main_results_html
         + "</section>"
     )
@@ -972,22 +1100,22 @@ def render_paper_page(p: Dict[str, Any]) -> str:
     # Experiments / PDE / tasks
     pdes_display, pdes_is_auto = get_display_list(p, "pdes")
     tasks_display, tasks_is_auto = get_display_list(p, "tasks")
-    pdes_title = "PDE problems" + (" <span class=\"muted\">(auto)</span>" if pdes_is_auto else "")
-    tasks_title = "Tasks" + (" <span class=\"muted\">(auto)</span>" if tasks_is_auto else "")
+    pdes_title = "PDE problems" + (' <span class="muted">(auto)</span>' if pdes_is_auto else "")
+    tasks_title = "Tasks" + (' <span class="muted">(auto)</span>' if tasks_is_auto else "")
 
     exp_html = (
-        "<section id=\"experiments\"><h2>Experiments</h2>"
-        "<div class=\"grid2\">"
-        f"  <div class=\"card\"><h3>{pdes_title}</h3>"
+        '<section id="experiments"><h2>Experiments</h2>'
+        '<div class="grid2">'
+        f'  <div class="card"><h3>{pdes_title}</h3>'
         + ul_or_placeholder(pdes_display, "Not specified yet.")
         + "</div>"
-        f"  <div class=\"card\"><h3>{tasks_title}</h3>"
+        f'  <div class="card"><h3>{tasks_title}</h3>'
         + ul_or_placeholder(tasks_display, "Not specified yet.")
         + "</div>"
         "</div>"
     )
     exp_html += (
-        "<div class=\"card\" style=\"margin-top:14px;\"><h3>Experiment setting (high level)</h3>"
+        '<div class="card" style="margin-top:14px;"><h3>Experiment setting (high level)</h3>'
         + ul_or_placeholder(p.get("setting", []))
         + "</div>"
     )
@@ -995,20 +1123,23 @@ def render_paper_page(p: Dict[str, Any]) -> str:
     sections.append(exp_html)
 
     sections.append(
-        "<section id=\"baselines\"><h2>Comparable baselines</h2>"
-        + ul_or_placeholder(p.get("baselines", []), "Not curated yet. Add items under <code>baselines</code> in JSON.")
+        '<section id="baselines"><h2>Comparable baselines</h2>'
+        + ul_or_placeholder(
+            p.get("baselines", []),
+            "Not curated yet. Add items under <code>baselines</code> in JSON.",
+        )
         + "</section>"
     )
 
     # Results tables
     tables = p.get("results_tables", []) or []
     if tables:
-        res_parts = ["<section id=\"results\"><h2>Main results</h2>"]
+        res_parts = ['<section id="results"><h2>Main results</h2>']
         for t in tables:
             if t.get("title"):
-                res_parts.append(f"<h3 class=\"subhead\">{html_escape(t['title'])}</h3>")
+                res_parts.append(f'<h3 class="subhead">{html_escape(t["title"])}</h3>')
             if t.get("note"):
-                res_parts.append(f"<p class=\"muted\">{t['note']}</p>")
+                res_parts.append(f'<p class="muted">{t["note"]}</p>')
             header = t.get("header", [])
             rows = t.get("rows", [])
             thead = "".join(f"<th>{html_escape(h)}</th>" for h in header)
@@ -1016,14 +1147,14 @@ def render_paper_page(p: Dict[str, Any]) -> str:
             for r in rows:
                 body_rows.append("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>")
             res_parts.append(
-                "<div class=\"tablewrap\"><table><thead><tr>"
+                '<div class="tablewrap"><table><thead><tr>'
                 + thead
                 + "</tr></thead><tbody>"
                 + "\n".join(body_rows)
                 + "</tbody></table></div>"
             )
         if p.get("benchmark_note"):
-            res_parts.append(f"<div class=\"note\">{p['benchmark_note']}</div>")
+            res_parts.append(f'<div class="note">{p["benchmark_note"]}</div>')
         res_parts.append("</section>")
         sections.append("\n".join(res_parts))
 
@@ -1040,7 +1171,13 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         authors = (p.get("authors") or "").strip()
         year = str(p.get("year") or "").strip()
         venue = (p.get("venue") or "").strip()
-        url = links.get("paper") or links.get("arxiv") or links.get("openreview") or links.get("code") or ""
+        url = (
+            links.get("paper")
+            or links.get("arxiv")
+            or links.get("openreview")
+            or links.get("code")
+            or ""
+        )
         entry_type = "inproceedings" if venue else "article"
         fields = []
         if title:
@@ -1056,12 +1193,10 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         bib = f"@{entry_type}{{{key},\n" + ",\n".join(fields) + "\n}"
 
     sections.append(
-        "<section id=\"citation\"><h2>Citation (BibTeX)</h2>"
-        + f"<pre class=\"code\"><code>{html_escape(bib)}</code></pre>"
+        '<section id="citation"><h2>Citation (BibTeX)</h2>'
+        + f'<pre class="code"><code>{html_escape(bib)}</code></pre>'
         + "</section>"
     )
-
-
 
     body = "\n".join(sections)
 
@@ -1070,13 +1205,13 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         root=root,
         current="research",
         hero_h1=f"{html_escape(p['short_title'])} ({p['year']})",
-        hero_subtitle_html=f"<b>{html_escape(p['full_title'])}</b><br/>{html_escape(p.get('authors',''))}",
+        hero_subtitle_html=f"<b>{html_escape(p['full_title'])}</b><br/>{html_escape(p.get('authors', ''))}",
         hero_meta_html=hero_meta + badges(p.get("badges", [])),
         hero_card_html=hero_card,
         extra_head=(
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
-            "<script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
-            "<script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>"
+            '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
+            '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
             "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>"
         ),
         body_html=body,
@@ -1090,16 +1225,17 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
 
     # Keep the homepage status concise; full commands live on the Run page.
     hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Benchmark status</div>"
-        "  <p style=\"margin:8px 0 0;\"><b>Benchmark-paper tooling: implemented</b></p>"
-        "  <p class=\"muted\" style=\"margin-top:8px;\">"
+        '<div class="hero-card">'
+        '  <div class="smallcaps">Benchmark status</div>'
+        '  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>'
+        '  <p class="muted" style="margin-top:8px;">'
         "    Deterministic generation, verified shards, strict splits, baselines, "
         "    OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in."
         "  </p>"
-        "  <p class=\"muted\"><b>Paper-data release:</b> pending numerical validation.</p>"
-        "  <p><a href=\"benchmark/\">Benchmark-paper contract</a> · "
-        "  <a href=\"server/\">Run on a server</a></p>"
+        '  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>'
+        '  <p><a href="benchmark/">Benchmark-paper contract</a> · '
+        '  <a href="builder/">Build a dataset</a> · '
+        '  <a href="server/">Run on a server</a></p>'
         "</div>"
     )
 
@@ -1115,7 +1251,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     <li><b>Research:</b> browse/search <b>{n_total}</b> AI4PDE/AI4SDE papers (<b>{n_curated}</b> curated pages + index placeholders).</li>
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication gates.</li>
+    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication-candidate quality gates.</li>
     <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
     <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
@@ -1160,16 +1296,16 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
             "plus a supporting partial-observation research map."
         ),
         hero_meta_html=(
-            "<div class=\"meta\">"
-            "  <div><b>Project:</b> <a class=\"meta-link\" href=\"https://ru1ch3n.github.io/PartialObs--PDEBench\" target=\"_blank\" rel=\"noopener noreferrer\">ru1ch3n.github.io/PartialObs--PDEBench</a></div>"
-            "  <div><b>Repo:</b> <a class=\"meta-link\" href=\"https://github.com/ru1ch3n/PartialObs--PDEBench\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub</a></div>"
+            '<div class="meta">'
+            '  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>'
+            '  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div>'
             "</div>"
         ),
         hero_card_html=hero_card,
         extra_head=(
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
-            "<script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
-            "<script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js\"></script>"
+            '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
+            '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
             "<script>document.addEventListener('DOMContentLoaded',()=>{"
             "  if(!window.mermaid) return;"
             "  /* Enable clickable Mermaid nodes on GitHub Pages. */"
@@ -1273,7 +1409,7 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
         hero_card_html="",
         extra_head=(
             "<script>window.PAPERS_DB_URL='../assets/papers_db.json';</script>"
-            "<script defer src=\"../assets/research.js\"></script>"
+            '<script defer src="../assets/research.js"></script>'
         ),
         body_html=body,
     )
@@ -1303,7 +1439,7 @@ def render_paper_placeholder() -> str:
         hero_card_html="",
         extra_head=(
             "<script>window.PAPERS_DB_URL='../../assets/papers_db.json';</script>"
-            "<script defer src=\"../../assets/paper.js\"></script>"
+            '<script defer src="../../assets/paper.js"></script>'
         ),
         body_html=body,
     )
@@ -1361,36 +1497,33 @@ def render_pde_problems(papers: List[Dict[str, Any]]) -> str:
                 "<tr>"
                 f"<td><b>{html_escape(pde)}</b></td>"
                 f"<td>{len(ps)}</td>"
-                f"<td class=\"muted\">{html_escape(top_methods) if top_methods else '—'}</td>"
-                f"<td class=\"muted\">{html_escape(top_bases) if top_bases else '—'}</td>"
-                f"<td><a href=\"{link}\">View papers</a></td>"
+                f'<td class="muted">{html_escape(top_methods) if top_methods else "—"}</td>'
+                f'<td class="muted">{html_escape(top_bases) if top_bases else "—"}</td>'
+                f'<td><a href="{link}">View papers</a></td>'
                 "</tr>"
             )
 
         sections.append(
-            "<section class=\"section\">"
+            '<section class="section">'
             f"  <h2>{html_escape(fam)}</h2>"
-            "  <div class=\"tablewrap\"><table><thead><tr>"
+            '  <div class="tablewrap"><table><thead><tr>'
             "    <th>PDE</th><th># papers</th><th>Common method classes</th><th>Common baselines (curated pages)</th><th></th>"
-            "  </tr></thead><tbody>"
-            + "\n".join(rows)
-            + "</tbody></table></div>"
+            "  </tr></thead><tbody>" + "\n".join(rows) + "</tbody></table></div>"
             "</section>"
         )
 
     body = (
-        "<section class=\"section\">"
+        '<section class="section">'
         "  <h2>Browse by PDE problem</h2>"
         "  <p>This page groups PDEs into common families. Each row links to the Research table with a PDE filter applied.</p>"
-        "  <div class=\"note\">PDE tags for <b>index-only</b> papers are auto-extracted from titles and may be incomplete. Curated pages include better coverage.</div>"
-        "</section>"
-        + "\n".join(sections)
+        '  <div class="note">PDE tags for <b>index-only</b> papers are auto-extracted from titles and may be incomplete. Curated pages include better coverage.</div>'
+        "</section>" + "\n".join(sections)
     )
 
     hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">How to use</div>"
-        "  <p class=\"muted\" style=\"margin-top:8px;\">"
+        '<div class="hero-card">'
+        '  <div class="smallcaps">How to use</div>'
+        '  <p class="muted" style="margin-top:8px;">'
         "    Pick a PDE family → click <b>View papers</b> to jump into the Research table."
         "  </p>"
         "</div>"
@@ -1422,15 +1555,13 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
             f"<td><b>{html_escape(cls)}</b></td>"
             f"<td>{n}</td>"
             f"<td>{eq_html}</td>"
-            f"<td><a href=\"{link}\">View papers</a></td>"
+            f'<td><a href="{link}">View papers</a></td>'
             "</tr>"
         )
     cls_table = (
-        "<div class=\"tablewrap\"><table><thead><tr>"
+        '<div class="tablewrap"><table><thead><tr>'
         "<th>Method class</th><th># papers</th><th>Core objective (template)</th><th></th>"
-        "</tr></thead><tbody>"
-        + "\n".join(cls_rows)
-        + "</tbody></table></div>"
+        "</tr></thead><tbody>" + "\n".join(cls_rows) + "</tbody></table></div>"
     )
 
     # Baseline methods (from curated pages only)
@@ -1445,44 +1576,38 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
     for base, ps in sorted(base_to_papers.items(), key=lambda kv: (-len(kv[1]), kv[0].lower())):
         ex = sorted(ps, key=lambda x: (-x.get("year", 0), x.get("short_title", "")))[:3]
         ex_links = ", ".join(
-            f"<a href=\"{paper_link(pp, '../')}\">{html_escape(pp['short_title'])}</a>"
-            for pp in ex
+            f'<a href="{paper_link(pp, "../")}">{html_escape(pp["short_title"])}</a>' for pp in ex
         )
         qlink = f"../research/?q={quote(base)}"
         base_rows.append(
             "<tr>"
             f"<td><b>{html_escape(base)}</b></td>"
             f"<td>{len(ps)}</td>"
-            f"<td class=\"muted\">{ex_links or '—'}</td>"
-            f"<td><a href=\"{qlink}\">Search</a></td>"
+            f'<td class="muted">{ex_links or "—"}</td>'
+            f'<td><a href="{qlink}">Search</a></td>'
             "</tr>"
         )
     base_table = (
-        "<div class=\"tablewrap\"><table><thead><tr>"
+        '<div class="tablewrap"><table><thead><tr>'
         "<th>Baseline method</th><th># curated papers</th><th>Examples</th><th></th>"
-        "</tr></thead><tbody>"
-        + "\n".join(base_rows)
-        + "</tbody></table></div>"
+        "</tr></thead><tbody>" + "\n".join(base_rows) + "</tbody></table></div>"
     )
 
     body = (
-        "<section class=\"section\">"
+        '<section class="section">'
         "  <h2>Method classes</h2>"
         "  <p>High-level taxonomy used across this website. Each row links to the Research table with a class filter.</p>"
-        "</section>"
-        + cls_table
-        + "<section class=\"section\">"
+        "</section>" + cls_table + '<section class="section">'
         "  <h2>Baseline methods (curated pages)</h2>"
         "  <p>Baseline lists are only available on manually curated paper pages. This table summarizes what is currently extracted.</p>"
-        "</section>"
-        + base_table
+        "</section>" + base_table
     )
 
     hero_card = (
-        "<div class=\"hero-card\">"
-        "  <div class=\"smallcaps\">Tip</div>"
-        "  <p class=\"muted\" style=\"margin-top:8px;\">"
-        "    Use <b>Method classes</b> to compare approaches, and <b>Baseline methods</b> to reproduce literature tables." 
+        '<div class="hero-card">'
+        '  <div class="smallcaps">Tip</div>'
+        '  <p class="muted" style="margin-top:8px;">'
+        "    Use <b>Method classes</b> to compare approaches, and <b>Baseline methods</b> to reproduce literature tables."
         "  </p>"
         "</div>"
     )
@@ -1496,7 +1621,7 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
         hero_card_html=hero_card,
         extra_head=(
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
-            "<script defer src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>"
+            '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
         ),
         body_html=body,
     )
@@ -1629,19 +1754,518 @@ def render_contribute(papers: List[Dict[str, Any]]) -> str:
     )
 
 
+def benchmark_builder_options() -> Dict[str, Any]:
+    """Build browser-safe choices directly from the frozen benchmark contract."""
+
+    source_root = str(REPO_ROOT / "src")
+    added_path = source_root not in sys.path
+    if added_path:
+        sys.path.insert(0, source_root)
+    try:
+        from pdeobs.methods import METHOD_REGISTRY, available_methods
+        from pdeobs.protocol import benchmark_contract
+        from pdeobs.splits import tier_regime_counts
+
+        contract = benchmark_contract()
+        method_labels = {
+            "fno": "FNO",
+            "unet": "U-Net",
+            "cno": "CNO-like",
+            "mae_small": "MAE small",
+            "rbf": "RBF interpolation",
+        }
+        registered_methods = set(available_methods())
+        method_rows = []
+        for method_name in sorted(registered_methods):
+            factory = METHOD_REGISTRY[method_name]
+            capabilities = getattr(factory, "capabilities", None)
+            method_rows.append(
+                {
+                    "value": method_name,
+                    "label": method_labels.get(method_name, method_name.replace("_", " ").title()),
+                    "tasks": sorted(getattr(capabilities, "tasks", ())),
+                    "capabilities_known": capabilities is not None,
+                    "trainable": bool(getattr(capabilities, "trainable", False)),
+                    "temporal": bool(getattr(capabilities, "temporal", False)),
+                    "supports_multichannel": bool(
+                        getattr(capabilities, "supports_multichannel", False)
+                    ),
+                    "reference_only": bool(getattr(capabilities, "reference_only", True)),
+                    "note": str(
+                        getattr(
+                            capabilities,
+                            "notes",
+                            "No machine-readable capabilities are registered; use an explicit config.",
+                        )
+                    ),
+                }
+            )
+
+        observation_training = contract["observation_training"]
+        protocol_methods = []
+        for row in observation_training["methods"]:
+            registry_name = row.get("registry_name")
+            declared_executable = str(row["execution_status"]).startswith("executable_")
+            builder_available = bool(
+                declared_executable and registry_name and registry_name in registered_methods
+            )
+            protocol_methods.append(
+                {
+                    **row,
+                    "value": row["method_id"],
+                    "default_seeds": 3 if row["method_id"] == "pinn_or_pino" else 1,
+                    "variant_required": bool(row.get("implementation_choice_required", False)),
+                    "builder_available": builder_available,
+                    "command_generation": ("single_run_only" if builder_available else "blocked"),
+                }
+            )
+    finally:
+        if added_path:
+            sys.path.remove(source_root)
+
+    pde_details = {
+        "darcy": (
+            "Darcy flow",
+            "-div(a grad u) - f",
+            "Variable-coefficient flux residual with stored or identified forcing.",
+        ),
+        "poisson": ("Poisson", "-Laplacian(u) - f", "Elliptic equation residual."),
+        "helmholtz": (
+            "Helmholtz",
+            "(-Laplacian - k^2)u - f",
+            "Nominal PDE residual; regularized transfer defect is reported separately.",
+        ),
+        "heat": ("Heat", "u_t - D Laplacian(u)", "Saved-frame temporal residual."),
+        "reaction_diffusion": (
+            "Reaction-diffusion",
+            "u_t - D Laplacian(u) - r(u - u^3)",
+            "Allen-Cahn-type temporal residual.",
+        ),
+        "burgers": (
+            "2-D Burgers",
+            "u_t + u(u_x + u_y) - nu Laplacian(u)",
+            "Temporal transport-diffusion residual.",
+        ),
+        "navier_stokes": (
+            "Navier-Stokes",
+            "omega_t + velocity dot grad(omega) - nu Laplacian(omega)",
+            "Periodic vorticity residual; bounded velocity-only data use a labeled partial curl diagnostic, plus divergence and boundary losses.",
+        ),
+    }
+    boundaries = {
+        "dirichlet": ("Dirichlet / no-slip", "Prescribed boundary value."),
+        "neumann": ("Neumann / free-slip", "Prescribed normal derivative."),
+        "periodic": ("Periodic", "Opposite-edge continuity."),
+        "robin_obstacle": (
+            "Robin / obstacle",
+            "Family-conditioned mixed boundary or embedded obstacle.",
+        ),
+    }
+    task_labels = {
+        "sparse_recovery": "Sparse recovery",
+        "forward_prediction": "Forward prediction",
+        "inverse_prediction": "Inverse prediction",
+        "semantic_retrieval": "Semantic retrieval",
+        "world_modeling": "World modeling / rollout",
+        "solver_routing": "Solver routing",
+        "foundation_transfer": "Foundation transfer",
+    }
+    mask_labels = {
+        "random_1pct": "Random 1%",
+        "random_3pct": "Random 3% (500 points at 128x128 training)",
+        "random_5pct": "Random 5%",
+        "random_10pct": "Random 10%",
+        "regular_grid": "Regular grid",
+        "block_missing": "Missing block",
+        "line_sensors": "Line sensors",
+        "boundary_sensors": "Boundary sensors",
+        "clustered_sensors": "Clustered sensors",
+    }
+    dataset = contract["dataset"]
+    tiers = []
+    for name, row in dataset["tiers"].items():
+        size = int(row["samples_per_macro_case"])
+        tiers.append(
+            {
+                "value": name,
+                "label": f"{name.title()} ({size:,} samples / macro case)",
+                "samples_per_macro_case": size,
+                "full_matrix_samples": int(row["total_samples"]),
+                "regime_counts": tier_regime_counts(size),
+            }
+        )
+
+    all_protocol_methods = [row["value"] for row in protocol_methods]
+    all_observations = list(contract["masks"])
+    three_anchor_observations = ["random_1pct", "random_3pct", "block_missing"]
+    protocol_by_id = {row["value"]: row for row in protocol_methods}
+    observation_accounting = observation_training["campaign_accounting"]
+    compute_planning = observation_training["compute_planning"]
+
+    def campaign_counts(method_observations: dict[str, list[str]]) -> dict[str, int]:
+        pde_count = int(observation_training["dataset_accounting"]["pde_count"])
+        result_cells = 0
+        neural_jobs = 0
+        pod_fits = 0
+        prior_jobs = 0
+        raw_evaluations = 0
+        for method_id, observations in method_observations.items():
+            row = protocol_by_id[method_id]
+            seeds = int(row["default_seeds"])
+            observation_count = len(observations)
+            cells = pde_count * observation_count
+            result_cells += cells
+            raw_evaluations += cells * seeds
+            fit_scope = row["fit_scope"]
+            if fit_scope == "once_per_pde_and_observation":
+                neural_jobs += cells * seeds
+            elif fit_scope == "once_per_pde_training_split":
+                pod_fits += pde_count
+            elif fit_scope == "once_per_pde_prior":
+                prior_jobs += pde_count
+        preparation_min = neural_jobs + pod_fits
+        return {
+            "result_cells": result_cells,
+            "neural_training_jobs": neural_jobs,
+            "pod_fit_jobs": pod_fits,
+            "prior_preparation_jobs_min": 0,
+            "prior_preparation_jobs_max": prior_jobs,
+            "preparation_jobs_min": preparation_min,
+            "preparation_jobs_max": preparation_min + prior_jobs,
+            "raw_evaluation_runs": raw_evaluations,
+        }
+
+    full_anchor_methods = [
+        "rbf",
+        "gappy_pod",
+        "unet",
+        "fno",
+        "cno",
+        "diffusionpde",
+        "fundps",
+    ]
+    full_hybrid_method_observations = {
+        method: (all_observations if method in {"rbf", "gappy_pod"} else three_anchor_observations)
+        for method in full_anchor_methods
+    }
+    all_method_observations = {method: all_observations for method in all_protocol_methods}
+    campaign_presets = [
+        {
+            "value": "medium_recommended",
+            "label": "Medium 140k: full 10-method comparison (recommended)",
+            "tier": "medium",
+            "methods": all_protocol_methods,
+            "method_observations": all_method_observations,
+            **campaign_counts(all_method_observations),
+            "gpu_hours_low": compute_planning["medium_gpu_hours_pinn_or_pino_three_seeds"][0],
+            "gpu_hours_high": compute_planning["medium_gpu_hours_pinn_or_pino_three_seeds"][1],
+            "recommendation": "Feasible but tight after a measured runtime pilot.",
+        },
+        {
+            "value": "full_anchor_hybrid",
+            "label": "Full 560k: hybrid anchor matrix (recommended full-tier check)",
+            "tier": "full",
+            "methods": full_anchor_methods,
+            "method_observations": full_hybrid_method_observations,
+            **campaign_counts(full_hybrid_method_observations),
+            "gpu_hours_low": None,
+            "gpu_hours_high": None,
+            "recommendation": "Run a hardware-specific pilot before reserving this campaign.",
+        },
+        {
+            "value": "full_all_methods_planning",
+            "label": "Full 560k: all methods and observations (not recommended)",
+            "tier": "full",
+            "methods": all_protocol_methods,
+            "method_observations": all_method_observations,
+            **campaign_counts(all_method_observations),
+            "gpu_hours_low": compute_planning["full_gpu_hours_pinn_or_pino_three_seeds"][0],
+            "gpu_hours_high": compute_planning["full_gpu_hours_pinn_or_pino_three_seeds"][1],
+            "recommendation": "Not feasible within the default ten-day planning budget.",
+        },
+    ]
+    for preset in campaign_presets:
+        preset["blocked_methods"] = [
+            method_id
+            for method_id in preset["methods"]
+            if not protocol_by_id[method_id]["builder_available"]
+        ]
+        preset["execution_status"] = "planning_only_blocked"
+
+    return {
+        "schema_version": "pdeobs.benchmark-builder/v2",
+        "generated_from": {
+            "contract": contract["schema_version"],
+            "default_config": "configs/dataset/default.yaml",
+        },
+        "release": contract["publication_gate"],
+        "pdes": [
+            {
+                "value": value,
+                "label": pde_details[value][0],
+                "loss": pde_details[value][1],
+                "note": pde_details[value][2],
+            }
+            for value in dataset["pde_families"]
+        ],
+        "boundaries": [
+            {"value": value, "label": boundaries[value][0], "note": boundaries[value][1]}
+            for value in dataset["boundaries"]
+        ],
+        "settings": [
+            {"value": value, "label": value.replace("_", " ").title()}
+            for value in dataset["settings"]
+        ],
+        "regimes": [{"value": value, "label": value.title()} for value in dataset["regimes"]],
+        "tiers": tiers,
+        "tasks": [
+            {
+                "value": task["name"],
+                "label": task_labels[task["name"]],
+                "status": task["status"],
+                "metrics": task["metrics"],
+            }
+            for task in contract["tasks"]
+        ],
+        "splits": [
+            {"value": value, "label": value.replace("_", " ").upper()}
+            for value in contract["splits"]
+        ],
+        "masks": [{"value": value, "label": mask_labels[value]} for value in contract["masks"]],
+        "models": method_rows,
+        "protocol_methods": protocol_methods,
+        "campaign_planner": {
+            "schema_version": observation_training["schema_version"],
+            "protocol_url": "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md",
+            "scope": observation_accounting["scope"],
+            "pde_count": observation_training["dataset_accounting"]["pde_count"],
+            "observation_count": observation_training["dataset_accounting"]["observation_count"],
+            "primary": observation_training["primary"],
+            "secondary": observation_training["secondary"],
+            "dataset_accounting": observation_training["dataset_accounting"],
+            "observation_counts_128": observation_training["observation_counts_128"],
+            "split_fractions": {"train": 0.70, "validation": 0.15, "test": 0.15},
+            "budget": compute_planning,
+            "scientific_caveats": observation_training["scientific_caveats"],
+            "presets": campaign_presets,
+        },
+        "environments": [
+            {"value": "local", "label": "Linux/macOS/local Bash"},
+            {"value": "server", "label": "Linux server"},
+            {"value": "seawulf", "label": "SeaWulf (Slurm)"},
+        ],
+        "quality_profiles": [
+            {
+                "value": "report",
+                "label": "Report",
+                "note": "Compute every available per-sample PDE/physics loss without applying an unfrozen scientific threshold; malformed array or geometry contracts are still quarantined.",
+            },
+            {
+                "value": "strict",
+                "label": "Strict generation gate",
+                "note": "Reject non-finite, geometry, initial-condition, and boundary failures; an optional calibrated PDE-loss limit adds a residual gate.",
+            },
+            {
+                "value": "publication",
+                "label": "Publication-candidate quality gate",
+                "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, a per-stratum frozen threshold table, and a complete bounded Navier-Stokes residual contract. The current package intentionally keeps the candidate gate and publication_ready false.",
+            },
+        ],
+        "quality_outputs": [
+            "Per-sample quality records in HDF5 metadata",
+            "Per-shard *.quality.json summaries",
+            "Strict rejected-sample records in *.quality-failures.jsonl",
+            "Aggregate summary.quality.json and summary.quality.csv reports",
+            "Standalone pdeobs quality output at the explicitly selected report path",
+            "Manifest/checksum validation and pass/warn/fail gate status",
+        ],
+    }
+
+
+def render_builder() -> str:
+    """Render the client-side benchmark dataset and quality command builder."""
+
+    body = """
+<section class="section builder-intro">
+  <div class="note"><b>Scientific status / 科学状态：</b> bundled compact solvers are for development and CI. They can produce complete quality reports, but their outputs are not paper-ready ground truth until numerical validation and the publication-candidate quality gate pass. Even then, <code>publication_ready</code> remains false until the canonical full-factor expected plan/checksums and independent release evidence pass. 内置紧凑求解器可以生成完整质量报告，但通过数值验证、完整因子计划、校验和及独立发布证据前，不应作为论文级真值数据。</div>
+  <p>Choose a factor slice or the complete 7 x 4 x 10 benchmark. The page creates a reproducible YAML configuration and copy-ready commands; it never sends your selections or paths to a server. 选择需要的 PDE、边界、数据规模和运行环境后，页面会自动生成配置与命令；所有选择均只在浏览器本地处理。</p>
+</section>
+
+<section class="builder-layout" aria-labelledby="builder-form-title">
+  <form id="benchmark-builder" class="card builder-controls">
+    <h2 id="builder-form-title">1. Choose the benchmark / 选择基准</h2>
+    <div class="builder-fields">
+      <label>Environment / 运行环境<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
+      <label>Release tier / 数据规模<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
+      <label>PDE family / PDE 类别<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
+      <label>Boundary<select id="builder-boundary" class="select" data-option="boundaries" data-all-label="All 4 boundaries" data-default="all"></select></label>
+      <label>Condition setting<select id="builder-setting" class="select" data-option="settings" data-all-label="All 10 settings" data-default="all"></select></label>
+      <label>Physical regime<select id="builder-regime" class="select" data-option="regimes" data-all-label="All 3 regimes" data-default="all"></select></label>
+      <label>Benchmark task<select id="builder-task" class="select" data-option="tasks" data-default="sparse_recovery"></select></label>
+      <label>Observation mask<select id="builder-mask" class="select" data-option="masks" data-default="random_3pct"></select></label>
+      <label>Evaluation split<select id="builder-split" class="select" data-option="splits" data-default="iid"></select></label>
+      <label>Anchor model<select id="builder-model" class="select" data-option="models" data-default="fno"></select></label>
+      <label>Quality profile / 质量档位<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
+      <label>Calibrated max normalized PDE loss / 校准后的 PDE loss 上限
+        <input id="builder-threshold" class="input" inputmode="decimal" type="number" min="0" step="any" placeholder="Optional; required for publication candidate" />
+      </label>
+    </div>
+    <details class="builder-advanced">
+      <summary>Advanced paths and resources</summary>
+      <div class="builder-fields">
+        <label>Dataset name<input id="builder-name" class="input" value="pdeobs-custom" maxlength="64" /></label>
+        <label>Data root<input id="builder-data-root" class="input" value="datasets" maxlength="240" /></label>
+        <label>Run root<input id="builder-run-root" class="input" value="runs" maxlength="240" /></label>
+        <label>Local workers<input id="builder-workers" class="input" type="number" min="1" max="128" step="1" value="4" /></label>
+        <label>Samples per shard<input id="builder-shard-size" class="input" type="number" min="1" max="2000" step="1" value="700" /></label>
+        <label>SeaWulf group<input id="builder-group" class="input" value="YOUR_GROUP" maxlength="80" /></label>
+      </div>
+    </details>
+    <div class="builder-actions">
+      <button class="btn" type="button" id="builder-reset">Reset choices</button>
+      <span id="builder-state" class="muted" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <aside class="card builder-summary" aria-labelledby="builder-summary-title">
+    <h2 id="builder-summary-title">Plan preview / 计划预览</h2>
+    <dl class="builder-stats">
+      <div><dt>Macro cases</dt><dd id="builder-macro-cases">-</dd></div>
+      <div><dt>Samples</dt><dd id="builder-samples">-</dd></div>
+      <div><dt>Shard jobs</dt><dd id="builder-jobs">-</dd></div>
+      <div><dt>Task status</dt><dd id="builder-task-status">-</dd></div>
+    </dl>
+    <p id="builder-profile-note" class="muted"></p>
+    <div id="builder-warning-box" class="builder-warning" role="status" aria-live="polite">
+      <b>Checks before running / 运行前检查</b>
+      <ul id="builder-warnings"></ul>
+    </div>
+  </aside>
+</section>
+
+<section id="observation-training" class="section" aria-labelledby="campaign-title">
+  <h2 id="campaign-title">2. Training per observation type / 按观测类型分别训练</h2>
+  <p><b>Primary matched-mask comparison:</b> every normal learned baseline gets an independent checkpoint for each PDE and each of the nine observation masks. The model trained on random 3% is reused only for the separate mask-transfer/OOD table; it never replaces matched-mask training in the primary IID table.</p>
+  <p><b>主要 matched-mask 对比：</b>每个普通学习基线都按 PDE 与观测掩码分别训练。random 3% 检查点只用于单独的 mask-transfer/OOD 表，不能替代主要 IID 表中的同掩码训练。</p>
+  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol / 查看完整观测训练协议</a></p>
+  <div class="note"><b>Execution boundary:</b> this planner counts the complete paper matrix, including methods that are not integrated in PDE-OBS. Its campaign manifest is planning-only. It never invents commands for Gappy POD, DeepONet, PINN/PINO, Transolver/GNOT, DiffusionPDE, or FunDPS.</div>
+
+  <div class="campaign-layout">
+    <div class="card campaign-controls">
+      <h3>Campaign preset / 计划预设</h3>
+      <div class="builder-fields">
+        <label>Comparison matrix<select id="campaign-preset" class="select" data-option="campaign_presets" data-default="medium_recommended"></select></label>
+        <label>Dedicated GPUs<input id="campaign-gpus" class="input" type="number" min="1" max="512" step="1" value="12" /></label>
+        <label>Campaign days<input id="campaign-days" class="input" type="number" min="1" max="365" step="1" value="10" /></label>
+        <label>Low utilization (%)<input id="campaign-utilization-low" class="input" type="number" min="1" max="100" step="1" value="75" /></label>
+        <label>High utilization (%)<input id="campaign-utilization-high" class="input" type="number" min="1" max="100" step="1" value="80" /></label>
+      </div>
+      <p id="campaign-recommendation" class="muted"></p>
+      <div class="builder-warning" role="status" aria-live="polite">
+        <b>Planning status</b>
+        <ul id="campaign-warnings"></ul>
+      </div>
+    </div>
+
+    <aside class="card campaign-summary" aria-labelledby="campaign-summary-title">
+      <h3 id="campaign-summary-title">Count and budget preview</h3>
+      <dl class="builder-stats campaign-stats">
+        <div><dt>Data pool</dt><dd id="campaign-data-pool">-</dd></div>
+        <div><dt>Pool / PDE</dt><dd id="campaign-data-per-pde">-</dd></div>
+        <div><dt>Train / PDE</dt><dd id="campaign-train-per-pde">-</dd></div>
+        <div><dt>Result cells</dt><dd id="campaign-result-cells">-</dd></div>
+        <div><dt>Preparation jobs</dt><dd id="campaign-preparation-jobs">-</dd></div>
+        <div><dt>Raw evaluations</dt><dd id="campaign-evaluation-runs">-</dd></div>
+        <div><dt>A6000 estimate</dt><dd id="campaign-gpu-estimate">-</dd></div>
+        <div><dt>Safe capacity</dt><dd id="campaign-safe-capacity">-</dd></div>
+      </dl>
+      <p id="campaign-feasibility" class="campaign-feasibility" role="status" aria-live="polite"></p>
+    </aside>
+  </div>
+
+  <div class="tablewrap campaign-table-wrap">
+    <table class="campaign-method-table">
+      <thead><tr><th>Method row</th><th>Fit policy</th><th>Seeds</th><th>Observations</th><th>Preparation</th><th>Evaluations</th><th>Builder status</th></tr></thead>
+      <tbody id="campaign-method-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="builder-code-title">
+  <div class="builder-code-heading">
+    <div><h2 id="builder-code-title">3. Copy the generated code / 复制生成代码</h2><p class="muted">The dataset YAML is the executable source of truth. The campaign tab is a non-executable planning record and lists every missing adapter explicitly.</p></div>
+    <div class="builder-actions">
+      <button id="builder-copy" class="btn primary" type="button">Copy current tab</button>
+      <button id="builder-download" class="btn" type="button">Download YAML</button>
+    </div>
+  </div>
+  <div class="builder-tabs" role="tablist" aria-label="Generated code">
+    <button class="btn" id="builder-tab-setup" type="button" role="tab" aria-selected="true" aria-controls="builder-code-panel" data-builder-tab="setup">Setup</button>
+    <button class="btn" id="builder-tab-yaml" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="yaml">Dataset YAML</button>
+    <button class="btn" id="builder-tab-run" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="run">Generate + quality</button>
+    <button class="btn" id="builder-tab-seawulf" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="seawulf">SeaWulf chain</button>
+    <button class="btn" id="builder-tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="campaign">Campaign plan (not executable)</button>
+  </div>
+  <div id="builder-code-panel" role="tabpanel" tabindex="0" aria-labelledby="builder-tab-setup">
+    <pre class="builder-code"><code id="builder-code">Loading benchmark contract...</code></pre>
+  </div>
+  <p id="builder-copy-status" class="muted" role="status" aria-live="polite"></p>
+  <noscript><div class="note">JavaScript is required only for generating tailored commands. The static benchmark and server guides remain available without it.</div></noscript>
+</section>
+
+<section class="section" aria-labelledby="quality-coverage-title">
+  <h2 id="quality-coverage-title">4. Quality management for every PDE / 全 PDE 数据质量管理</h2>
+  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together. 每个样本都保存数值、几何、初边值和对应 PDE 物理残差；完整基准会在同一份报告中分别汇总七类 PDE loss。</p>
+  <div class="tablewrap">
+    <table class="builder-quality-table">
+      <thead><tr><th>PDE</th><th>Reported normalized loss</th><th>Interpretation</th></tr></thead>
+      <tbody id="builder-quality-body"></tbody>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Always produced</h3><ul id="builder-quality-outputs"></ul></div>
+    <div class="card"><h3>Gate levels</h3><ol><li><b>Report:</b> report scientific losses without applying an unfrozen PDE threshold; malformed array/geometry contracts are still quarantined.</li><li><b>Strict:</b> reject structural/BC/IC failures, log them to <code>*.quality-failures.jsonl</code>, and apply a PDE limit only when calibrated.</li><li><b>Publication candidate:</b> expert-only and intentionally blocked by this Builder until validated solver evidence, a per-stratum threshold table, and a complete bounded Navier-Stokes residual contract exist. It does not by itself set <code>publication_ready</code>.</li></ol></div>
+  </div>
+  <div class="note"><b>Important interpretation:</b> saved-frame residuals are not the same as integrator replay error. Helmholtz nominal residual and regularized transfer defect stay separate. Bounded Navier-Stokes velocity-only data receive a labeled partial curl diagnostic, not a falsely complete momentum residual.</div>
+</section>
+"""
+    return page(
+        title="Benchmark Builder - PDE-OBS",
+        root="../",
+        current="builder",
+        hero_h1="Benchmark Builder / 基准构建器",
+        hero_subtitle_html=(
+            "Choose a benchmark slice, generate the dataset code, and attach a "
+            "quality report covering every selected PDE family. 选择配置后自动生成数据与质量检查代码。"
+        ),
+        hero_meta_html=badges(
+            ["7 PDE losses", "Local + Linux", "SeaWulf Slurm", "Deep-linkable choices"]
+        ),
+        extra_head=(
+            '<script defer src="../assets/benchmark-builder.js?'
+            'v=2026-08-16-observation-v3"></script>'
+        ),
+        body_html=body,
+    )
+
+
 def render_server() -> str:
     """Render the public Linux-server and SeaWulf quick-start page."""
 
     root = "../"
-    linux_guide = (
-        "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/SERVER.md"
-    )
+    linux_guide = "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/SERVER.md"
     seawulf_guide = (
         "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/hpc/seawulf/README.md"
+    )
+    observation_training_guide = (
+        "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/"
+        "docs/OBSERVATION_TRAINING_PROTOCOL.md"
     )
     body = f"""
 <section class="section">
   <h2>Choose the machine</h2>
+  <p>Need a custom factor slice? Use the <a href="../builder/">Benchmark Builder</a> first to generate matching YAML, quality gates, and local or SeaWulf commands.</p>
+  <p>Planning the paper comparison? Read the <a href="{observation_training_guide}">matched-mask observation-training protocol</a> before submitting GPU jobs; the random 3% checkpoint belongs to a separate transfer/OOD table.</p>
   <div class="grid2">
     <div class="card">
       <h3>Single Linux server</h3>
@@ -1662,6 +2286,7 @@ def render_server() -> str:
   <div class="card">
 <pre><code>git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
 cd PartialObs--PDEBench
+git checkout YOUR_RELEASE_TAG_OR_COMMIT
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
@@ -1754,11 +2379,11 @@ squeue -j "$generation_job,$validation_job,$training_job"</code></pre>
         body_html=body,
     )
 
+
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     normalized = "\n".join(line.rstrip() for line in content.splitlines()) + "\n"
     path.write_text(normalized, encoding="utf-8")
-
 
 
 def paper_public_record(p: Dict[str, Any]) -> Dict[str, Any]:
@@ -1785,7 +2410,7 @@ def paper_public_record(p: Dict[str, Any]) -> Dict[str, Any]:
     pdes_list, pdes_is_auto = get_display_list(p, "pdes")
     tasks_list, tasks_is_auto = get_display_list(p, "tasks")
 
-    is_curated = (p.get("status") == "curated")
+    is_curated = p.get("status") == "curated"
 
     return {
         "slug": p.get("slug"),
@@ -1809,6 +2434,7 @@ def paper_public_record(p: Dict[str, Any]) -> Dict[str, Any]:
         "bibtex": (p.get("bibtex") or "").strip(),
     }
 
+
 def main() -> None:
     papers = load_db()
 
@@ -1818,7 +2444,9 @@ def main() -> None:
 
         # --- Human-curated fields ---
         p["pdes"] = _dedup_keep_order([normalize_pde_tag(x) for x in (p.get("pdes") or [])])
-        p["tasks"] = _dedup_keep_order([x.strip() for x in (p.get("tasks") or []) if x and x.strip()])
+        p["tasks"] = _dedup_keep_order(
+            [x.strip() for x in (p.get("tasks") or []) if x and x.strip()]
+        )
 
         # --- Auto-suggested fields (stored under p["auto"]) ---
         if not isinstance(p.get("auto"), dict):
@@ -1828,17 +2456,27 @@ def main() -> None:
 
         # Only add suggestions if the human list is empty.
         if not p["pdes"]:
-            p["auto"]["pdes"] = _dedup_keep_order((p.get("auto", {}).get("pdes") or []) + infer_pdes(p))
+            p["auto"]["pdes"] = _dedup_keep_order(
+                (p.get("auto", {}).get("pdes") or []) + infer_pdes(p)
+            )
         if not p["tasks"]:
-            p["auto"]["tasks"] = _dedup_keep_order((p.get("auto", {}).get("tasks") or []) + infer_tasks(p))
+            p["auto"]["tasks"] = _dedup_keep_order(
+                (p.get("auto", {}).get("tasks") or []) + infer_tasks(p)
+            )
 
     # Write a compact JSON DB for client-side rendering
     papers_json = [paper_public_record(p) for p in papers]
     write(DOCS / "assets" / "papers_db.json", json.dumps(papers_json, ensure_ascii=False, indent=2))
+    builder_options = benchmark_builder_options()
+    write(
+        DOCS / "assets" / "benchmark-builder-options.json",
+        json.dumps(builder_options, ensure_ascii=False, indent=2),
+    )
 
     # Core pages
     write(DOCS / "index.html", render_home(papers))
     write(DOCS / "research" / "index.html", render_research_index(papers))
+    write(DOCS / "builder" / "index.html", render_builder())
     write(DOCS / "server" / "index.html", render_server())
     write(DOCS / "contribute" / "index.html", render_contribute(papers))
 
@@ -1861,7 +2499,9 @@ def main() -> None:
     write(DOCS / "pde-problems" / "index.html", render_pde_problems(papers))
     write(DOCS / "baselines" / "index.html", render_baselines(papers))
 
-    print(f"Generated: {len(curated)} curated paper pages + {len(papers)} index entries (papers_db.json).")
+    print(
+        f"Generated: {len(curated)} curated paper pages + {len(papers)} index entries (papers_db.json)."
+    )
 
 
 if __name__ == "__main__":

@@ -113,6 +113,8 @@ def generate(
             "realized_coefficient_contrast": realized_contrast,
             "solver_steps": iterations,
             "forcing_amplitude": 1.0,
+            "forcing_id": "unit_square_sine_mix_v1",
+            "solver_id": "weighted_jacobi_flux_v1",
         },
         dtype=dtype,
     )

@@ -8,6 +8,7 @@ from pdeobs.methods import (
     create_model,
     register_method,
 )
+from pdeobs.methods import base as method_base
 from pdeobs.registry import METHOD_REGISTRY as PROJECT_METHOD_REGISTRY
 
 
@@ -45,7 +46,12 @@ def test_persistence_rollout_shape():
     np.testing.assert_array_equal(result[3], final_state)
 
 
-def test_external_method_decorator():
+def test_external_method_decorator(monkeypatch):
+    # Keep this plugin-registration test isolated from later tests that compare
+    # generated website options with the built-in method registry.
+    monkeypatch.setattr(method_base, "METHOD_REGISTRY", dict(method_base.METHOD_REGISTRY))
+    monkeypatch.setattr(method_base, "_PRIMARY_NAMES", set(method_base._PRIMARY_NAMES))
+
     @register_method("test_external_method", replace=True)
     class External:
         name = "test_external_method"

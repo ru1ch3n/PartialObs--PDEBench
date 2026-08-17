@@ -59,6 +59,7 @@ def generate(
     apply_scalar_boundary(initial, boundary)
 
     states = [initial.copy()]
+    clip_count = 0
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
         substeps = max(1, int(np.ceil(reaction_rate * frame_dt / 0.18)))
@@ -67,9 +68,11 @@ def generate(
         for _ in range(1, steps):
             for _ in range(substeps):
                 state += 0.5 * dt * reaction_rate * (state - state**3)
+                clip_count += int(np.count_nonzero(np.abs(state) > 1.25))
                 state = np.clip(state, -1.25, 1.25)
                 state = spectral_diffuse(state, float(diffusivity), dt, dx, dy)
                 state += 0.5 * dt * reaction_rate * (state - state**3)
+                clip_count += int(np.count_nonzero(np.abs(state) > 1.25))
                 state = np.clip(state, -1.25, 1.25)
                 apply_scalar_boundary(state, boundary)
             states.append(state.copy())
@@ -98,6 +101,8 @@ def generate(
             "final_time": float(final_time),
             "time_steps": steps,
             "substeps_per_frame": substeps,
+            "clip_count": clip_count,
+            "integrator_id": "strang_reaction_spectral_diffusion_v1",
         },
         dtype=dtype,
     )

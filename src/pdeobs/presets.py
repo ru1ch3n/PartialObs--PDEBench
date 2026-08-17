@@ -171,6 +171,19 @@ def default_generation_config(tier: str = "tiny") -> dict[str, Any]:
                 {"protocol": "clustered", "ratio": 0.03},
             ],
         },
+        "quality": {
+            "enabled": True,
+            "profile": "report",
+            "require_pde_loss": True,
+            "thresholds": {
+                "finite_fraction_min": 1.0,
+                "geometry_binary_max_error_max": 1.0e-6,
+                "initial_condition_loss_normalized_max": 1.0e-6,
+                "boundary_condition_loss_normalized_max": 1.0e-4,
+                "pde_loss_normalized_max": None,
+                "divergence_loss_normalized_max": None,
+            },
+        },
     }
 
 

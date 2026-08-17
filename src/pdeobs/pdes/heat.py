@@ -82,6 +82,7 @@ def generate(
             "diffusivity": diffusivity,
             "final_time": float(final_time),
             "time_steps": steps,
+            "integrator_id": "spectral_diffusion_frame_map_v1",
         },
         dtype=dtype,
     )

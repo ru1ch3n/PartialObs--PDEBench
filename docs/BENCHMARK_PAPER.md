@@ -133,13 +133,67 @@ oriented degradation.
 
 Checked-in factor configs train separately for boundary, setting, parameter,
 and combination OOD, so a held-out factor cannot leak through a different OOD
-experiment. The mask configuration trains on 3% random observations and tests
-1%, 5%, 10%, regular-grid, missing-block, line, boundary, and clustered masks.
-Temporal configs train on horizons 1/2 and test 4/8.
+experiment. The checked-in random-3% mask configuration tests 1%, 5%, 10%,
+regular-grid, missing-block, line, boundary, and clustered masks as a secondary
+mask-transfer/OOD analysis. The primary IID observation table instead trains a
+separate checkpoint for each of all nine masks. Temporal configs train on
+horizons 1/2 and test 4/8.
 
 Navier–Stokes low/medium/high currently changes both viscosity and initial-state
 scale. It is therefore a **regime shift**, not an isolated single-parameter
 causal claim.
+
+## Primary observation-conditioned baseline protocol
+
+For the primary sparse-recovery IID comparison, normal trainable operator
+baselines are trained separately for every PDE family and observation mask,
+with `training_mask == evaluation_mask`. All masks reuse one immutable physical
+dataset; they do not create nine copies of the generated fields.
+
+| Method slot | Fit/reuse rule | Repository status |
+| --- | --- | --- |
+| RBF / interpolation | no fit; evaluate each cell | executable built-in |
+| Gappy POD / PCA | one training-only basis per PDE; reuse across masks | planning-only |
+| Mask-channel U-Net | one checkpoint per PDE and mask | executable compact reference |
+| Mask-channel FNO | one checkpoint per PDE and mask | executable compact reference |
+| CNO | one checkpoint per PDE and mask | executable CNO-like reference |
+| DeepONet | one checkpoint per PDE and mask | adapter required |
+| PINN or PINO | choose one frozen operator-level implementation; one checkpoint per PDE and mask | adapter and choice required |
+| Transolver or GNOT | choose one frozen implementation; one checkpoint per PDE and mask | adapter and choice required |
+| DiffusionPDE | freeze the upstream prior once per compatible PDE distribution; vary masks only at inference | external adapter required |
+| FunDPS | freeze the upstream prior once per compatible PDE distribution; vary masks only at inference | external adapter required |
+
+This ten-row suite is a protocol target, not a claim that all ten methods are
+implemented. The Builder must block commands for missing adapters. Classical
+per-instance PINN does not share PINO's 63 operator-training-job arithmetic, so
+the method choice must be frozen before results are counted.
+
+For one sparse-recovery task and IID split, the table has `10 x 7 x 9 = 630`
+result cells. Six normal trainable slots require 378 fits at one seed, or 504
+when only PINN/PINO uses three seeds. Gappy POD adds seven fits. DiffusionPDE
+and FunDPS add zero prior-training jobs when compatible upstream checkpoints
+exist, or up to fourteen when both priors must be trained per PDE. Total
+preparation is therefore 385-399 jobs at one seed or 511-525 with the special
+three-seed PINN/PINO rule. Result cells, seeded evaluations, and scheduler jobs
+are different quantities and must be reported separately.
+
+The medium tier contains 140,000 records, 20,000 per PDE, and approximately
+14,000 optimizer-training records per PDE for the frozen nested split. Full
+contains 560,000, 80,000 per PDE, and exactly 56,000 training records per PDE.
+A single all-boundary Navier-Stokes checkpoint is not currently shape-compatible:
+periodic records store one-channel vorticity while bounded records store
+two-channel velocity. Standardize the representation or train explicit
+representation-specific models before claiming the seven-PDE matrix.
+
+The provisional 12-A6000/10-day figures are unmeasured planning assumptions.
+The theoretical capacity is 2,880 GPU-hours and 75-80% utilization gives
+2,160-2,304 GPU-hours. The supplied scenarios estimate 4,200-4,600 hours for
+full with one PINN/PINO seed, 7,000-7,400 for full with three, and 1,800-2,300
+for medium with three. These are not benchmark measurements or SeaWulf/A100
+promises; a measured pilot is mandatory. The recommended plan is the complete
+ten-slot/nine-mask comparison on medium, followed by a reduced full-tier anchor
+table. See [OBSERVATION_TRAINING_PROTOCOL.md](OBSERVATION_TRAINING_PROTOCOL.md)
+for the corrected arithmetic, hybrid full preset, schedule, and quality gates.
 
 ## Anchor matrix
 

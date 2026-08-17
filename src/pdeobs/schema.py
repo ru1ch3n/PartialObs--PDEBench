@@ -158,6 +158,7 @@ class GenerationSpec:
     shard_size: int = 100
     tier: str = "full"
     options: Mapping[str, Any] = field(default_factory=dict)
+    quality: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for name in ("pde", "boundary", "setting", "regime"):
@@ -174,8 +175,11 @@ class GenerationSpec:
         object.__setattr__(self, "resolution", normalize_resolution(self.resolution))
         if self.time_steps is not None and int(self.time_steps) < 1:
             raise ValueError("time_steps must be positive")
-        np.dtype(self.dtype)
+        storage_dtype = np.dtype(self.dtype)
+        if not np.issubdtype(storage_dtype, np.floating):
+            raise TypeError("generation dtype must be floating-point")
         object.__setattr__(self, "options", dict(json_safe(self.options)))
+        object.__setattr__(self, "quality", dict(json_safe(self.quality)))
 
     @property
     def family(self) -> str:

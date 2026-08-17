@@ -22,13 +22,13 @@ TASKS = (
         "id": "T1",
         "name": "sparse_recovery",
         "status": "executable_field_task",
-        "metrics": ["relative_l2", "mse", "spectral", "validated_pde_residual"],
+        "metrics": ["relative_l2", "mse", "spectral"],
     },
     {
         "id": "T2",
         "name": "forward_prediction",
         "status": "executable_field_task",
-        "metrics": ["relative_l2", "spectral", "validated_pde_residual"],
+        "metrics": ["relative_l2", "spectral"],
     },
     {
         "id": "T3",
@@ -91,6 +91,126 @@ MINIMUM_BASELINES = (
     "supervised_multitask_small",
 )
 
+# The paper's core observation comparison is deliberately separate from the
+# broader minimum-anchor list above.  Rows without an executable implementation
+# remain in the machine-readable plan so the website and campaign tooling can
+# distinguish planned integrations from code that is actually present.
+OBSERVATION_COUNTS_128 = {
+    "random_1pct": {"observed_count": 164, "observed_fraction": 0.010009765625},
+    "random_3pct": {"observed_count": 500, "observed_fraction": 0.030517578125},
+    "random_5pct": {"observed_count": 819, "observed_fraction": 0.04998779296875},
+    "random_10pct": {"observed_count": 1638, "observed_fraction": 0.0999755859375},
+    "regular_grid": {"observed_count": 441, "observed_fraction": 0.02691650390625},
+    "block_missing": {"observed_count": 12288, "observed_fraction": 0.75},
+    "line_sensors": {"observed_count": 508, "observed_fraction": 0.031005859375},
+    "boundary_sensors": {"observed_count": 508, "observed_fraction": 0.031005859375},
+    "clustered_sensors": {"observed_count": 492, "observed_fraction": 0.030029296875},
+}
+
+CORE_OBSERVATION_METHODS = (
+    {
+        "method_id": "rbf",
+        "label": "RBF / interpolation",
+        "execution_status": "executable_builtin",
+        "registry_name": "rbf",
+        "fit_scope": "none",
+        "mask_specific_training": False,
+        "note": "Transparent evaluation-only baseline; no training job.",
+    },
+    {
+        "method_id": "gappy_pod",
+        "label": "Gappy POD / PCA",
+        "execution_status": "planning_only",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_training_split",
+        "mask_specific_training": False,
+        "note": "Fit seven leakage-free PDE bases; no implementation is bundled yet.",
+    },
+    {
+        "method_id": "unet",
+        "label": "Mask-channel U-Net",
+        "execution_status": "executable_compact_reference",
+        "registry_name": "unet",
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "note": "Bundled compact reference; not an exact paper reproduction.",
+    },
+    {
+        "method_id": "fno",
+        "label": "Mask-channel FNO",
+        "execution_status": "executable_compact_reference",
+        "registry_name": "fno",
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "note": "Bundled compact reference; not an exact paper reproduction.",
+    },
+    {
+        "method_id": "cno",
+        "label": "CNO",
+        "execution_status": "executable_compact_reference",
+        "registry_name": "cno",
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "note": "The bundled model is CNO-like, not an exact CNO reproduction.",
+    },
+    {
+        "method_id": "deeponet",
+        "label": "DeepONet",
+        "execution_status": "planning_only",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "note": "Requires a versioned external adapter or future plugin.",
+    },
+    {
+        "method_id": "pinn_or_pino",
+        "label": "PINN or PINO",
+        "execution_status": "planning_only_choice_required",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "implementation_choice_required": True,
+        "note": "The job accounting assumes one amortized operator-level implementation.",
+    },
+    {
+        "method_id": "transolver_or_gnot",
+        "label": "Transolver or GNOT",
+        "execution_status": "planning_only_choice_required",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_and_observation",
+        "mask_specific_training": True,
+        "implementation_choice_required": True,
+        "note": "Choose and freeze exactly one implementation before counting results.",
+    },
+    {
+        "method_id": "diffusionpde",
+        "label": "DiffusionPDE",
+        "execution_status": "planning_only_external_adapter",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_prior",
+        "mask_specific_training": False,
+        "note": "Use the exact upstream prior and condition it on all nine masks.",
+    },
+    {
+        "method_id": "fundps",
+        "label": "FunDPS",
+        "execution_status": "planning_only_external_adapter",
+        "registry_name": None,
+        "fit_scope": "once_per_pde_prior",
+        "mask_specific_training": False,
+        "note": "Use the exact upstream prior and condition it on all nine masks.",
+    },
+)
+
+NORMAL_OBSERVATION_TRAINING_METHODS = (
+    "unet",
+    "fno",
+    "cno",
+    "deeponet",
+    "pinn_or_pino",
+    "transolver_or_gnot",
+)
+
 ANALYSES = (
     "observation_ratio_difficulty",
     "observation_pattern_difficulty",
@@ -118,13 +238,129 @@ EXCLUDED_CLAIMS = (
 )
 
 
+def observation_training_contract() -> dict[str, Any]:
+    """Return the frozen matched-mask campaign policy and planning arithmetic."""
+
+    observations = list(MASK_PROTOCOL_NAMES)
+    transfer_masks = [name for name in observations if name != "random_3pct"]
+    return deepcopy(
+        {
+            "schema_version": "pdeobs.observation-training/v1",
+            "task": "sparse_recovery",
+            "primary": {
+                "name": "matched_mask_iid",
+                "split": "iid",
+                "observation_protocols": observations,
+                "normal_trainable_methods": list(NORMAL_OBSERVATION_TRAINING_METHODS),
+                "training_mask_equals_evaluation_mask": True,
+                "independent_checkpoint_per_pde_and_observation": True,
+                "reuse_weights_across_observations": False,
+                "reuse_immutable_physical_dataset": True,
+            },
+            "secondary": {
+                "name": "mask_transfer",
+                "split": "mask_ood",
+                "training_mask": "random_3pct",
+                "evaluation_masks": transfer_masks,
+                "separate_result_table": True,
+                "note": (
+                    "This train-on-3%-and-transfer view is not a substitute for the "
+                    "primary matched-mask comparison."
+                ),
+            },
+            "observation_counts_128": {
+                name: dict(OBSERVATION_COUNTS_128[name]) for name in observations
+            },
+            "methods": [dict(row) for row in CORE_OBSERVATION_METHODS],
+            "dataset_accounting": {
+                "pde_count": 7,
+                "observation_count": 9,
+                "method_row_count": 10,
+                "full": {
+                    "total_records": 560_000,
+                    "records_per_pde": 80_000,
+                    "training_records_per_pde": 56_000,
+                },
+                "medium": {
+                    "total_records": 140_000,
+                    "records_per_pde": 20_000,
+                    "training_records_per_pde_approximately": 14_000,
+                    "training_records_per_pde_range_for_frozen_seed": [13_916, 14_016],
+                    "seed": 20_260_804,
+                },
+            },
+            "campaign_accounting": {
+                "scope": "one sparse-recovery task and one IID result table",
+                "iid_result_cells": 630,
+                "normal_training_jobs_one_seed": 378,
+                "normal_training_jobs_pinn_or_pino_three_seeds": 504,
+                "gappy_pod_fits": 7,
+                "external_prior_jobs": {"compatible_pretrained": 0, "retrain_per_pde": 14},
+                "total_jobs_one_seed": {"minimum": 385, "maximum": 399},
+                "total_jobs_pinn_or_pino_three_seeds": {"minimum": 511, "maximum": 525},
+                "diffusionpde_fundps_observation_cells": 126,
+                "five_factor_split_result_cells": 3_150,
+                "counts_assume_one_implementation_per_choice_row": True,
+                "result_cells_are_not_scheduler_jobs": True,
+            },
+            "compute_planning": {
+                "status": "unmeasured_planning_scenario",
+                "hardware": "12 dedicated NVIDIA A6000 GPUs",
+                "duration_days": 10,
+                "theoretical_gpu_hours": 2_880,
+                "usable_gpu_hours_at_75_to_80_percent": [2_160, 2_304],
+                "attachment_rounded_safe_gpu_hours": [2_100, 2_300],
+                "full_gpu_hours_pinn_or_pino_one_seed": [4_200, 4_600],
+                "full_gpu_hours_pinn_or_pino_three_seeds": [7_000, 7_400],
+                "medium_gpu_hours_pinn_or_pino_three_seeds": [1_800, 2_300],
+                "estimated_wall_days_with_overhead": {
+                    "full_one_seed": [17, 22],
+                    "full_three_seeds": [28, 32],
+                    "medium_three_seeds": [8, 10],
+                },
+                "pilot_required": True,
+                "warning": (
+                    "These are unmeasured planning estimates, not benchmark results. "
+                    "Dataset-size quartering is not a validated scaling law for PINNs, "
+                    "diffusion sampling, or fixed-cost prior training. SeaWulf uses a "
+                    "shared A100 queue, so this dedicated-A6000 scenario is not a SeaWulf "
+                    "capacity promise."
+                ),
+            },
+            "scientific_caveats": [
+                (
+                    "Periodic Navier-Stokes stores one-channel vorticity while bounded and "
+                    "obstacle cases store two-channel velocity; one cross-boundary checkpoint "
+                    "requires a standardized representation or representation-specific models."
+                ),
+                (
+                    "Gappy POD must fit only on the canonical training split; fitting the basis "
+                    "on validation or test records is leakage."
+                ),
+                (
+                    "The block-missing view observes 75% of the grid and is not density-matched "
+                    "to the approximately 3% structured views."
+                ),
+                (
+                    "Classical per-instance PINN and amortized PINO are not interchangeable; "
+                    "the frozen job counts require one operator-level implementation choice."
+                ),
+                (
+                    "Final uncertainty comparisons should use a consistent seed policy across "
+                    "stochastic learned methods and record diffusion sampling seeds."
+                ),
+            ],
+        }
+    )
+
+
 def benchmark_contract() -> dict[str, Any]:
     """Return a detached JSON-safe representation of the frozen paper scope."""
 
     macro_cases = len(PDE_FAMILIES) * len(BOUNDARIES) * len(SETTING_NAMES)
     return deepcopy(
         {
-            "schema_version": "pdeobs.benchmark-paper/v1",
+            "schema_version": "pdeobs.benchmark-paper/v2",
             "title": TITLE,
             "central_question": CENTRAL_QUESTION,
             "contribution": [
@@ -134,6 +370,7 @@ def benchmark_contract() -> dict[str, Any]:
                 "metrics",
                 "anchor_leaderboard",
                 "difficulty_analysis",
+                "dataset_quality_control",
                 "one_line_tools",
             ],
             "dataset": {
@@ -165,8 +402,22 @@ def benchmark_contract() -> dict[str, Any]:
             "tasks": list(TASKS),
             "splits": list(SPLITS),
             "masks": list(MASK_PROTOCOL_NAMES),
+            "observation_training": observation_training_contract(),
             "minimum_baselines": list(MINIMUM_BASELINES),
             "analyses": list(ANALYSES),
+            "dataset_quality": {
+                "schema_version": "1.0",
+                "profiles": ["report", "strict", "publication"],
+                "default_profile": "report",
+                "pde_loss_coverage": list(PDE_FAMILIES),
+                "outputs": [
+                    "sample_metadata",
+                    "shard_quality_summary",
+                    "dataset_quality_json",
+                    "dataset_quality_csv",
+                ],
+                "prediction_residual_separate": True,
+            },
             "excluded_claims": list(EXCLUDED_CLAIMS),
             "publication_gate": {
                 "official_release_published": False,
@@ -176,6 +427,7 @@ def benchmark_contract() -> dict[str, Any]:
                     "residual_validation",
                     "trusted_solver_comparison",
                     "full_factor_matrix_validation",
+                    "family_boundary_resolution_threshold_calibration",
                     "versioned_checksummed_release_manifest",
                 ],
             },
@@ -300,6 +552,16 @@ def validate_dataset_config(config: Mapping[str, Any]) -> list[str]:
             protocols = {str(row.get("protocol")) for row in rows}
             if not structured.issubset(protocols):
                 issues.append("observations.evaluation must cover every structured mask protocol")
+    quality = config.get("quality", {})
+    if not isinstance(quality, Mapping):
+        issues.append("quality must be a mapping")
+    else:
+        if quality.get("enabled") is not True:
+            issues.append("quality.enabled must be true")
+        if quality.get("profile") != "report":
+            issues.append("quality.profile must be report in the canonical generation config")
+        if quality.get("require_pde_loss") is not True:
+            issues.append("quality.require_pde_loss must be true")
     return issues
 
 

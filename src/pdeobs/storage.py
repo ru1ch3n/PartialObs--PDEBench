@@ -119,6 +119,12 @@ def _full_specs_match(left: Any, right: Any) -> bool:
     return _canonical_json(left) == _canonical_json(right)
 
 
+def _spec_requires_quality(spec: Any) -> bool:
+    """Return whether a generation spec uses the mandatory quality contract."""
+
+    return isinstance(spec, Mapping) and "quality" in spec
+
+
 def _require_h5py() -> Any:
     if h5py is None:
         raise ModuleNotFoundError(
@@ -193,6 +199,7 @@ def shard_sidecars(path: str | Path) -> dict[str, Path]:
         "checksum": shard.with_suffix(".sha256"),
         "metadata_csv": shard.with_suffix(".metadata.csv"),
         "metadata_json": shard.with_suffix(".metadata.json"),
+        "quality": shard.with_suffix(".quality.json"),
     }
 
 
@@ -225,6 +232,27 @@ def is_shard_complete(
         return False
     if verify_checksum and manifest.get("sha256") != sha256_file(shard):
         return False
+    if _spec_requires_quality(manifest.get("spec")):
+        from .quality import QUALITY_SCHEMA_VERSION
+
+        sidecars = shard_sidecars(shard)
+        if (
+            manifest.get("quality_json") != sidecars["quality"].name
+            or manifest.get("quality_schema_version") != QUALITY_SCHEMA_VERSION
+            or not isinstance(manifest.get("quality_summary"), Mapping)
+            or not sidecars["quality"].is_file()
+        ):
+            return False
+        try:
+            quality_payload = json.loads(sidecars["quality"].read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        if (
+            not isinstance(quality_payload, Mapping)
+            or quality_payload.get("schema_version") != QUALITY_SCHEMA_VERSION
+            or not isinstance(quality_payload.get("quality"), Mapping)
+        ):
+            return False
     return True
 
 
@@ -518,9 +546,23 @@ class AtomicHDF5ShardWriter:
         return rows
 
     def _publish_sidecars(self) -> dict[str, Any]:
+        from .quality import BUILTIN_PDE_FAMILIES, summarize_quality_records
+
         sidecars = shard_sidecars(self.path)
         rows = self._read_metadata()
         self._count = len(rows)
+        family = self.spec.get("pde", self.spec.get("family"))
+        expected_families = (str(family),) if family else BUILTIN_PDE_FAMILIES
+        quality_summary = summarize_quality_records(rows, expected_families=expected_families)
+        if _spec_requires_quality(self.spec) and (
+            int(quality_summary.get("input_count", -1)) != self._count
+            or int(quality_summary.get("record_count", -1)) != self._count
+            or int(quality_summary.get("missing_quality_count", -1)) != 0
+            or int(quality_summary.get("invalid_quality_count", -1)) != 0
+        ):
+            raise StorageError(
+                "mandatory sample-level quality coverage is incomplete; refusing to publish shard"
+            )
 
         atomic_write_json(
             sidecars["metadata_json"],
@@ -528,6 +570,16 @@ class AtomicHDF5ShardWriter:
                 "schema_version": SCHEMA_VERSION,
                 "shard": self.path.name,
                 "samples": rows,
+                "quality_summary": quality_summary,
+            },
+        )
+        atomic_write_json(
+            sidecars["quality"],
+            {
+                "schema_version": quality_summary["schema_version"],
+                "shard": self.path.name,
+                "sample_count": self._count,
+                "quality": quality_summary,
             },
         )
         flattened = [_flatten_metadata(row) for row in rows]
@@ -555,6 +607,9 @@ class AtomicHDF5ShardWriter:
             "spec": self.spec,
             "metadata_csv": sidecars["metadata_csv"].name,
             "metadata_json": sidecars["metadata_json"].name,
+            "quality_json": sidecars["quality"].name,
+            "quality_schema_version": quality_summary["schema_version"],
+            "quality_summary": quality_summary,
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
         atomic_write_json(sidecars["manifest"], manifest)

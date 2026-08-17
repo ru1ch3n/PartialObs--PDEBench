@@ -62,17 +62,25 @@ def generate(
 
     states = [initial.copy()]
     total_substeps = 0
+    substeps_per_frame: list[int] = []
+    max_courant = 0.0
+    substep_cap_hits = 0
+    clip_count = 0
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
         state = initial.copy()
         for _ in range(1, steps):
             courant = float(np.max(np.abs(state))) * frame_dt / min(dx, dy)
             substeps = max(1, min(24, int(np.ceil(courant / 0.75))))
+            max_courant = max(max_courant, courant)
+            substeps_per_frame.append(substeps)
+            substep_cap_hits += int(substeps == 24)
             dt = frame_dt / substeps
             total_substeps += substeps
             for _ in range(substeps):
                 state = semi_lagrangian(state, state, state, dt, dx, dy, boundary)
                 state = spectral_diffuse(state, viscosity, dt, dx, dy)
+                clip_count += int(np.count_nonzero(np.abs(state) > 2.0))
                 state = np.clip(state, -2.0, 2.0)
                 apply_scalar_boundary(state, boundary)
             states.append(state.copy())
@@ -99,6 +107,11 @@ def generate(
             "final_time": float(final_time),
             "time_steps": steps,
             "total_substeps": total_substeps,
+            "substeps_per_frame": substeps_per_frame,
+            "max_frame_courant": max_courant,
+            "substep_cap_hits": substep_cap_hits,
+            "clip_count": clip_count,
+            "integrator_id": "semi_lagrangian_spectral_diffusion_v1",
         },
         dtype=dtype,
     )

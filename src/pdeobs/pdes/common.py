@@ -648,8 +648,8 @@ class PDEOutput:
     condition: FloatArray
     trajectory: FloatArray
     geometry: FloatArray
-    parameters: Mapping[str, float | int] = field(default_factory=dict)
-    diagnostics: Mapping[str, float] = field(default_factory=dict)
+    parameters: Mapping[str, Any] = field(default_factory=dict)
+    diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         try:
@@ -721,7 +721,7 @@ def build_output(
     condition: FloatArray,
     trajectory: FloatArray,
     geometry: FloatArray,
-    parameters: Mapping[str, float | int],
+    parameters: Mapping[str, Any],
     dtype: np.dtype[Any] | type[np.floating[Any]] = np.float32,
 ) -> PDEOutput:
     """Validate arrays, attach lightweight diagnostics, and validate layout.
@@ -734,6 +734,21 @@ def build_output(
     condition_array = _safe_array(condition, dtype)
     trajectory_array = _safe_array(trajectory, dtype)
     geometry_array = _safe_array(geometry, dtype)
+    parameter_payload = dict(parameters)
+    parameter_payload.setdefault("domain_id", "unit_square_cell_centered_v1")
+    parameter_payload.setdefault("boundary_operator_id", f"pdeobs.{boundary}.compact_v1")
+    family_token = str(family).strip().lower().replace("-", "_")
+    normalized_boundary = normalize_boundary(boundary)
+    if normalized_boundary == "periodic":
+        geometry_protocol_id = "pdeobs.geometry.empty_periodic_v1"
+    elif normalized_boundary == "robin" and family_token == "navier_stokes":
+        geometry_protocol_id = "pdeobs.geometry.outer_wall_circular_obstacle_v1"
+    else:
+        geometry_protocol_id = "pdeobs.geometry.outer_wall_v1"
+    parameter_payload.setdefault("geometry_protocol_id", geometry_protocol_id)
+    if normalize_boundary(boundary) == "robin" and family_token != "navier_stokes":
+        parameter_payload.setdefault("robin_alpha", 1.0)
+        parameter_payload.setdefault("robin_beta", 0.15)
     diagnostics = {
         "condition_min": float(np.min(condition_array)),
         "condition_max": float(np.max(condition_array)),
@@ -751,7 +766,7 @@ def build_output(
         condition=condition_array,
         trajectory=trajectory_array,
         geometry=geometry_array,
-        parameters=dict(parameters),
+        parameters=parameter_payload,
         diagnostics=diagnostics,
     )
 

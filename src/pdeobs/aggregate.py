@@ -14,6 +14,15 @@ from typing import Any
 import h5py
 import numpy as np
 
+from .quality import (
+    BUILTIN_PDE_FAMILIES,
+    QUALITY_SCHEMA_VERSION,
+    QualityAccumulator,
+    assess_quality_gate,
+    calibration_key_for_context,
+    summarize_quality_records,
+    write_quality_csv,
+)
 from .reports import aggregate_records, load_records, write_csv_report
 from .schema import SCHEMA_VERSION
 from .storage import (
@@ -158,6 +167,47 @@ def _strict_completion(
         or _json_text(metadata_payload["samples"]) != _json_text(metadata_rows)
     ):
         raise ShardValidationError(f"metadata JSON sidecar does not match {shard}")
+
+    quality_required = "quality" in completion["spec"]
+    quality_name = completion.get("quality_json")
+    if quality_required and quality_name is None:
+        raise ShardValidationError(f"completion manifest lacks mandatory quality_json for {shard}")
+    if quality_name is not None:
+        quality_path = sidecars["quality"]
+        if quality_name != quality_path.name or not quality_path.is_file():
+            raise ShardValidationError(f"missing quality_json sidecar for {shard}: {quality_path}")
+        try:
+            quality_payload = json.loads(quality_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ShardValidationError(f"invalid quality JSON sidecar for {shard}") from exc
+        spec = attrs.get("spec", {})
+        family = spec.get("pde", spec.get("family")) if isinstance(spec, Mapping) else None
+        expected_families = (str(family),) if family else BUILTIN_PDE_FAMILIES
+        computed_quality = summarize_quality_records(
+            metadata_rows,
+            expected_families=expected_families,
+        )
+        if (
+            not isinstance(quality_payload, dict)
+            or quality_payload.get("schema_version") != QUALITY_SCHEMA_VERSION
+            or completion.get("quality_schema_version") != QUALITY_SCHEMA_VERSION
+            or quality_payload.get("shard") != shard.name
+            or _required_integer(
+                quality_payload.get("sample_count"), source=f"quality sample_count for {shard}"
+            )
+            != count
+            or _json_text(quality_payload.get("quality")) != _json_text(computed_quality)
+            or _json_text(completion.get("quality_summary")) != _json_text(computed_quality)
+            or _json_text(metadata_payload.get("quality_summary")) != _json_text(computed_quality)
+        ):
+            raise ShardValidationError(f"quality JSON sidecar does not match {shard}")
+        if quality_required and (
+            int(computed_quality.get("input_count", -1)) != count
+            or int(computed_quality.get("record_count", -1)) != count
+            or int(computed_quality.get("missing_quality_count", -1)) != 0
+            or int(computed_quality.get("invalid_quality_count", -1)) != 0
+        ):
+            raise ShardValidationError(f"mandatory quality coverage is incomplete for {shard}")
     try:
         with sidecars["metadata_csv"].open("r", newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
@@ -222,6 +272,27 @@ def validate_hdf5_shard(
                 raise ShardValidationError("trajectory must be NTHWC")
             if handle["geometry"].ndim != 4 or handle["geometry"].shape[-1] != 1:
                 raise ShardValidationError("geometry must be NHW1")
+            spatial = tuple(int(value) for value in handle["trajectory"].shape[2:4])
+            if tuple(handle["condition"].shape[1:3]) != spatial:
+                raise ShardValidationError(
+                    "condition spatial dimensions must match trajectory spatial dimensions"
+                )
+            if tuple(handle["geometry"].shape[1:3]) != spatial:
+                raise ShardValidationError(
+                    "geometry spatial dimensions must match trajectory spatial dimensions"
+                )
+            for name in ("condition", "trajectory"):
+                if not np.issubdtype(handle[name].dtype, np.floating):
+                    raise ShardValidationError(f"{name} must use a floating-point dtype")
+            if str(handle["condition"].dtype) != str(handle["trajectory"].dtype):
+                raise ShardValidationError(
+                    "condition and trajectory must use the same stored dtype"
+                )
+            geometry_dtype = handle["geometry"].dtype
+            if not (
+                np.issubdtype(geometry_dtype, np.number) or geometry_dtype == np.dtype(np.bool_)
+            ):
+                raise ShardValidationError("geometry must use a numeric or boolean dtype")
             attrs = {
                 str(key): value.item() if isinstance(value, np.generic) else value
                 for key, value in handle.attrs.items()
@@ -256,19 +327,189 @@ def validate_hdf5_shard(
                 if isinstance(spec, Mapping) and spec.get("pde"):
                     required_metadata = {
                         "sample_id",
+                        "schema_version",
                         "pde",
                         "boundary",
                         "setting",
                         "regime",
+                        "state_representation",
+                        "resolution",
+                        "T",
                         "split",
                         "seed",
                     }
+                    family = str(spec.get("pde"))
+                    boundary = str(spec.get("boundary", "periodic"))
+                    if family in BUILTIN_PDE_FAMILIES:
+                        expected_channels = (
+                            2 if family == "navier_stokes" and boundary != "periodic" else 1
+                        )
+                        expected_representation = (
+                            "velocity"
+                            if expected_channels == 2
+                            else "vorticity"
+                            if family == "navier_stokes"
+                            else "scalar"
+                        )
+                        if (
+                            int(handle["condition"].shape[-1]) != expected_channels
+                            or int(handle["trajectory"].shape[-1]) != expected_channels
+                        ):
+                            raise ShardValidationError(
+                                f"{shard} state channels violate the built-in {family} contract"
+                            )
+                        time_steps = int(handle["trajectory"].shape[1])
+                        if family in {"darcy", "poisson", "helmholtz"} and time_steps != 1:
+                            raise ShardValidationError(
+                                f"{shard} static built-in trajectory must have T=1"
+                            )
+                        if (
+                            family
+                            in {
+                                "heat",
+                                "reaction_diffusion",
+                                "burgers",
+                                "navier_stokes",
+                            }
+                            and time_steps < 2
+                        ):
+                            raise ShardValidationError(
+                                f"{shard} temporal built-in trajectory must have T>=2"
+                            )
+                    else:
+                        expected_representation = None
                     for index, row in enumerate(metadata_rows):
                         missing = sorted(required_metadata - row.keys())
                         if missing:
                             raise ShardValidationError(
                                 f"{shard}:metadata[{index}] lacks official fields: {missing}"
                             )
+                        for key in ("pde", "boundary", "setting", "regime", "tier"):
+                            if spec.get(key) is not None and row.get(key) != spec.get(key):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].{key} differs from shard spec"
+                                )
+                        spatial_list = list(spatial)
+                        if (
+                            row.get("resolution") is not None
+                            and list(row["resolution"]) != spatial_list
+                        ):
+                            raise ShardValidationError(
+                                f"{shard}:metadata[{index}].resolution differs from arrays"
+                            )
+                        if row.get("T") is not None and int(row["T"]) != int(
+                            handle["trajectory"].shape[1]
+                        ):
+                            raise ShardValidationError(
+                                f"{shard}:metadata[{index}].T differs from trajectory"
+                            )
+                        representation = row.get("state_representation")
+                        if (
+                            expected_representation is not None
+                            and representation != expected_representation
+                        ):
+                            raise ShardValidationError(
+                                f"{shard}:metadata[{index}].state_representation "
+                                "differs from the built-in family/boundary contract"
+                            )
+                        if family in BUILTIN_PDE_FAMILIES:
+                            expected_channels = {
+                                "scalar": 1,
+                                "vorticity": 1,
+                                "velocity": 2,
+                            }.get(str(representation))
+                            if (
+                                expected_channels is not None
+                                and int(handle["trajectory"].shape[-1]) != expected_channels
+                            ):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].state_representation "
+                                    "differs from stored state channels"
+                                )
+                        quality = row.get("quality")
+                        if quality is not None:
+                            if not isinstance(quality, Mapping):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].quality must be a mapping"
+                                )
+                            expected_quality = {
+                                "schema_version": "1.0",
+                                "pde": row.get("pde"),
+                                "boundary": row.get("boundary"),
+                                "resolution": spatial_list,
+                                "stored_dtype": str(handle["trajectory"].dtype),
+                            }
+                            for key, expected_value in expected_quality.items():
+                                if quality.get(key) != expected_value:
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}].quality.{key} "
+                                        "differs from stored sample"
+                                    )
+                            context = quality.get("calibration_context")
+                            if not isinstance(context, Mapping):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}] lacks quality calibration context"
+                                )
+                            calibration_key = str(quality.get("calibration_key", ""))
+                            if calibration_key_for_context(context) != calibration_key:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}] quality calibration key "
+                                    "does not match its context"
+                                )
+                            for key in ("pde", "boundary", "setting", "regime"):
+                                if context.get(key) != row.get(key):
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}] quality calibration {key} "
+                                        "differs from metadata"
+                                    )
+                            parameters = row.get("parameters", {})
+                            if not isinstance(parameters, Mapping):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].parameters must be a mapping"
+                                )
+                            time_steps = int(handle["trajectory"].shape[1])
+                            final_time = parameters.get("final_time")
+                            if time_steps > 1 and final_time is not None:
+                                try:
+                                    expected_saved_dt = float(final_time) / (time_steps - 1)
+                                except (TypeError, ValueError):
+                                    expected_saved_dt = None
+                            else:
+                                expected_saved_dt = None
+                            expected_context = {
+                                "resolution": spatial_list,
+                                "dtype": str(handle["trajectory"].dtype),
+                                "T": time_steps,
+                                "saved_dt": expected_saved_dt,
+                                "operator_id": quality.get("operator_id"),
+                                "solver_id": parameters.get("solver_id"),
+                                "integrator_id": parameters.get("integrator_id"),
+                                "solver_implementation": row.get("solver_implementation"),
+                                "solver_version": row.get("solver_version"),
+                            }
+                            for key, expected_value in expected_context.items():
+                                if context.get(key) != expected_value:
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}] quality calibration {key} "
+                                        "differs from stored metadata/arrays"
+                                    )
+                            for context_name in (
+                                "equation_parameters",
+                                "solver_parameters",
+                                "residual_protocol",
+                            ):
+                                context_parameters = context.get(context_name)
+                                if not isinstance(context_parameters, Mapping):
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}] quality calibration "
+                                        f"{context_name} must be a mapping"
+                                    )
+                                for key, expected_value in context_parameters.items():
+                                    if parameters.get(key) != expected_value:
+                                        raise ShardValidationError(
+                                            f"{shard}:metadata[{index}] quality calibration "
+                                            f"parameter {key} differs from metadata"
+                                        )
             shapes = {name: list(handle[name].shape) for name in arrays}
     except ShardValidationError:
         raise
@@ -290,6 +531,12 @@ def validate_hdf5_shard(
             digest = _sha256(shard)
             if digest.lower() != str(completion["sha256"]).lower():
                 raise ShardValidationError(f"Checksum mismatch for {shard}")
+    spec = attrs.get("spec", {})
+    family = spec.get("pde", spec.get("family")) if isinstance(spec, Mapping) else None
+    shard_quality = summarize_quality_records(
+        metadata_rows,
+        expected_families=(str(family),) if family else BUILTIN_PDE_FAMILIES,
+    )
     return {
         "path": str(shard),
         "samples": count,
@@ -297,9 +544,11 @@ def validate_hdf5_shard(
         "attributes": attrs,
         "sha256": digest or (completion or {}).get("sha256"),
         "completion": completion,
+        "quality": shard_quality,
         "_sample_ids": [
             str(row["sample_id"]) for row in metadata_rows if row.get("sample_id") is not None
         ],
+        "_quality_records": metadata_rows,
     }
 
 
@@ -375,12 +624,17 @@ def summarize_dataset(
         raise ValueError("expected_plan requires validate=True")
     if validate and strict and not shards:
         raise ShardValidationError(f"no HDF5 shards found under {directory}")
-    summaries = [
-        validate_hdf5_shard(path, verify_checksum=verify_checksum, strict=strict)
-        if validate
-        else {"path": str(path), "samples": None}
-        for path in shards
-    ]
+    summaries: list[dict[str, Any]] = []
+    quality_accumulator = QualityAccumulator()
+    for path in shards:
+        item = (
+            validate_hdf5_shard(path, verify_checksum=verify_checksum, strict=strict)
+            if validate
+            else {"path": str(path), "samples": None}
+        )
+        for row in item.pop("_quality_records", []):
+            quality_accumulator.update(row)
+        summaries.append(item)
     if validate and strict:
         seen_ids: set[str] = set()
         for item in summaries:
@@ -429,6 +683,7 @@ def summarize_dataset(
         "shard_count": len(shards),
         "sample_count": total if validate else None,
         "samples_by_family": dict(sorted(families.items())),
+        "quality": quality_accumulator.summary(),
         "shards": summaries,
     }
 
@@ -446,6 +701,10 @@ def aggregate_path(
     verify_checksum: bool = True,
     expected_plan: str | Path | None = None,
     group_by: Iterable[str] = ("method", "task", "split"),
+    quality_strict: bool = False,
+    max_pde_loss: float | None = None,
+    require_all_pdes: bool = False,
+    require_validated_solvers: bool = False,
 ) -> dict[str, Any]:
     root = Path(input_root)
     dataset = summarize_dataset(
@@ -457,13 +716,33 @@ def aggregate_path(
     report_paths = _report_files(root)
     records = load_records(report_paths) if report_paths else []
     aggregated = aggregate_records(records, group_by=tuple(group_by)) if records else []
+    quality_gate = assess_quality_gate(
+        dataset["quality"],
+        strict=quality_strict,
+        max_pde_loss=max_pde_loss,
+        require_all_pdes=require_all_pdes,
+        require_validated_solvers=require_validated_solvers,
+        expected_record_count=dataset["sample_count"] if validate_shards else None,
+    )
     payload = {
         "dataset": dataset,
+        "quality_gate": quality_gate,
         "report_files": [str(path) for path in report_paths],
         "leaderboard": aggregated,
     }
     destination = Path(output)
     atomic_write_json(destination, payload)
+    quality_report = {
+        "schema_version": dataset["quality"]["schema_version"],
+        "root": dataset["root"],
+        "shard_count": dataset["shard_count"],
+        "sample_count": dataset["sample_count"],
+        "quality": dataset["quality"],
+        "gate": quality_gate,
+    }
+    quality_json = destination.with_suffix(".quality.json")
+    atomic_write_json(quality_json, quality_report)
+    write_quality_csv(quality_report, destination.with_suffix(".quality.csv"))
     if aggregated:
         write_csv_report(aggregated, destination.with_suffix(".csv"))
     return payload

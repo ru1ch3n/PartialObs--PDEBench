@@ -37,6 +37,46 @@ def _experiment_selector(parser: argparse.ArgumentParser, *, include_model: bool
     parser.add_argument("--param-regime", dest="param_regime", help="optional regime filter")
 
 
+def _quality_profile_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--quality-profile",
+        choices=("report", "strict", "publication"),
+        help=(
+            "dataset-quality policy: report measurements, reject failed calibrated "
+            "checks, or require publication-grade solver/threshold evidence"
+        ),
+    )
+    parser.add_argument(
+        "--max-pde-loss",
+        type=float,
+        help="maximum normalized PDE loss (must be calibrated for the selected protocol)",
+    )
+
+
+def _quality_gate_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--quality-strict",
+        "--strict",
+        action="store_true",
+        help="fail on stored quality failures",
+    )
+    parser.add_argument(
+        "--max-pde-loss",
+        type=float,
+        help="fail if any PDE family's maximum normalized loss exceeds this value",
+    )
+    parser.add_argument(
+        "--require-all-pdes",
+        action="store_true",
+        help="require quality records for all seven built-in PDE families",
+    )
+    parser.add_argument(
+        "--require-validated-solvers",
+        action="store_true",
+        help="require every present PDE to use a solver marked independently validated",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pdeobs",
@@ -73,6 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--config", type=Path, help="advanced generation YAML")
     plan.add_argument("--tier", choices=("tiny", "debug", "signal", "medium", "full"))
     plan.add_argument("--output", required=True, type=Path)
+    _quality_profile_options(plan)
     _overrides(plan)
     plan.set_defaults(handler=_cmd_plan)
 
@@ -89,6 +130,7 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--force", action="store_true")
     generate.add_argument("--dry-run", action="store_true")
     generate.add_argument("--num-workers", type=int, default=1, help="local shard processes")
+    _quality_profile_options(generate)
     _overrides(generate)
     generate.set_defaults(handler=_cmd_generate)
 
@@ -110,6 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     generate_case.add_argument("--force", action="store_true")
     generate_case.add_argument("--dry-run", action="store_true")
+    _quality_profile_options(generate_case)
     generate_case.set_defaults(handler=_cmd_generate_case)
 
     download = commands.add_parser("download", help="download and verify a published dataset tier")
@@ -184,7 +227,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="strictly require the exact shards and row counts in a generation JSONL plan",
     )
     aggregate.add_argument("--group-by", default="method,task,split")
+    _quality_gate_options(aggregate)
     aggregate.set_defaults(handler=_cmd_aggregate)
+
+    quality = commands.add_parser(
+        "quality", help="audit and aggregate stored PDE losses and dataset-quality checks"
+    )
+    quality.add_argument("--input", required=True, type=Path)
+    quality.add_argument("--output", required=True, type=Path, help="quality-report JSON path")
+    quality.add_argument(
+        "--recompute",
+        action="store_true",
+        help="recompute each sample instead of trusting embedded quality metadata",
+    )
+    _quality_gate_options(quality)
+    quality.set_defaults(handler=_cmd_quality)
 
     analyze = commands.add_parser(
         "analyze", help="summarize problem difficulty from JSON/CSV metric records"
@@ -290,6 +347,23 @@ def _cmd_protocol(args: argparse.Namespace) -> int:
     return 0 if report.get("validation", {}).get("valid", True) else 1
 
 
+def _apply_quality_cli(config: dict[str, Any], args: argparse.Namespace) -> None:
+    """Apply explicit quality selectors after YAML/default resolution."""
+
+    selected_profile = getattr(args, "quality_profile", None)
+    selected_limit = getattr(args, "max_pde_loss", None)
+    if selected_profile is None and selected_limit is None:
+        return
+    quality = dict(config.get("quality", {}))
+    if selected_profile is not None:
+        quality["profile"] = selected_profile
+    if selected_limit is not None:
+        thresholds = dict(quality.get("thresholds", {}))
+        thresholds["pde_loss_normalized_max"] = selected_limit
+        quality["thresholds"] = thresholds
+    config["quality"] = quality
+
+
 def _cmd_plan(args: argparse.Namespace) -> int:
     from .config import apply_overrides, expand_environment, load_config, save_resolved_config
     from .generation import write_generation_plan
@@ -305,6 +379,7 @@ def _cmd_plan(args: argparse.Namespace) -> int:
     )
     if args.tier:
         config["tier"] = args.tier
+    _apply_quality_cli(config, args)
     provenance = collect_provenance(config=config)
     generation_config = dict(config)
     generation_config["_provenance"] = provenance
@@ -329,6 +404,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     )
     if args.tier:
         config["tier"] = args.tier
+    _apply_quality_cli(config, args)
     selected_tier = str(config.get("tier", selected_tier))
     output = (
         args.output
@@ -378,6 +454,14 @@ def _cmd_generate_case(args: argparse.Namespace) -> int:
         time_steps=args.time_steps,
         shard_size=args.shard_size,
         tier=args.tier or inferred_tier,
+        quality={
+            "profile": args.quality_profile or "report",
+            "thresholds": (
+                {"pde_loss_normalized_max": args.max_pde_loss}
+                if args.max_pde_loss is not None
+                else {}
+            ),
+        },
     )
     output = args.root / "pdeobs_cases"
     jobs = jobs_from_spec(spec, output, include_tier_dir=False)
@@ -580,12 +664,40 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
         verify_checksum=not args.skip_checksums,
         expected_plan=args.expected_plan,
         group_by=tuple(part.strip() for part in args.group_by.split(",") if part.strip()),
+        quality_strict=args.quality_strict,
+        max_pde_loss=args.max_pde_loss,
+        require_all_pdes=args.require_all_pdes,
+        require_validated_solvers=args.require_validated_solvers,
     )
     print(
         f"Found {payload['dataset']['shard_count']} shards and "
         f"{len(payload['leaderboard'])} aggregate result rows"
     )
-    return 0
+    gate = payload.get("quality_gate", {})
+    return 2 if isinstance(gate, dict) and gate.get("status") == "fail" else 0
+
+
+def _cmd_quality(args: argparse.Namespace) -> int:
+    from .quality import audit_dataset_quality, write_quality_csv
+    from .storage import atomic_write_json
+
+    report = audit_dataset_quality(
+        args.input,
+        recompute=args.recompute,
+        strict=args.quality_strict,
+        max_pde_loss=args.max_pde_loss,
+        require_all_pdes=args.require_all_pdes,
+        require_validated_solvers=args.require_validated_solvers,
+    )
+    atomic_write_json(args.output, report)
+    csv_path = args.output.with_suffix(".csv")
+    write_quality_csv(report, csv_path)
+    gate = report["gate"]
+    print(
+        f"Audited {report['sample_count']} samples in {report['shard_count']} shards; "
+        f"quality gate={gate['status']}; wrote {args.output} and {csv_path}"
+    )
+    return 2 if gate["status"] == "fail" else 0
 
 
 def _cmd_analyze(args: argparse.Namespace) -> int:

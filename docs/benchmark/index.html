@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDE-OBS benchmark · PartialObs-PDEBench</title>
-  <link rel="stylesheet" href="../assets/style.css?v=2026-08-13" />
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-16" />
 </head>
 <body>
   <header class="hero">
@@ -18,6 +18,7 @@
         <span class="badge">IID + 6 OOD views</span>
         <span class="badge">7 task protocols</span>
         <span class="badge">15 analyses</span>
+        <span class="badge">9 matched-mask views</span>
         <span class="badge">SeaWulf ready</span>
       </div>
       <nav class="nav">
@@ -26,6 +27,7 @@
         <a href="../pde-problems/">PDE problems</a>
         <a href="../baselines/">Baselines</a>
         <a href="./" aria-current="page">Benchmark</a>
+        <a href="../builder/">Builder</a>
         <a href="../server/">Run</a>
         <a href="../contribute/">Contribute</a>
       </nav>
@@ -105,6 +107,64 @@
     </section>
 
     <section>
+      <h2>Matched-mask training protocol</h2>
+      <p>
+        The primary IID recovery table trains every normal operator baseline
+        independently for each PDE family and each observation protocol. Its
+        training mask equals its evaluation mask; checkpoints are not reused
+        across masks. All nine masks are deterministic views of the same
+        physical HDF5 records, so this policy does not create nine copies of
+        the dataset.
+      </p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Nine observation views</h3>
+          <p>Random 1%, 3%, 5%, and 10%; regular grid; missing block; line sensors; boundary sensors; and clustered sensors.</p>
+        </div>
+        <div class="card">
+          <h3>Method-specific reuse</h3>
+          <p>RBF requires no fit. Gappy POD fits one training-only basis per PDE. DiffusionPDE and FunDPS use one frozen upstream prior per compatible PDE distribution and vary only the observation operator at inference.</p>
+        </div>
+      </div>
+      <div class="note">
+        <b>Separate secondary test:</b> training on random 3% and testing the
+        other eight masks remains the mask-transfer/OOD analysis. It is not a
+        substitute for the nine separately trained matched-mask IID rows.
+      </div>
+    </section>
+
+    <section>
+      <h2>Campaign size and ten-day planning scenario</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Result cells</th><th>Preparation jobs</th><th>Interpretation</th></tr></thead>
+          <tbody>
+            <tr><td>Medium, all 10 slots x 7 PDEs x 9 masks</td><td>630</td><td>511-525 with PINN/PINO at 3 seeds</td><td>Recommended complete comparison after adapters and pilots</td></tr>
+            <tr><td>Full hybrid anchors</td><td>231</td><td>84</td><td>RBF/POD on all masks; five heavier anchors on random 1%, random 3%, and missing block</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Medium contains 140,000 records (20,000 per PDE, approximately 14,000
+        per PDE in the optimizer split). Full contains 560,000 records (80,000
+        per PDE, exactly 56,000 training records per PDE). The quoted
+        12-A6000 GPU-hour ranges are unmeasured planning assumptions, not
+        SeaWulf/A100 runtime promises; every platform needs a measured pilot.
+      </p>
+      <div class="note">
+        <b>Executable status:</b> this repository currently provides RBF and
+        compact-reference U-Net/FNO/CNO adapters. Gappy POD, DeepONet,
+        PINN/PINO, Transolver/GNOT, DiffusionPDE, and FunDPS remain explicit
+        integration targets. The Builder shows their counts and blockers but
+        does not fabricate commands for them. A single all-boundary
+        Navier-Stokes checkpoint also requires a standardized state
+        representation because periodic data store vorticity while bounded
+        cases store velocity.
+      </div>
+      <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training and compute protocol</a>.</p>
+    </section>
+
+    <section>
       <h2>Run from Git</h2>
       <div class="card">
 <pre><code>git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
@@ -122,7 +182,8 @@ pdeobs train --task sparse_recovery --model fno \
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/BENCHMARK_PAPER.md">benchmark-paper contract</a>,
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/PROTOCOL.md">numerical/data protocol</a>,
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/NUMERICAL_VALIDATION.md">numerical-validation gate</a>,
-        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/EXTENDING.md">method extension guide</a>, or use the
+        <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/EXTENDING.md">method extension guide</a>, generate a tailored configuration in the
+        <a href="../builder/">interactive Benchmark Builder</a>, or use the
         <a href="../server/">Linux and SeaWulf quick starts</a>.
       </p>
     </section>

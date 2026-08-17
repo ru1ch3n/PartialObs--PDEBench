@@ -119,7 +119,30 @@ pdeobs train --config configs/experiment/recovery_unet.yaml \
   --resume "$PDEOBS_RUNS/recovery-signal/checkpoints/last.pt"
 ```
 
-## 4. Update from Git safely
+## 4. Plan the nine-observation comparison
+
+The primary IID table trains each normal operator baseline separately for every
+PDE family and observation mask, while reusing the same physical dataset. The
+random-3%-trained run above is a useful starter and the reference point for a
+separate cross-mask-transfer/OOD study; it is not the complete matched-mask
+table.
+
+Use `configs/campaign/core_observation_medium.yaml` and
+[OBSERVATION_TRAINING_PROTOCOL.md](OBSERVATION_TRAINING_PROTOCOL.md) to review
+the full matrix before launching work. The ten-row suite contains methods that
+are not yet registered in this package, so the campaign manifest is
+planning-only until each external adapter passes its integration tests. Do not
+submit a command for an unavailable method or treat a compact reference as an
+exact upstream reproduction.
+
+On a dedicated 12-A6000 server, the quoted ten-day capacity and GPU-hour values
+are unmeasured planning assumptions. Begin with one PDE and three masks, record
+actual samples/second, memory, checkpoint size, inference cost, and failure
+rate, then recompute the schedule. A single all-boundary Navier-Stokes model
+also requires an explicit canonical representation because periodic and
+bounded records currently have different state channels.
+
+## 5. Update from Git safely
 
 Generated data, checkpoints, predictions, and runs are intentionally ignored by
 Git. Commit your method/config changes before updating the checkout.
@@ -136,7 +159,7 @@ For a reproducible campaign, record `git rev-parse HEAD`, copy the resolved YAML
 and provenance files from the run directory, and export the environment. Keep a
 second copy of valuable datasets and checkpoints outside the server.
 
-## 5. Operational notes
+## 6. Operational notes
 
 - Confirm free space with `df -h` before generating larger tiers.
 - Use `nvidia-smi` plus `pdeobs doctor --gpu` before scheduling GPU training.

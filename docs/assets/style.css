@@ -349,3 +349,200 @@ select{color-scheme:dark;}
 select option{background-color:var(--code);color:var(--fg);} 
 select option:disabled{color:var(--muted);} 
 select optgroup{background-color:var(--code);color:var(--fg);} 
+
+/* --- Benchmark Builder --- */
+.builder-intro { margin-bottom: 18px; }
+
+.builder-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.builder-controls h2,
+.builder-summary h2,
+.builder-code-heading h2 { margin-top: 0; }
+
+.builder-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.builder-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.builder-fields .select,
+.builder-fields .input {
+  width: 100%;
+  min-width: 0;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 500;
+}
+
+.builder-advanced {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.builder-advanced summary {
+  margin-bottom: 12px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.builder-summary {
+  position: sticky;
+  top: 14px;
+}
+
+.builder-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0 0 14px;
+}
+
+.builder-stats div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(15,21,34,.58);
+}
+
+.builder-stats dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.builder-stats dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.builder-warning {
+  margin-top: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,200,120,.35);
+  border-radius: 11px;
+  background: rgba(255,200,120,.08);
+}
+
+.builder-warning ul { margin-bottom: 0; padding-left: 20px; }
+
+.builder-code-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+}
+
+.builder-code-heading .builder-actions { margin-top: 0; flex-shrink: 0; }
+
+.builder-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.builder-tabs [aria-selected="true"] {
+  color: var(--fg);
+  border-color: rgba(122,162,255,.65);
+  background: rgba(122,162,255,.20);
+}
+
+.builder-code {
+  max-height: 680px;
+  margin-top: 0;
+  tab-size: 2;
+}
+
+.builder-code code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  white-space: pre;
+}
+
+.builder-quality-table { min-width: 780px; }
+.builder-quality-table td:nth-child(2) { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.campaign-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.campaign-controls h3,
+.campaign-summary h3 { margin-top: 0; }
+
+.campaign-summary {
+  border-color: rgba(122,162,255,.38);
+}
+
+.campaign-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-stats dd { font-size: 17px; }
+
+.campaign-feasibility {
+  margin-bottom: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(122,162,255,.12);
+  font-weight: 700;
+}
+
+.campaign-table-wrap { margin-top: 16px; }
+.campaign-method-table { min-width: 1050px; }
+.campaign-method-table td:last-child { max-width: 290px; }
+.campaign-method-omitted { opacity: .58; }
+
+.builder-controls :focus-visible,
+.builder-tabs :focus-visible,
+.builder-actions :focus-visible,
+#builder-code-panel:focus-visible {
+  outline: 3px solid rgba(122,162,255,.7);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .builder-layout { grid-template-columns: 1fr; }
+  .builder-summary { position: static; }
+  .campaign-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 650px) {
+  .builder-fields { grid-template-columns: 1fr; }
+  .builder-code-heading { flex-direction: column; }
+  .builder-code-heading .builder-actions { width: 100%; }
+  .builder-code-heading .btn { flex: 1 1 auto; }
+}

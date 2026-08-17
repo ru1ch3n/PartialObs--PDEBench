@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Benchmark Builder - PDE-OBS</title>
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-16" />
+  <script defer src="../assets/benchmark-builder.js?v=2026-08-16-observation-v3"></script>
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Benchmark Builder / 基准构建器</h1>
+          <p class="subtitle">Choose a benchmark slice, generate the dataset code, and attach a quality report covering every selected PDE family. 选择配置后自动生成数据与质量检查代码。</p>
+          <div class="badges">
+<span class="badge">7 PDE losses</span>
+<span class="badge">Local + Linux</span>
+<span class="badge">SeaWulf Slurm</span>
+<span class="badge">Deep-linkable choices</span>
+</div>
+        </div>
+
+
+      </div>
+
+      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../builder/" aria-current="page">Builder</a><a href="../server/">Run</a><a href="../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+<section class="section builder-intro">
+  <div class="note"><b>Scientific status / 科学状态：</b> bundled compact solvers are for development and CI. They can produce complete quality reports, but their outputs are not paper-ready ground truth until numerical validation and the publication-candidate quality gate pass. Even then, <code>publication_ready</code> remains false until the canonical full-factor expected plan/checksums and independent release evidence pass. 内置紧凑求解器可以生成完整质量报告，但通过数值验证、完整因子计划、校验和及独立发布证据前，不应作为论文级真值数据。</div>
+  <p>Choose a factor slice or the complete 7 x 4 x 10 benchmark. The page creates a reproducible YAML configuration and copy-ready commands; it never sends your selections or paths to a server. 选择需要的 PDE、边界、数据规模和运行环境后，页面会自动生成配置与命令；所有选择均只在浏览器本地处理。</p>
+</section>
+
+<section class="builder-layout" aria-labelledby="builder-form-title">
+  <form id="benchmark-builder" class="card builder-controls">
+    <h2 id="builder-form-title">1. Choose the benchmark / 选择基准</h2>
+    <div class="builder-fields">
+      <label>Environment / 运行环境<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
+      <label>Release tier / 数据规模<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
+      <label>PDE family / PDE 类别<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
+      <label>Boundary<select id="builder-boundary" class="select" data-option="boundaries" data-all-label="All 4 boundaries" data-default="all"></select></label>
+      <label>Condition setting<select id="builder-setting" class="select" data-option="settings" data-all-label="All 10 settings" data-default="all"></select></label>
+      <label>Physical regime<select id="builder-regime" class="select" data-option="regimes" data-all-label="All 3 regimes" data-default="all"></select></label>
+      <label>Benchmark task<select id="builder-task" class="select" data-option="tasks" data-default="sparse_recovery"></select></label>
+      <label>Observation mask<select id="builder-mask" class="select" data-option="masks" data-default="random_3pct"></select></label>
+      <label>Evaluation split<select id="builder-split" class="select" data-option="splits" data-default="iid"></select></label>
+      <label>Anchor model<select id="builder-model" class="select" data-option="models" data-default="fno"></select></label>
+      <label>Quality profile / 质量档位<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
+      <label>Calibrated max normalized PDE loss / 校准后的 PDE loss 上限
+        <input id="builder-threshold" class="input" inputmode="decimal" type="number" min="0" step="any" placeholder="Optional; required for publication candidate" />
+      </label>
+    </div>
+    <details class="builder-advanced">
+      <summary>Advanced paths and resources</summary>
+      <div class="builder-fields">
+        <label>Dataset name<input id="builder-name" class="input" value="pdeobs-custom" maxlength="64" /></label>
+        <label>Data root<input id="builder-data-root" class="input" value="datasets" maxlength="240" /></label>
+        <label>Run root<input id="builder-run-root" class="input" value="runs" maxlength="240" /></label>
+        <label>Local workers<input id="builder-workers" class="input" type="number" min="1" max="128" step="1" value="4" /></label>
+        <label>Samples per shard<input id="builder-shard-size" class="input" type="number" min="1" max="2000" step="1" value="700" /></label>
+        <label>SeaWulf group<input id="builder-group" class="input" value="YOUR_GROUP" maxlength="80" /></label>
+      </div>
+    </details>
+    <div class="builder-actions">
+      <button class="btn" type="button" id="builder-reset">Reset choices</button>
+      <span id="builder-state" class="muted" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <aside class="card builder-summary" aria-labelledby="builder-summary-title">
+    <h2 id="builder-summary-title">Plan preview / 计划预览</h2>
+    <dl class="builder-stats">
+      <div><dt>Macro cases</dt><dd id="builder-macro-cases">-</dd></div>
+      <div><dt>Samples</dt><dd id="builder-samples">-</dd></div>
+      <div><dt>Shard jobs</dt><dd id="builder-jobs">-</dd></div>
+      <div><dt>Task status</dt><dd id="builder-task-status">-</dd></div>
+    </dl>
+    <p id="builder-profile-note" class="muted"></p>
+    <div id="builder-warning-box" class="builder-warning" role="status" aria-live="polite">
+      <b>Checks before running / 运行前检查</b>
+      <ul id="builder-warnings"></ul>
+    </div>
+  </aside>
+</section>
+
+<section id="observation-training" class="section" aria-labelledby="campaign-title">
+  <h2 id="campaign-title">2. Training per observation type / 按观测类型分别训练</h2>
+  <p><b>Primary matched-mask comparison:</b> every normal learned baseline gets an independent checkpoint for each PDE and each of the nine observation masks. The model trained on random 3% is reused only for the separate mask-transfer/OOD table; it never replaces matched-mask training in the primary IID table.</p>
+  <p><b>主要 matched-mask 对比：</b>每个普通学习基线都按 PDE 与观测掩码分别训练。random 3% 检查点只用于单独的 mask-transfer/OOD 表，不能替代主要 IID 表中的同掩码训练。</p>
+  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol / 查看完整观测训练协议</a></p>
+  <div class="note"><b>Execution boundary:</b> this planner counts the complete paper matrix, including methods that are not integrated in PDE-OBS. Its campaign manifest is planning-only. It never invents commands for Gappy POD, DeepONet, PINN/PINO, Transolver/GNOT, DiffusionPDE, or FunDPS.</div>
+
+  <div class="campaign-layout">
+    <div class="card campaign-controls">
+      <h3>Campaign preset / 计划预设</h3>
+      <div class="builder-fields">
+        <label>Comparison matrix<select id="campaign-preset" class="select" data-option="campaign_presets" data-default="medium_recommended"></select></label>
+        <label>Dedicated GPUs<input id="campaign-gpus" class="input" type="number" min="1" max="512" step="1" value="12" /></label>
+        <label>Campaign days<input id="campaign-days" class="input" type="number" min="1" max="365" step="1" value="10" /></label>
+        <label>Low utilization (%)<input id="campaign-utilization-low" class="input" type="number" min="1" max="100" step="1" value="75" /></label>
+        <label>High utilization (%)<input id="campaign-utilization-high" class="input" type="number" min="1" max="100" step="1" value="80" /></label>
+      </div>
+      <p id="campaign-recommendation" class="muted"></p>
+      <div class="builder-warning" role="status" aria-live="polite">
+        <b>Planning status</b>
+        <ul id="campaign-warnings"></ul>
+      </div>
+    </div>
+
+    <aside class="card campaign-summary" aria-labelledby="campaign-summary-title">
+      <h3 id="campaign-summary-title">Count and budget preview</h3>
+      <dl class="builder-stats campaign-stats">
+        <div><dt>Data pool</dt><dd id="campaign-data-pool">-</dd></div>
+        <div><dt>Pool / PDE</dt><dd id="campaign-data-per-pde">-</dd></div>
+        <div><dt>Train / PDE</dt><dd id="campaign-train-per-pde">-</dd></div>
+        <div><dt>Result cells</dt><dd id="campaign-result-cells">-</dd></div>
+        <div><dt>Preparation jobs</dt><dd id="campaign-preparation-jobs">-</dd></div>
+        <div><dt>Raw evaluations</dt><dd id="campaign-evaluation-runs">-</dd></div>
+        <div><dt>A6000 estimate</dt><dd id="campaign-gpu-estimate">-</dd></div>
+        <div><dt>Safe capacity</dt><dd id="campaign-safe-capacity">-</dd></div>
+      </dl>
+      <p id="campaign-feasibility" class="campaign-feasibility" role="status" aria-live="polite"></p>
+    </aside>
+  </div>
+
+  <div class="tablewrap campaign-table-wrap">
+    <table class="campaign-method-table">
+      <thead><tr><th>Method row</th><th>Fit policy</th><th>Seeds</th><th>Observations</th><th>Preparation</th><th>Evaluations</th><th>Builder status</th></tr></thead>
+      <tbody id="campaign-method-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="builder-code-title">
+  <div class="builder-code-heading">
+    <div><h2 id="builder-code-title">3. Copy the generated code / 复制生成代码</h2><p class="muted">The dataset YAML is the executable source of truth. The campaign tab is a non-executable planning record and lists every missing adapter explicitly.</p></div>
+    <div class="builder-actions">
+      <button id="builder-copy" class="btn primary" type="button">Copy current tab</button>
+      <button id="builder-download" class="btn" type="button">Download YAML</button>
+    </div>
+  </div>
+  <div class="builder-tabs" role="tablist" aria-label="Generated code">
+    <button class="btn" id="builder-tab-setup" type="button" role="tab" aria-selected="true" aria-controls="builder-code-panel" data-builder-tab="setup">Setup</button>
+    <button class="btn" id="builder-tab-yaml" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="yaml">Dataset YAML</button>
+    <button class="btn" id="builder-tab-run" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="run">Generate + quality</button>
+    <button class="btn" id="builder-tab-seawulf" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="seawulf">SeaWulf chain</button>
+    <button class="btn" id="builder-tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="campaign">Campaign plan (not executable)</button>
+  </div>
+  <div id="builder-code-panel" role="tabpanel" tabindex="0" aria-labelledby="builder-tab-setup">
+    <pre class="builder-code"><code id="builder-code">Loading benchmark contract...</code></pre>
+  </div>
+  <p id="builder-copy-status" class="muted" role="status" aria-live="polite"></p>
+  <noscript><div class="note">JavaScript is required only for generating tailored commands. The static benchmark and server guides remain available without it.</div></noscript>
+</section>
+
+<section class="section" aria-labelledby="quality-coverage-title">
+  <h2 id="quality-coverage-title">4. Quality management for every PDE / 全 PDE 数据质量管理</h2>
+  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together. 每个样本都保存数值、几何、初边值和对应 PDE 物理残差；完整基准会在同一份报告中分别汇总七类 PDE loss。</p>
+  <div class="tablewrap">
+    <table class="builder-quality-table">
+      <thead><tr><th>PDE</th><th>Reported normalized loss</th><th>Interpretation</th></tr></thead>
+      <tbody id="builder-quality-body"></tbody>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Always produced</h3><ul id="builder-quality-outputs"></ul></div>
+    <div class="card"><h3>Gate levels</h3><ol><li><b>Report:</b> report scientific losses without applying an unfrozen PDE threshold; malformed array/geometry contracts are still quarantined.</li><li><b>Strict:</b> reject structural/BC/IC failures, log them to <code>*.quality-failures.jsonl</code>, and apply a PDE limit only when calibrated.</li><li><b>Publication candidate:</b> expert-only and intentionally blocked by this Builder until validated solver evidence, a per-stratum threshold table, and a complete bounded Navier-Stokes residual contract exist. It does not by itself set <code>publication_ready</code>.</li></ol></div>
+  </div>
+  <div class="note"><b>Important interpretation:</b> saved-frame residuals are not the same as integrator replay error. Helmholtz nominal residual and regularized transfer defect stay separate. Bounded Navier-Stokes velocity-only data receive a labeled partial curl diagnostic, not a falsely complete momentum residual.</div>
+</section>
+
+
+    <footer class="footer">
+      <div class="muted">Generated deterministically from repository sources.</div>
+    </footer>
+  </main>
+</body>
+</html>

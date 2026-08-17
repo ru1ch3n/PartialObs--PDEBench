@@ -71,13 +71,42 @@ available as a per-shard CSV plus a JSON summary for tools that should not open
 the arrays. Prediction evaluation additionally emits per-sample metric JSONL
 for difficulty and failure analysis.
 
+Every generated sample also carries a versioned dataset-quality record. Shard
+and dataset summaries report an explicit equation loss for every present PDE
+family and preserve missing-family rows, so aggregation cannot hide incomplete
+coverage. The default profile is report-only: an equation residual is a
+measurement, not automatic acceptance. The loss definitions, profile semantics,
+release gate, and known limitations are specified in
+[Dataset quality control](QUALITY_CONTROL.md).
+
 ## Observations
 
-The main 128-by-128 training view uses exactly 500 observed spatial locations.
-Official evaluation views include random 1%, 3%, 5%, and 10%, regular-grid,
-missing-block, line, boundary-only, and clustered sensors. Mask seeds are
-separate from PDE seeds so the same physical sample can be evaluated under
-multiple observation protocols without regeneration.
+The paper has nine deterministic observation views: random 1%, 3%, 5%, and
+10%; regular grid; missing block; line sensors; boundary sensors; and clustered
+sensors. At 128 by 128 their realized observed counts are 164, 500, 819, 1,638,
+441, 12,288, 508, 508, and 492 respectively. Always report the realized count
+and ratio. In particular, missing block observes 75% of the grid and is not a
+density-matched comparison with the approximately 3% structured views.
+
+Mask seeds are separate from PDE seeds, so all nine protocols are views of the
+same immutable physical sample. Do not regenerate or store nine copies of the
+140,000- or 560,000-record physical dataset.
+
+### Primary matched-mask comparison
+
+For the primary sparse-recovery IID table, every normal trainable operator
+baseline is trained independently for each PDE family and each observation
+view. The training and evaluation masks match, and a checkpoint is not reused
+for a different mask. RBF requires no training; Gappy POD fits one basis per
+PDE using only canonical training records; DiffusionPDE and FunDPS use one
+frozen upstream prior per compatible PDE distribution and vary the observation
+operator only at inference.
+
+The default 500-point random mask remains the starter/reference configuration.
+Training on that view and testing the other eight masks is a separate secondary
+mask-transfer/OOD analysis, not a substitute for the nine matched-mask IID
+rows. The full campaign rules and conditional job counts are in
+[OBSERVATION_TRAINING_PROTOCOL.md](OBSERVATION_TRAINING_PROTOCOL.md).
 
 ## Official split views
 
@@ -86,7 +115,8 @@ multiple observation protocols without regeneration.
 - Setting OOD: hold out condition families, by default dipole and front.
 - Parameter OOD: train on low/medium and evaluate the hard extrapolation regime.
 - Combination OOD: hold out selected factor tuples while retaining each factor.
-- Mask OOD: train with the main random mask and test other ratios/geometries.
+- Mask OOD: secondary cross-mask transfer--train with the 500-point random mask
+  and test other ratios/geometries. Primary IID rows use matched-mask training.
 - Time-horizon OOD: train short predictions and evaluate horizons 4 and 8.
 
 ## Numerical status
@@ -102,5 +132,6 @@ Boundary enforcement in the compact temporal/Helmholtz implementations is an
 approximation and the bounded obstacle-flow reference is not yet backed by the
 required divergence/no-penetration convergence evidence. Before a scientific
 release, pass and publish [the numerical validation gate](NUMERICAL_VALIDATION.md)
-against trusted solvers. The PDE registry permits replacing a generator without
-changing storage, masks, split views, or benchmark methods.
+against trusted solvers and freeze the calibrated quality thresholds before
+generation. The PDE registry permits replacing a generator without changing
+storage, masks, split views, or benchmark methods.

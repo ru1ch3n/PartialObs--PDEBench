@@ -100,7 +100,11 @@ def generate(
         condition=add_channel(source),
         trajectory=add_channel(solution)[None, ...],
         geometry=add_channel(geometry),
-        parameters={"wavenumber": wavenumber, "damping_ratio": float(damping_ratio)},
+        parameters={
+            "wavenumber": wavenumber,
+            "damping_ratio": float(damping_ratio),
+            "solver_id": "regularized_real_spectral_transfer_v1",
+        },
         dtype=dtype,
     )
 

@@ -4,7 +4,9 @@
 learning under partial observation.**
 
 [Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) |
+[Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/) |
 [benchmark-paper contract](docs/BENCHMARK_PAPER.md) |
+[observation-training protocol](docs/OBSERVATION_TRAINING_PROTOCOL.md) |
 [reference protocol](docs/PROTOCOL.md) |
 [extension guide](docs/EXTENDING.md) |
 [Linux server guide](docs/SERVER.md) |
@@ -104,10 +106,33 @@ pdeobs generate --tier tiny --root ./data --num-workers 4
 Generation is deterministic and resumable. Existing shards are skipped only
 after their completion record and checksum pass validation.
 
+For a tailored PDE/boundary/setting slice, use the
+[interactive Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/).
+It generates local, Linux-server, and SeaWulf commands together with report and
+strict quality profiles plus per-PDE loss reporting. The publication-candidate
+choice is shown but intentionally blocked until a trusted external evidence
+verifier, per-stratum thresholds, and a complete bounded Navier-Stokes residual
+contract exist. Rejected samples are logged in `*.quality-failures.jsonl`.
+
 The same planner can describe `medium` and `full`, but do not publish those
 outputs from the bundled compact solvers as benchmark ground truth. First
-complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md), or
-install a validated solver plugin at the same registered family names.
+complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md). A
+validated solver plugin is also required, but by itself is insufficient for the
+current velocity-only bounded Navier-Stokes quality contract.
+
+For the primary IID observation comparison, normal trainable operator
+baselines use a separate checkpoint for every PDE family and every one of the
+nine observation masks; the training and evaluation masks match. The same
+physical HDF5 dataset is reused for all masks--the workflow does not generate
+nine copies of the fields. The existing random-3%-to-other-masks experiment is
+retained as a separate mask-transfer/OOD analysis. See the
+[observation-training protocol](docs/OBSERVATION_TRAINING_PROTOCOL.md) for the
+method-specific exceptions, corrected job counts, and compute assumptions.
+
+The requested ten-row campaign is partly a planning target. RBF and the compact
+U-Net/FNO/CNO references are available now. Gappy POD, DeepONet, PINN/PINO,
+Transolver/GNOT, DiffusionPDE, and FunDPS require reviewed external adapters;
+the Builder reports those blockers and never emits fake training commands.
 
 ## One-line benchmark tools
 
@@ -252,6 +277,27 @@ neural field anchors plus separately trained boundary-, setting-, parameter-,
 combination-, and mask-OOD configurations. Retrieval, routing, and transfer are
 lightweight protocol/API anchors in this benchmark paper; they are not presented
 as completed new methods or a finished leaderboard.
+
+## Observation-conditioned campaign planning
+
+The proposed primary recovery table contains 10 method slots x 7 PDE families
+x 9 observation masks = 630 IID result cells, after one implementation is
+frozen for each ambiguous slot such as PINN versus PINO. Six normal trainable
+slots require 378 neural fits at one seed, or 504 when only the PINN/PINO slot
+uses three seeds. Gappy POD adds seven leakage-free training-split fits.
+DiffusionPDE and FunDPS add zero prior-training jobs when compatible upstream
+checkpoints exist, or up to fourteen per-PDE prior jobs when both must be
+trained. Total preparation is therefore 385-399 jobs at one seed or 511-525
+with the special three-seed PINN/PINO rule.
+
+The recommended ten-day planning scenario is the 140,000-record `medium` tier
+for the complete ten-slot/nine-mask comparison, followed by a reduced
+560,000-record full-tier anchor table. Medium contains 20,000 records per PDE
+and approximately 14,000 optimizer-training records per PDE; full contains
+80,000 and exactly 56,000 respectively. Runtime figures in the protocol are
+unmeasured A6000 capacity estimates, not SeaWulf/A100 guarantees. Every real
+campaign must begin with a measured pilot, equal-seed uncertainty reporting,
+and the dataset-quality gate.
 
 ## Extensibility
 

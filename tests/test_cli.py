@@ -21,6 +21,38 @@ def test_download_one_line_uses_the_publication_gated_default_endpoint() -> None
     assert args.root == Path("data")
 
 
+def test_quality_profiles_and_gate_flags_parse() -> None:
+    generated = build_parser().parse_args(
+        [
+            "generate",
+            "--tier",
+            "tiny",
+            "--quality-profile",
+            "strict",
+            "--max-pde-loss",
+            "0.25",
+        ]
+    )
+    assert generated.quality_profile == "strict"
+    assert generated.max_pde_loss == 0.25
+
+    audited = build_parser().parse_args(
+        [
+            "quality",
+            "--input",
+            "data",
+            "--output",
+            "quality.json",
+            "--strict",
+            "--require-all-pdes",
+            "--require-validated-solvers",
+        ]
+    )
+    assert audited.quality_strict is True
+    assert audited.require_all_pdes is True
+    assert audited.require_validated_solvers is True
+
+
 def test_cli_dispatches_doctor_download_and_aggregate(tmp_path: Path, monkeypatch, capsys) -> None:
     from pdeobs import aggregate, doctor, download
     from pdeobs.doctor import Check
@@ -72,6 +104,24 @@ def test_cli_dispatches_doctor_download_and_aggregate(tmp_path: Path, monkeypatc
         == 0
     )
     assert "Found 1 shards" in capsys.readouterr().out
+
+
+def test_cli_dispatches_quality_audit(tmp_path: Path, monkeypatch, capsys) -> None:
+    from pdeobs import quality
+
+    report = {
+        "sample_count": 7,
+        "shard_count": 2,
+        "quality": {"by_pde": {}},
+        "gate": {"status": "warning"},
+    }
+    monkeypatch.setattr(quality, "audit_dataset_quality", lambda *_, **__: report)
+    output = tmp_path / "quality.json"
+
+    assert main(["quality", "--input", str(tmp_path), "--output", str(output)]) == 0
+    assert output.is_file()
+    assert output.with_suffix(".csv").is_file()
+    assert "Audited 7 samples" in capsys.readouterr().out
 
 
 def test_cli_lists_builtins_in_fresh_process() -> None:

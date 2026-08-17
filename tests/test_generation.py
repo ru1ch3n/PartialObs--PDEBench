@@ -1,9 +1,11 @@
+import json
 from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+from pdeobs.aggregate import validate_hdf5_shard
 from pdeobs.generation import (
     build_job_grid,
     generate_job,
@@ -14,6 +16,7 @@ from pdeobs.generation import (
     write_generation_plan,
     write_job_manifest,
 )
+from pdeobs.quality import QualityGateError
 from pdeobs.registry import PDE_REGISTRY
 from pdeobs.schema import GenerationSpec, Sample
 from pdeobs.storage import (
@@ -70,6 +73,19 @@ def test_job_grid_rejects_unregistered_setting_path(tmp_path):
         )
 
 
+def test_generation_rejects_non_floating_storage_dtype(tmp_path):
+    with pytest.raises(TypeError, match="floating-point"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            dtype="int8",
+            families=("poisson",),
+            boundaries=("periodic",),
+            settings=("smooth_grf",),
+            regimes=("low",),
+        )
+
+
 def test_job_grid_rejects_unknown_pde_after_plugin_discovery(tmp_path, monkeypatch):
     monkeypatch.setattr("pdeobs.pdes._PLUGINS_DISCOVERED", False)
     monkeypatch.setattr(PDE_REGISTRY, "discover", lambda **_: ())
@@ -104,10 +120,15 @@ def test_external_pde_plugin_is_discovered_and_generated(tmp_path, monkeypatch):
         received_time_steps.append(time_steps)
         height, width = resolution
         steps = int(time_steps or 1)
-        condition = np.ones((height, width, 1), dtype=np.float32)
-        trajectory = np.ones((steps, height, width, 1), dtype=np.float32)
-        geometry = np.zeros_like(condition)
-        return Sample(condition, trajectory, geometry, {"plugin": True})
+        condition = np.ones((height, width, 3), dtype=np.float32)
+        trajectory = np.ones((steps, height, width, 4), dtype=np.float32)
+        geometry = np.zeros((height, width, 1), dtype=np.bool_)
+        return Sample(
+            condition,
+            trajectory,
+            geometry,
+            {"plugin": True, "state_representation": "plugin_vector"},
+        )
 
     def discover(**_kwargs):
         nonlocal discovery_calls
@@ -135,11 +156,19 @@ def test_external_pde_plugin_is_discovered_and_generated(tmp_path, monkeypatch):
     assert result.sample_count == 2
     assert received_time_steps == [4, 4]
     with LazyHDF5Dataset(job.output_path) as dataset:
-        assert dataset[0].trajectory.shape == (4, 8, 8, 1)
+        assert dataset[0].condition.shape == (8, 8, 3)
+        assert dataset[0].trajectory.shape == (4, 8, 8, 4)
+        assert dataset[0].geometry.dtype == np.bool_
         assert dataset[0].metadata["pde"] == "external_wave"
+        assert dataset[0].metadata["state_representation"] == "plugin_vector"
         assert dataset[0].metadata["solver_fidelity"] == "external_plugin"
         assert dataset[0].metadata["solver_version"] == "unreported"
         assert dataset[0].metadata["solver_implementation"].endswith("external_solver")
+        assert dataset[0].metadata["quality"]["pde_loss"]["status"] == "unsupported"
+        assert dataset[0].metadata["quality"]["checks"]["array_contract"] == "pass"
+        assert dataset[0].metadata["quality"]["operator_id"] is None
+
+    validate_hdf5_shard(job.output_path, verify_checksum=True, strict=True)
 
 
 def test_job_grid_rejects_duplicate_setting_aliases(tmp_path):
@@ -481,3 +510,51 @@ def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
         assert metadata["solver_fidelity"] == "compact_reference"
         assert metadata["solver_version"] == "0.1.0"
         assert metadata["solver_implementation"].startswith("pdeobs.pdes.heat:")
+        quality = metadata["quality"]
+        assert quality["schema_version"] == "1.0"
+        assert quality["pde"] == "heat"
+        assert quality["stored_dtype"] == "float32"
+        assert quality["pde_loss"]["status"] == "measured"
+        assert quality["metrics"]["pde_loss_normalized"] >= 0.0
+        assert quality["status"] == "warning"
+
+
+def test_quality_describes_exact_float64_storage_and_rejected_sample_is_audited(tmp_path):
+    pytest.importorskip("h5py")
+    job = build_job_grid(
+        tmp_path / "float64",
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        dtype="float64",
+        families=("poisson",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+    )[0]
+    generate_job(job)
+    with LazyHDF5Dataset(job.output_path) as dataset:
+        assert dataset[0].trajectory.dtype == np.dtype("float64")
+        assert dataset[0].metadata["quality"]["stored_dtype"] == "float64"
+
+    rejected = build_job_grid(
+        tmp_path / "rejected",
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        families=("poisson",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+        quality={
+            "profile": "strict",
+            "thresholds": {"pde_loss_normalized_max": 0.0},
+        },
+    )[0]
+    with pytest.raises(QualityGateError):
+        generate_job(rejected)
+    failure_path = Path(rejected.output_path).with_suffix(".quality-failures.jsonl")
+    failure = json.loads(failure_path.read_text(encoding="utf-8"))
+    assert failure["accepted"] is False
+    assert failure["quality"]["status"] == "fail"
+    assert failure["quality"]["checks"]["pde_loss"] == "fail"

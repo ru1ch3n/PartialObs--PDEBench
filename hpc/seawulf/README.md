@@ -189,7 +189,38 @@ The aggregate job verifies completion records, checksums, sample identities,
 and exact plan coverage. It is a storage/provenance gate, not a substitute for
 the numerical validation required for paper data.
 
-## 7. Monitor, resume, and evaluate
+## 7. Plan the nine-observation training campaign
+
+The primary IID comparison uses a separate checkpoint for every normal
+trainable method, PDE family, and observation mask. It reuses one validated
+physical dataset; masks are deterministic views and must not be materialized as
+nine duplicate datasets. The random-3%-trained configuration remains a
+secondary mask-transfer/OOD experiment.
+
+The complete requested ten-slot suite is a planning target, not a submit-ready
+SeaWulf array. This repository currently executes RBF and compact-reference
+U-Net/FNO/CNO. Gappy POD, DeepONet, PINN/PINO, Transolver/GNOT, DiffusionPDE,
+and FunDPS need reviewed adapters and frozen upstream versions/checkpoints.
+Never submit planning-only rows or silently replace them with a different
+method. Use `configs/campaign/core_observation_medium.yaml` as a manifest of
+the intended policy, then create explicit executable experiment configs only
+for integrated methods.
+
+For a ten-day study, start with the 140,000-record medium tier, pilot one PDE
+and three masks, and measure wall time, memory, I/O, and failure rate before
+expanding. The attachment's capacity scenario assumes twelve dedicated A6000s;
+SeaWulf launchers use the shared A100 partition, one GPU per job, and do not
+guarantee twelve concurrent GPUs. Treat every A6000 GPU-hour range as an
+unmeasured planning estimate and derive SeaWulf resources from the pilot.
+
+Keep campaign outputs unique by method, PDE, mask, and seed. Submit bounded
+windows, wait for each window to finish, and chain evaluation only after the
+matching dataset checksum/quality gate and checkpoint succeed. See
+`docs/OBSERVATION_TRAINING_PROTOCOL.md` for corrected result/job counts,
+method-specific reuse rules, Navier-Stokes representation constraints, and the
+reduced full-tier anchor recommendation.
+
+## 8. Monitor, resume, and evaluate
 
 ```bash
 squeue --user="$USER"

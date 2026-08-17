@@ -1,0 +1,1269 @@
+{
+  "schema_version": "pdeobs.benchmark-builder/v2",
+  "generated_from": {
+    "contract": "pdeobs.benchmark-paper/v2",
+    "default_config": "configs/dataset/default.yaml"
+  },
+  "release": {
+    "official_release_published": false,
+    "bundled_solver_fidelity": "compact_reference",
+    "required_before_paper_data": [
+      "convergence_study",
+      "residual_validation",
+      "trusted_solver_comparison",
+      "full_factor_matrix_validation",
+      "family_boundary_resolution_threshold_calibration",
+      "versioned_checksummed_release_manifest"
+    ]
+  },
+  "pdes": [
+    {
+      "value": "darcy",
+      "label": "Darcy flow",
+      "loss": "-div(a grad u) - f",
+      "note": "Variable-coefficient flux residual with stored or identified forcing."
+    },
+    {
+      "value": "poisson",
+      "label": "Poisson",
+      "loss": "-Laplacian(u) - f",
+      "note": "Elliptic equation residual."
+    },
+    {
+      "value": "helmholtz",
+      "label": "Helmholtz",
+      "loss": "(-Laplacian - k^2)u - f",
+      "note": "Nominal PDE residual; regularized transfer defect is reported separately."
+    },
+    {
+      "value": "heat",
+      "label": "Heat",
+      "loss": "u_t - D Laplacian(u)",
+      "note": "Saved-frame temporal residual."
+    },
+    {
+      "value": "reaction_diffusion",
+      "label": "Reaction-diffusion",
+      "loss": "u_t - D Laplacian(u) - r(u - u^3)",
+      "note": "Allen-Cahn-type temporal residual."
+    },
+    {
+      "value": "burgers",
+      "label": "2-D Burgers",
+      "loss": "u_t + u(u_x + u_y) - nu Laplacian(u)",
+      "note": "Temporal transport-diffusion residual."
+    },
+    {
+      "value": "navier_stokes",
+      "label": "Navier-Stokes",
+      "loss": "omega_t + velocity dot grad(omega) - nu Laplacian(omega)",
+      "note": "Periodic vorticity residual; bounded velocity-only data use a labeled partial curl diagnostic, plus divergence and boundary losses."
+    }
+  ],
+  "boundaries": [
+    {
+      "value": "dirichlet",
+      "label": "Dirichlet / no-slip",
+      "note": "Prescribed boundary value."
+    },
+    {
+      "value": "neumann",
+      "label": "Neumann / free-slip",
+      "note": "Prescribed normal derivative."
+    },
+    {
+      "value": "periodic",
+      "label": "Periodic",
+      "note": "Opposite-edge continuity."
+    },
+    {
+      "value": "robin_obstacle",
+      "label": "Robin / obstacle",
+      "note": "Family-conditioned mixed boundary or embedded obstacle."
+    }
+  ],
+  "settings": [
+    {
+      "value": "smooth_grf",
+      "label": "Smooth Grf"
+    },
+    {
+      "value": "medium_grf",
+      "label": "Medium Grf"
+    },
+    {
+      "value": "rough_grf",
+      "label": "Rough Grf"
+    },
+    {
+      "value": "low_frequency_fourier",
+      "label": "Low Frequency Fourier"
+    },
+    {
+      "value": "multi_frequency_fourier",
+      "label": "Multi Frequency Fourier"
+    },
+    {
+      "value": "gaussian_blobs",
+      "label": "Gaussian Blobs"
+    },
+    {
+      "value": "piecewise_blocks",
+      "label": "Piecewise Blocks"
+    },
+    {
+      "value": "threshold_level_set",
+      "label": "Threshold Level Set"
+    },
+    {
+      "value": "dipole_vortex_pair",
+      "label": "Dipole Vortex Pair"
+    },
+    {
+      "value": "front_ring_shock",
+      "label": "Front Ring Shock"
+    }
+  ],
+  "regimes": [
+    {
+      "value": "low",
+      "label": "Low"
+    },
+    {
+      "value": "medium",
+      "label": "Medium"
+    },
+    {
+      "value": "high",
+      "label": "High"
+    }
+  ],
+  "tiers": [
+    {
+      "value": "tiny",
+      "label": "Tiny (5 samples / macro case)",
+      "samples_per_macro_case": 5,
+      "full_matrix_samples": 1400,
+      "regime_counts": {
+        "low": 2,
+        "medium": 2,
+        "high": 1
+      }
+    },
+    {
+      "value": "debug",
+      "label": "Debug (20 samples / macro case)",
+      "samples_per_macro_case": 20,
+      "full_matrix_samples": 5600,
+      "regime_counts": {
+        "low": 7,
+        "medium": 7,
+        "high": 6
+      }
+    },
+    {
+      "value": "signal",
+      "label": "Signal (100 samples / macro case)",
+      "samples_per_macro_case": 100,
+      "full_matrix_samples": 28000,
+      "regime_counts": {
+        "low": 34,
+        "medium": 33,
+        "high": 33
+      }
+    },
+    {
+      "value": "medium",
+      "label": "Medium (500 samples / macro case)",
+      "samples_per_macro_case": 500,
+      "full_matrix_samples": 140000,
+      "regime_counts": {
+        "low": 167,
+        "medium": 167,
+        "high": 166
+      }
+    },
+    {
+      "value": "full",
+      "label": "Full (2,000 samples / macro case)",
+      "samples_per_macro_case": 2000,
+      "full_matrix_samples": 560000,
+      "regime_counts": {
+        "low": 667,
+        "medium": 667,
+        "high": 666
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "value": "sparse_recovery",
+      "label": "Sparse recovery",
+      "status": "executable_field_task",
+      "metrics": [
+        "relative_l2",
+        "mse",
+        "spectral"
+      ]
+    },
+    {
+      "value": "forward_prediction",
+      "label": "Forward prediction",
+      "status": "executable_field_task",
+      "metrics": [
+        "relative_l2",
+        "spectral"
+      ]
+    },
+    {
+      "value": "inverse_prediction",
+      "label": "Inverse prediction",
+      "status": "executable_field_task",
+      "metrics": [
+        "relative_l2",
+        "parameter_error"
+      ]
+    },
+    {
+      "value": "semantic_retrieval",
+      "label": "Semantic retrieval",
+      "status": "lightweight_anchor_api",
+      "metrics": [
+        "recall_at_k",
+        "map",
+        "ndcg",
+        "semantic_ambiguity"
+      ]
+    },
+    {
+      "value": "world_modeling",
+      "label": "World modeling / rollout",
+      "status": "executable_field_task",
+      "metrics": [
+        "rollout_relative_l2",
+        "spectral",
+        "energy",
+        "enstrophy",
+        "stability"
+      ]
+    },
+    {
+      "value": "solver_routing",
+      "label": "Solver routing",
+      "status": "lightweight_anchor_api",
+      "metrics": [
+        "solver_accuracy",
+        "solver_regret"
+      ]
+    },
+    {
+      "value": "foundation_transfer",
+      "label": "Foundation transfer",
+      "status": "lightweight_protocol_only",
+      "metrics": [
+        "linear_probe",
+        "few_shot",
+        "ood_transfer"
+      ]
+    }
+  ],
+  "splits": [
+    {
+      "value": "iid",
+      "label": "IID"
+    },
+    {
+      "value": "boundary_ood",
+      "label": "BOUNDARY OOD"
+    },
+    {
+      "value": "setting_ood",
+      "label": "SETTING OOD"
+    },
+    {
+      "value": "parameter_ood",
+      "label": "PARAMETER OOD"
+    },
+    {
+      "value": "combination_ood",
+      "label": "COMBINATION OOD"
+    },
+    {
+      "value": "mask_ood",
+      "label": "MASK OOD"
+    },
+    {
+      "value": "time_horizon_ood",
+      "label": "TIME HORIZON OOD"
+    }
+  ],
+  "masks": [
+    {
+      "value": "random_1pct",
+      "label": "Random 1%"
+    },
+    {
+      "value": "random_3pct",
+      "label": "Random 3% (500 points at 128x128 training)"
+    },
+    {
+      "value": "random_5pct",
+      "label": "Random 5%"
+    },
+    {
+      "value": "random_10pct",
+      "label": "Random 10%"
+    },
+    {
+      "value": "regular_grid",
+      "label": "Regular grid"
+    },
+    {
+      "value": "block_missing",
+      "label": "Missing block"
+    },
+    {
+      "value": "line_sensors",
+      "label": "Line sensors"
+    },
+    {
+      "value": "boundary_sensors",
+      "label": "Boundary sensors"
+    },
+    {
+      "value": "clustered_sensors",
+      "label": "Clustered sensors"
+    }
+  ],
+  "models": [
+    {
+      "value": "autoregressive",
+      "label": "Autoregressive",
+      "tasks": [
+        "rollout"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": true,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact architectural reference; not an exact paper reproduction."
+    },
+    {
+      "value": "autoregressive_fno",
+      "label": "Autoregressive Fno",
+      "tasks": [],
+      "capabilities_known": false,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": false,
+      "reference_only": true,
+      "note": "No machine-readable capabilities are registered; use an explicit config."
+    },
+    {
+      "value": "bilinear",
+      "label": "Bilinear",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    },
+    {
+      "value": "cno",
+      "label": "CNO-like",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact architectural reference; not an exact paper reproduction."
+    },
+    {
+      "value": "convlstm",
+      "label": "Convlstm",
+      "tasks": [
+        "rollout"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": true,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact architectural reference; not an exact paper reproduction."
+    },
+    {
+      "value": "fno",
+      "label": "FNO",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact architectural reference; not an exact paper reproduction."
+    },
+    {
+      "value": "mae_small",
+      "label": "MAE small",
+      "tasks": [
+        "forward",
+        "inverse",
+        "pretraining",
+        "recovery",
+        "representation"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact convolutional MAE-style reconstruction reference; not a ViT-MAE or exact paper reproduction."
+    },
+    {
+      "value": "mean",
+      "label": "Mean",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    },
+    {
+      "value": "nearest",
+      "label": "Nearest",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    },
+    {
+      "value": "persistence",
+      "label": "Persistence",
+      "tasks": [
+        "rollout"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": true,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    },
+    {
+      "value": "rbf",
+      "label": "RBF interpolation",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    },
+    {
+      "value": "residual_cnn",
+      "label": "Residual Cnn",
+      "tasks": [
+        "classification",
+        "representation",
+        "retrieval",
+        "supervised_multitask"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact residual CNN encoder/classifier reference for continuous-latent retrieval and supervised multitask pretraining; not an exact paper reproduction."
+    },
+    {
+      "value": "unet",
+      "label": "U-Net",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": true,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": true,
+      "note": "Compact architectural reference; not an exact paper reproduction."
+    },
+    {
+      "value": "zero",
+      "label": "Zero",
+      "tasks": [
+        "forward",
+        "inverse",
+        "recovery"
+      ],
+      "capabilities_known": true,
+      "trainable": false,
+      "temporal": false,
+      "supports_multichannel": true,
+      "reference_only": false,
+      "note": ""
+    }
+  ],
+  "protocol_methods": [
+    {
+      "method_id": "rbf",
+      "label": "RBF / interpolation",
+      "execution_status": "executable_builtin",
+      "registry_name": "rbf",
+      "fit_scope": "none",
+      "mask_specific_training": false,
+      "note": "Transparent evaluation-only baseline; no training job.",
+      "value": "rbf",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": true,
+      "command_generation": "single_run_only"
+    },
+    {
+      "method_id": "gappy_pod",
+      "label": "Gappy POD / PCA",
+      "execution_status": "planning_only",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_training_split",
+      "mask_specific_training": false,
+      "note": "Fit seven leakage-free PDE bases; no implementation is bundled yet.",
+      "value": "gappy_pod",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": false,
+      "command_generation": "blocked"
+    },
+    {
+      "method_id": "unet",
+      "label": "Mask-channel U-Net",
+      "execution_status": "executable_compact_reference",
+      "registry_name": "unet",
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "note": "Bundled compact reference; not an exact paper reproduction.",
+      "value": "unet",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": true,
+      "command_generation": "single_run_only"
+    },
+    {
+      "method_id": "fno",
+      "label": "Mask-channel FNO",
+      "execution_status": "executable_compact_reference",
+      "registry_name": "fno",
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "note": "Bundled compact reference; not an exact paper reproduction.",
+      "value": "fno",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": true,
+      "command_generation": "single_run_only"
+    },
+    {
+      "method_id": "cno",
+      "label": "CNO",
+      "execution_status": "executable_compact_reference",
+      "registry_name": "cno",
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "note": "The bundled model is CNO-like, not an exact CNO reproduction.",
+      "value": "cno",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": true,
+      "command_generation": "single_run_only"
+    },
+    {
+      "method_id": "deeponet",
+      "label": "DeepONet",
+      "execution_status": "planning_only",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "note": "Requires a versioned external adapter or future plugin.",
+      "value": "deeponet",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": false,
+      "command_generation": "blocked"
+    },
+    {
+      "method_id": "pinn_or_pino",
+      "label": "PINN or PINO",
+      "execution_status": "planning_only_choice_required",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "implementation_choice_required": true,
+      "note": "The job accounting assumes one amortized operator-level implementation.",
+      "value": "pinn_or_pino",
+      "default_seeds": 3,
+      "variant_required": true,
+      "builder_available": false,
+      "command_generation": "blocked"
+    },
+    {
+      "method_id": "transolver_or_gnot",
+      "label": "Transolver or GNOT",
+      "execution_status": "planning_only_choice_required",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_and_observation",
+      "mask_specific_training": true,
+      "implementation_choice_required": true,
+      "note": "Choose and freeze exactly one implementation before counting results.",
+      "value": "transolver_or_gnot",
+      "default_seeds": 1,
+      "variant_required": true,
+      "builder_available": false,
+      "command_generation": "blocked"
+    },
+    {
+      "method_id": "diffusionpde",
+      "label": "DiffusionPDE",
+      "execution_status": "planning_only_external_adapter",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_prior",
+      "mask_specific_training": false,
+      "note": "Use the exact upstream prior and condition it on all nine masks.",
+      "value": "diffusionpde",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": false,
+      "command_generation": "blocked"
+    },
+    {
+      "method_id": "fundps",
+      "label": "FunDPS",
+      "execution_status": "planning_only_external_adapter",
+      "registry_name": null,
+      "fit_scope": "once_per_pde_prior",
+      "mask_specific_training": false,
+      "note": "Use the exact upstream prior and condition it on all nine masks.",
+      "value": "fundps",
+      "default_seeds": 1,
+      "variant_required": false,
+      "builder_available": false,
+      "command_generation": "blocked"
+    }
+  ],
+  "campaign_planner": {
+    "schema_version": "pdeobs.observation-training/v1",
+    "protocol_url": "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md",
+    "scope": "one sparse-recovery task and one IID result table",
+    "pde_count": 7,
+    "observation_count": 9,
+    "primary": {
+      "name": "matched_mask_iid",
+      "split": "iid",
+      "observation_protocols": [
+        "random_1pct",
+        "random_3pct",
+        "random_5pct",
+        "random_10pct",
+        "regular_grid",
+        "block_missing",
+        "line_sensors",
+        "boundary_sensors",
+        "clustered_sensors"
+      ],
+      "normal_trainable_methods": [
+        "unet",
+        "fno",
+        "cno",
+        "deeponet",
+        "pinn_or_pino",
+        "transolver_or_gnot"
+      ],
+      "training_mask_equals_evaluation_mask": true,
+      "independent_checkpoint_per_pde_and_observation": true,
+      "reuse_weights_across_observations": false,
+      "reuse_immutable_physical_dataset": true
+    },
+    "secondary": {
+      "name": "mask_transfer",
+      "split": "mask_ood",
+      "training_mask": "random_3pct",
+      "evaluation_masks": [
+        "random_1pct",
+        "random_5pct",
+        "random_10pct",
+        "regular_grid",
+        "block_missing",
+        "line_sensors",
+        "boundary_sensors",
+        "clustered_sensors"
+      ],
+      "separate_result_table": true,
+      "note": "This train-on-3%-and-transfer view is not a substitute for the primary matched-mask comparison."
+    },
+    "dataset_accounting": {
+      "pde_count": 7,
+      "observation_count": 9,
+      "method_row_count": 10,
+      "full": {
+        "total_records": 560000,
+        "records_per_pde": 80000,
+        "training_records_per_pde": 56000
+      },
+      "medium": {
+        "total_records": 140000,
+        "records_per_pde": 20000,
+        "training_records_per_pde_approximately": 14000,
+        "training_records_per_pde_range_for_frozen_seed": [
+          13916,
+          14016
+        ],
+        "seed": 20260804
+      }
+    },
+    "observation_counts_128": {
+      "random_1pct": {
+        "observed_count": 164,
+        "observed_fraction": 0.010009765625
+      },
+      "random_3pct": {
+        "observed_count": 500,
+        "observed_fraction": 0.030517578125
+      },
+      "random_5pct": {
+        "observed_count": 819,
+        "observed_fraction": 0.04998779296875
+      },
+      "random_10pct": {
+        "observed_count": 1638,
+        "observed_fraction": 0.0999755859375
+      },
+      "regular_grid": {
+        "observed_count": 441,
+        "observed_fraction": 0.02691650390625
+      },
+      "block_missing": {
+        "observed_count": 12288,
+        "observed_fraction": 0.75
+      },
+      "line_sensors": {
+        "observed_count": 508,
+        "observed_fraction": 0.031005859375
+      },
+      "boundary_sensors": {
+        "observed_count": 508,
+        "observed_fraction": 0.031005859375
+      },
+      "clustered_sensors": {
+        "observed_count": 492,
+        "observed_fraction": 0.030029296875
+      }
+    },
+    "split_fractions": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "budget": {
+      "status": "unmeasured_planning_scenario",
+      "hardware": "12 dedicated NVIDIA A6000 GPUs",
+      "duration_days": 10,
+      "theoretical_gpu_hours": 2880,
+      "usable_gpu_hours_at_75_to_80_percent": [
+        2160,
+        2304
+      ],
+      "attachment_rounded_safe_gpu_hours": [
+        2100,
+        2300
+      ],
+      "full_gpu_hours_pinn_or_pino_one_seed": [
+        4200,
+        4600
+      ],
+      "full_gpu_hours_pinn_or_pino_three_seeds": [
+        7000,
+        7400
+      ],
+      "medium_gpu_hours_pinn_or_pino_three_seeds": [
+        1800,
+        2300
+      ],
+      "estimated_wall_days_with_overhead": {
+        "full_one_seed": [
+          17,
+          22
+        ],
+        "full_three_seeds": [
+          28,
+          32
+        ],
+        "medium_three_seeds": [
+          8,
+          10
+        ]
+      },
+      "pilot_required": true,
+      "warning": "These are unmeasured planning estimates, not benchmark results. Dataset-size quartering is not a validated scaling law for PINNs, diffusion sampling, or fixed-cost prior training. SeaWulf uses a shared A100 queue, so this dedicated-A6000 scenario is not a SeaWulf capacity promise."
+    },
+    "scientific_caveats": [
+      "Periodic Navier-Stokes stores one-channel vorticity while bounded and obstacle cases store two-channel velocity; one cross-boundary checkpoint requires a standardized representation or representation-specific models.",
+      "Gappy POD must fit only on the canonical training split; fitting the basis on validation or test records is leakage.",
+      "The block-missing view observes 75% of the grid and is not density-matched to the approximately 3% structured views.",
+      "Classical per-instance PINN and amortized PINO are not interchangeable; the frozen job counts require one operator-level implementation choice.",
+      "Final uncertainty comparisons should use a consistent seed policy across stochastic learned methods and record diffusion sampling seeds."
+    ],
+    "presets": [
+      {
+        "value": "medium_recommended",
+        "label": "Medium 140k: full 10-method comparison (recommended)",
+        "tier": "medium",
+        "methods": [
+          "rbf",
+          "gappy_pod",
+          "unet",
+          "fno",
+          "cno",
+          "deeponet",
+          "pinn_or_pino",
+          "transolver_or_gnot",
+          "diffusionpde",
+          "fundps"
+        ],
+        "method_observations": {
+          "rbf": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "gappy_pod": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "unet": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "fno": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "cno": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "deeponet": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "pinn_or_pino": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "transolver_or_gnot": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "diffusionpde": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "fundps": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ]
+        },
+        "result_cells": 630,
+        "neural_training_jobs": 504,
+        "pod_fit_jobs": 7,
+        "prior_preparation_jobs_min": 0,
+        "prior_preparation_jobs_max": 14,
+        "preparation_jobs_min": 511,
+        "preparation_jobs_max": 525,
+        "raw_evaluation_runs": 756,
+        "gpu_hours_low": 1800,
+        "gpu_hours_high": 2300,
+        "recommendation": "Feasible but tight after a measured runtime pilot.",
+        "blocked_methods": [
+          "gappy_pod",
+          "deeponet",
+          "pinn_or_pino",
+          "transolver_or_gnot",
+          "diffusionpde",
+          "fundps"
+        ],
+        "execution_status": "planning_only_blocked"
+      },
+      {
+        "value": "full_anchor_hybrid",
+        "label": "Full 560k: hybrid anchor matrix (recommended full-tier check)",
+        "tier": "full",
+        "methods": [
+          "rbf",
+          "gappy_pod",
+          "unet",
+          "fno",
+          "cno",
+          "diffusionpde",
+          "fundps"
+        ],
+        "method_observations": {
+          "rbf": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "gappy_pod": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "unet": [
+            "random_1pct",
+            "random_3pct",
+            "block_missing"
+          ],
+          "fno": [
+            "random_1pct",
+            "random_3pct",
+            "block_missing"
+          ],
+          "cno": [
+            "random_1pct",
+            "random_3pct",
+            "block_missing"
+          ],
+          "diffusionpde": [
+            "random_1pct",
+            "random_3pct",
+            "block_missing"
+          ],
+          "fundps": [
+            "random_1pct",
+            "random_3pct",
+            "block_missing"
+          ]
+        },
+        "result_cells": 231,
+        "neural_training_jobs": 63,
+        "pod_fit_jobs": 7,
+        "prior_preparation_jobs_min": 0,
+        "prior_preparation_jobs_max": 14,
+        "preparation_jobs_min": 70,
+        "preparation_jobs_max": 84,
+        "raw_evaluation_runs": 231,
+        "gpu_hours_low": null,
+        "gpu_hours_high": null,
+        "recommendation": "Run a hardware-specific pilot before reserving this campaign.",
+        "blocked_methods": [
+          "gappy_pod",
+          "diffusionpde",
+          "fundps"
+        ],
+        "execution_status": "planning_only_blocked"
+      },
+      {
+        "value": "full_all_methods_planning",
+        "label": "Full 560k: all methods and observations (not recommended)",
+        "tier": "full",
+        "methods": [
+          "rbf",
+          "gappy_pod",
+          "unet",
+          "fno",
+          "cno",
+          "deeponet",
+          "pinn_or_pino",
+          "transolver_or_gnot",
+          "diffusionpde",
+          "fundps"
+        ],
+        "method_observations": {
+          "rbf": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "gappy_pod": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "unet": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "fno": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "cno": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "deeponet": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "pinn_or_pino": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "transolver_or_gnot": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "diffusionpde": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ],
+          "fundps": [
+            "random_1pct",
+            "random_3pct",
+            "random_5pct",
+            "random_10pct",
+            "regular_grid",
+            "block_missing",
+            "line_sensors",
+            "boundary_sensors",
+            "clustered_sensors"
+          ]
+        },
+        "result_cells": 630,
+        "neural_training_jobs": 504,
+        "pod_fit_jobs": 7,
+        "prior_preparation_jobs_min": 0,
+        "prior_preparation_jobs_max": 14,
+        "preparation_jobs_min": 511,
+        "preparation_jobs_max": 525,
+        "raw_evaluation_runs": 756,
+        "gpu_hours_low": 7000,
+        "gpu_hours_high": 7400,
+        "recommendation": "Not feasible within the default ten-day planning budget.",
+        "blocked_methods": [
+          "gappy_pod",
+          "deeponet",
+          "pinn_or_pino",
+          "transolver_or_gnot",
+          "diffusionpde",
+          "fundps"
+        ],
+        "execution_status": "planning_only_blocked"
+      }
+    ]
+  },
+  "environments": [
+    {
+      "value": "local",
+      "label": "Linux/macOS/local Bash"
+    },
+    {
+      "value": "server",
+      "label": "Linux server"
+    },
+    {
+      "value": "seawulf",
+      "label": "SeaWulf (Slurm)"
+    }
+  ],
+  "quality_profiles": [
+    {
+      "value": "report",
+      "label": "Report",
+      "note": "Compute every available per-sample PDE/physics loss without applying an unfrozen scientific threshold; malformed array or geometry contracts are still quarantined."
+    },
+    {
+      "value": "strict",
+      "label": "Strict generation gate",
+      "note": "Reject non-finite, geometry, initial-condition, and boundary failures; an optional calibrated PDE-loss limit adds a residual gate."
+    },
+    {
+      "value": "publication",
+      "label": "Publication-candidate quality gate",
+      "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, a per-stratum frozen threshold table, and a complete bounded Navier-Stokes residual contract. The current package intentionally keeps the candidate gate and publication_ready false."
+    }
+  ],
+  "quality_outputs": [
+    "Per-sample quality records in HDF5 metadata",
+    "Per-shard *.quality.json summaries",
+    "Strict rejected-sample records in *.quality-failures.jsonl",
+    "Aggregate summary.quality.json and summary.quality.csv reports",
+    "Standalone pdeobs quality output at the explicitly selected report path",
+    "Manifest/checksum validation and pass/warn/fail gate status"
+  ]
+}

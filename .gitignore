@@ -6,6 +6,7 @@ build/
 dist/
 *.whl
 .pytest_cache/
+.pytest-agent/
 .ruff_cache/
 .coverage
 htmlcov/

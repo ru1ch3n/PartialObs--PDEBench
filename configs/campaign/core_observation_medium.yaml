@@ -1,0 +1,126 @@
+schema_version: pdeobs.observation-campaign/v1
+name: core-observation-medium
+status: mixed_executable_and_planning
+
+# This is a machine-readable research plan, not an executable experiment suite.
+# Tooling must reject planning-only methods instead of inventing commands.
+tier: medium
+task: sparse_recovery
+primary_split: iid
+
+dataset:
+  reuse_immutable_physical_dataset: true
+  total_records: 140000
+  records_per_pde: 20000
+  training_records_per_pde_approximately: 14000
+  training_records_per_pde_range_for_frozen_seed: [13916, 14016]
+  seed: 20260804
+  require_quality_summary: true
+  require_validated_shard_checksums: true
+
+primary_observation_policy:
+  name: matched_mask_iid
+  training_mask_equals_evaluation_mask: true
+  independent_checkpoint_per_pde_and_observation: true
+  reuse_weights_across_observations: false
+  masks:
+    - random_1pct
+    - random_3pct
+    - random_5pct
+    - random_10pct
+    - regular_grid
+    - block_missing
+    - line_sensors
+    - boundary_sensors
+    - clustered_sensors
+
+secondary_observation_policy:
+  name: mask_transfer
+  split: mask_ood
+  training_mask: random_3pct
+  evaluation_masks:
+    - random_1pct
+    - random_5pct
+    - random_10pct
+    - regular_grid
+    - block_missing
+    - line_sensors
+    - boundary_sensors
+    - clustered_sensors
+  separate_result_table: true
+
+methods:
+  - {method_id: rbf, label: RBF / interpolation, execution_status: executable_builtin,
+     registry_name: rbf, fit_scope: none, mask_specific_training: false}
+  - {method_id: gappy_pod, label: Gappy POD / PCA, execution_status: planning_only,
+     registry_name: null, fit_scope: once_per_pde_training_split, mask_specific_training: false}
+  - {method_id: unet, label: Mask-channel U-Net,
+     execution_status: executable_compact_reference, registry_name: unet,
+     fit_scope: once_per_pde_and_observation, mask_specific_training: true}
+  - {method_id: fno, label: Mask-channel FNO,
+     execution_status: executable_compact_reference, registry_name: fno,
+     fit_scope: once_per_pde_and_observation, mask_specific_training: true}
+  - {method_id: cno, label: CNO, execution_status: executable_compact_reference,
+     registry_name: cno, fit_scope: once_per_pde_and_observation,
+     mask_specific_training: true}
+  - {method_id: deeponet, label: DeepONet, execution_status: planning_only,
+     registry_name: null, fit_scope: once_per_pde_and_observation,
+     mask_specific_training: true}
+  - {method_id: pinn_or_pino, label: PINN or PINO,
+     execution_status: planning_only_choice_required, registry_name: null,
+     fit_scope: once_per_pde_and_observation, mask_specific_training: true,
+     implementation_choice_required: true}
+  - {method_id: transolver_or_gnot, label: Transolver or GNOT,
+     execution_status: planning_only_choice_required, registry_name: null,
+     fit_scope: once_per_pde_and_observation, mask_specific_training: true,
+     implementation_choice_required: true}
+  - {method_id: diffusionpde, label: DiffusionPDE,
+     execution_status: planning_only_external_adapter, registry_name: null,
+     fit_scope: once_per_pde_prior, mask_specific_training: false}
+  - {method_id: fundps, label: FunDPS,
+     execution_status: planning_only_external_adapter, registry_name: null,
+     fit_scope: once_per_pde_prior, mask_specific_training: false}
+
+seed_policy:
+  default_normal_method_seeds: 1
+  pinn_or_pino_planning_seeds: 3
+  final_comparison_requires_consistent_stochastic_seed_policy: true
+  diffusion_sampling_seeds_must_be_recorded: true
+
+accounting:
+  pde_count: 7
+  observation_count: 9
+  method_row_count: 10
+  iid_result_cells: 630
+  normal_training_jobs_one_seed: 378
+  normal_training_jobs_pinn_or_pino_three_seeds: 504
+  gappy_pod_fits: 7
+  external_prior_jobs: {compatible_pretrained: 0, retrain_per_pde: 14}
+  total_jobs_one_seed: {minimum: 385, maximum: 399}
+  total_jobs_pinn_or_pino_three_seeds: {minimum: 511, maximum: 525}
+  diffusionpde_fundps_observation_cells: 126
+  five_factor_split_result_cells: 3150
+  counts_assume_one_implementation_per_choice_row: true
+  result_cells_are_not_scheduler_jobs: true
+
+compute_planning:
+  status: unmeasured_planning_scenario
+  hardware: 12 dedicated NVIDIA A6000 GPUs
+  duration_days: 10
+  theoretical_gpu_hours: 2880
+  usable_gpu_hours_at_75_to_80_percent: [2160, 2304]
+  attachment_rounded_safe_gpu_hours: [2100, 2300]
+  full_gpu_hours_pinn_or_pino_one_seed: [4200, 4600]
+  full_gpu_hours_pinn_or_pino_three_seeds: [7000, 7400]
+  medium_gpu_hours_pinn_or_pino_three_seeds: [1800, 2300]
+  pilot_required: true
+  seawulf_capacity_promise: false
+
+scientific_constraints:
+  navier_stokes_representation: >-
+    Periodic data store one-channel vorticity, while bounded and obstacle data
+    store two-channel velocity. Cross-boundary training requires a standardized
+    representation or representation-specific checkpoints.
+  gappy_pod_no_leakage: Fit every basis only on canonical training records.
+  block_missing_density_matched: false
+  pinn_pino_interchangeable: false

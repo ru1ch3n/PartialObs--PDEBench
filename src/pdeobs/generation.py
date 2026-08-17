@@ -106,6 +106,7 @@ class GenerationJob:
     tier: str = "full"
     macro_size: int = 2000
     options: Mapping[str, Any] | None = None
+    quality: Mapping[str, Any] | None = None
     provenance: Mapping[str, Any] | None = None
 
     def __post_init__(self) -> None:
@@ -118,13 +119,18 @@ class GenerationJob:
         if self.sample_start < 0 or self.sample_count < 1 or self.shard_index < 0:
             raise ValueError("sample_start/shard_index must be non-negative and count positive")
         object.__setattr__(self, "resolution", normalize_resolution(self.resolution))
-        np.dtype(self.dtype)
+        storage_dtype = np.dtype(self.dtype)
+        if not np.issubdtype(storage_dtype, np.floating):
+            raise TypeError("generation dtype must be floating-point")
         if self.compression_level is not None and int(self.compression_level) < 0:
             raise ValueError("compression_level must be non-negative")
         regime_limit = regime_counts(self.macro_size)[self.regime]
         if self.sample_start + self.sample_count > regime_limit:
             raise ValueError("job sample range exceeds its full regime allocation")
         object.__setattr__(self, "options", dict(json_safe(self.options or {})))
+        from .quality import normalize_quality_config
+
+        object.__setattr__(self, "quality", normalize_quality_config(self.quality))
         object.__setattr__(self, "provenance", dict(json_safe(self.provenance or {})))
 
     @property
@@ -174,6 +180,7 @@ class GenerationJob:
             "tier": self.tier,
             "macro_size": self.macro_size,
             "options": dict(self.options or {}),
+            "quality": dict(self.quality or {}),
             "provenance": dict(self.provenance or {}),
             "job_id": self.job_id,
         }
@@ -215,6 +222,7 @@ def build_job_grid(
     regimes: Sequence[str] = REGIMES,
     macro_size: int = 2000,
     options: Mapping[str, Any] | None = None,
+    quality: Mapping[str, Any] | None = None,
     provenance: Mapping[str, Any] | None = None,
     include_tier_dir: bool = True,
 ) -> list[GenerationJob]:
@@ -274,6 +282,7 @@ def build_job_grid(
                                 tier=tier_name,
                                 macro_size=macro_size,
                                 options=options,
+                                quality=quality,
                                 provenance=provenance,
                             )
                         )
@@ -371,6 +380,11 @@ def generate_job(
             __version__ if is_builtin_generator else "unreported",
         )
     )
+    solver_validation_evidence = json_safe(
+        generator_options.pop("solver_validation_evidence", None)
+    )
+    if is_builtin_generator:
+        generator_options.setdefault("dtype", np.dtype(job.dtype))
     solver_implementation = (
         f"{getattr(generator, '__module__', '<unknown>')}:"
         f"{getattr(generator, '__qualname__', generator.__class__.__qualname__)}"
@@ -435,13 +449,27 @@ def generate_job(
                 setting=job.setting,
                 regime=job.regime,
             )
-            state_representation = (
-                "vorticity"
-                if job.pde == "navier_stokes" and job.boundary == "periodic"
-                else "velocity"
-                if job.pde == "navier_stokes"
-                else "scalar"
-            )
+            if is_builtin_generator:
+                state_representation = (
+                    "vorticity"
+                    if job.pde == "navier_stokes" and job.boundary == "periodic"
+                    else "velocity"
+                    if job.pde == "navier_stokes"
+                    else "scalar"
+                )
+            else:
+                output_metadata = getattr(output, "metadata", {})
+                output_parameters = getattr(output, "parameters", {})
+                declared_representation = (
+                    output_metadata.get("state_representation")
+                    if isinstance(output_metadata, Mapping)
+                    else None
+                )
+                if not declared_representation and isinstance(output_parameters, Mapping):
+                    declared_representation = output_parameters.get("state_representation")
+                state_representation = str(declared_representation or "generic").strip()
+                if not state_representation:
+                    state_representation = "generic"
             provenance = dict(job.provenance or {})
             git = provenance.get("git", {})
             metadata = {
@@ -458,6 +486,7 @@ def generate_job(
                 "solver_fidelity": solver_fidelity,
                 "solver_version": solver_version,
                 "solver_implementation": solver_implementation,
+                "solver_validation_evidence": solver_validation_evidence,
                 "pdeobs_version": __version__,
                 "resolution": list(normalize_resolution(job.resolution)),
                 "T": int(np.asarray(output.trajectory).shape[0]),
@@ -471,7 +500,42 @@ def generate_job(
                 "git_commit": git.get("commit") if isinstance(git, Mapping) else None,
                 **ood_labels,
             }
-            writer.append(_sample_from_output(output, metadata).astype(job.dtype))
+            # Quality is computed after the requested storage dtype conversion,
+            # so the embedded loss describes the bytes written to HDF5.
+            raw_sample = _sample_from_output(output, metadata)
+            geometry = raw_sample.geometry
+            if geometry.dtype != np.bool_:
+                geometry = geometry.astype(job.dtype, copy=False)
+            sample = Sample(
+                raw_sample.condition.astype(job.dtype, copy=False),
+                raw_sample.trajectory.astype(job.dtype, copy=False),
+                geometry,
+                raw_sample.metadata,
+            )
+            from .quality import (
+                enforce_generation_quality,
+                evaluate_sample_quality,
+                generation_quality_rejected,
+            )
+
+            quality = evaluate_sample_quality(sample, config=job.quality)
+            if generation_quality_rejected(quality):
+                failure_path = Path(job.output_path).with_suffix(".quality-failures.jsonl")
+                write_jsonl_manifest(
+                    [
+                        {
+                            "sample_id": sample.metadata.get("sample_id"),
+                            "seed": sample.metadata.get("seed"),
+                            "job_id": job.job_id,
+                            "accepted": False,
+                            "quality": quality,
+                        }
+                    ],
+                    failure_path,
+                )
+            enforce_generation_quality(quality)
+            sample.metadata["quality"] = quality
+            writer.append(sample)
         manifest = writer.finalize()
     except BaseException:
         writer.close()  # retain *.partial for the next array resubmission
@@ -535,6 +599,7 @@ def jobs_from_spec(
                 # range is valid while retaining official full-size semantics.
                 macro_size=max(2000, spec.num_samples * len(REGIMES)),
                 options=spec.options,
+                quality=spec.quality,
             )
         )
     return jobs
@@ -612,6 +677,7 @@ def jobs_from_config(
         regimes=_config_sequence(config, "regimes", REGIMES),
         macro_size=int(config.get("samples_per_case", 2000)),
         options=config.get("solver_options", {}),
+        quality=config.get("quality", {}),
         provenance=config.get("_provenance", {}),
         include_tier_dir=include_tier_dir,
     )
