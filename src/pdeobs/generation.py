@@ -87,6 +87,34 @@ def _regime_offset(regime: str, total: int) -> int:
     raise AssertionError("unreachable")
 
 
+def _case_override(
+    values: Mapping[str, Any] | None,
+    family: str,
+    boundary: str,
+    setting: str,
+    regime: str,
+) -> Any:
+    """Resolve flat case overrides from broadest to most specific key.
+
+    Supported keys are ``family``, ``family/boundary``,
+    ``family/boundary/setting``, and ``family/boundary/setting/regime``.
+    This keeps solver and saved-frame choices explicit in the plan without
+    entangling them with observation protocols.
+    """
+
+    mapping = dict(values or {})
+    selected: Any = None
+    for key in (
+        family,
+        f"{family}/{boundary}",
+        f"{family}/{boundary}/{setting}",
+        f"{family}/{boundary}/{setting}/{regime}",
+    ):
+        if key in mapping:
+            selected = mapping[key]
+    return selected
+
+
 @dataclass(frozen=True, slots=True)
 class GenerationJob:
     pde: str
@@ -213,6 +241,8 @@ def build_job_grid(
     shard_size: int = 100,
     seed: int = 0,
     time_steps: int | None = None,
+    time_steps_by_family: Mapping[str, int] | None = None,
+    time_steps_by_case: Mapping[str, int] | None = None,
     dtype: str = "float32",
     compression: str | None = "gzip",
     compression_level: int | None = 4,
@@ -222,6 +252,7 @@ def build_job_grid(
     regimes: Sequence[str] = REGIMES,
     macro_size: int = 2000,
     options: Mapping[str, Any] | None = None,
+    options_by_case: Mapping[str, Mapping[str, Any]] | None = None,
     quality: Mapping[str, Any] | None = None,
     provenance: Mapping[str, Any] | None = None,
     include_tier_dir: bool = True,
@@ -237,6 +268,15 @@ def build_job_grid(
     jobs: list[GenerationJob] = []
     canonical_families = tuple(_canonical_pde(name) for name in families)
     canonical_settings = tuple(_canonical_setting(name) for name in settings)
+    canonical_time_steps: dict[str, int] = {}
+    for name, value in dict(time_steps_by_family or {}).items():
+        family_name = _canonical_pde(name)
+        if family_name in canonical_time_steps:
+            raise ValueError(f"time_steps_by_family contains duplicate aliases for {family_name!r}")
+        family_steps = int(value)
+        if family_steps < 1:
+            raise ValueError("time_steps_by_family values must be positive")
+        canonical_time_steps[family_name] = family_steps
     if len(set(canonical_families)) != len(canonical_families):
         raise ValueError("families contain duplicate aliases for the same canonical PDE")
     if len(set(canonical_settings)) != len(canonical_settings):
@@ -251,6 +291,27 @@ def build_job_grid(
         for boundary in boundaries:
             for setting in canonical_settings:
                 for regime in regimes:
+                    case_steps = _case_override(
+                        time_steps_by_case,
+                        family,
+                        boundary,
+                        setting,
+                        regime,
+                    )
+                    if case_steps is not None and int(case_steps) < 1:
+                        raise ValueError("time_steps_by_case values must be positive")
+                    case_options = dict(options or {})
+                    option_override = _case_override(
+                        options_by_case,
+                        family,
+                        boundary,
+                        setting,
+                        regime,
+                    )
+                    if option_override is not None:
+                        if not isinstance(option_override, Mapping):
+                            raise TypeError("options_by_case values must be mappings")
+                        case_options.update(option_override)
                     count = counts[regime]
                     for shard_index, start in enumerate(range(0, count, shard_size)):
                         current_count = min(shard_size, count - start)
@@ -275,13 +336,17 @@ def build_job_grid(
                                 output_path=str(output),
                                 resolution=resolution,
                                 seed=seed,
-                                time_steps=time_steps,
+                                time_steps=(
+                                    int(case_steps)
+                                    if case_steps is not None
+                                    else canonical_time_steps.get(family, time_steps)
+                                ),
                                 dtype=dtype,
                                 compression=compression,
                                 compression_level=compression_level,
                                 tier=tier_name,
                                 macro_size=macro_size,
-                                options=options,
+                                options=case_options,
                                 quality=quality,
                                 provenance=provenance,
                             )
@@ -450,13 +515,12 @@ def generate_job(
                 regime=job.regime,
             )
             if is_builtin_generator:
-                state_representation = (
-                    "vorticity"
-                    if job.pde == "navier_stokes" and job.boundary == "periodic"
-                    else "velocity"
-                    if job.pde == "navier_stokes"
-                    else "scalar"
-                )
+                if job.pde == "navier_stokes":
+                    state_representation = str(
+                        output.parameters.get("state_representation", "vorticity")
+                    )
+                else:
+                    state_representation = "scalar"
             else:
                 output_metadata = getattr(output, "metadata", {})
                 output_parameters = getattr(output, "parameters", {})
@@ -668,6 +732,8 @@ def jobs_from_config(
         shard_size=int(config.get("shard_size", 100)),
         seed=int(config.get("seed", 0)),
         time_steps=config.get("trajectory_steps", config.get("time_steps")),
+        time_steps_by_family=config.get("trajectory_steps_by_family", {}),
+        time_steps_by_case=config.get("trajectory_steps_by_case", {}),
         dtype=str(config.get("dtype", "float32")),
         compression=None if compression is None else str(compression),
         compression_level=None if level is None else int(level),
@@ -677,6 +743,7 @@ def jobs_from_config(
         regimes=_config_sequence(config, "regimes", REGIMES),
         macro_size=int(config.get("samples_per_case", 2000)),
         options=config.get("solver_options", {}),
+        options_by_case=config.get("solver_options_by_case", {}),
         quality=config.get("quality", {}),
         provenance=config.get("_provenance", {}),
         include_tier_dir=include_tier_dir,

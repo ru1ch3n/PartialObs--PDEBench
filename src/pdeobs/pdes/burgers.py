@@ -28,6 +28,7 @@ FAMILY = "burgers"
 DEFAULT_TIME_STEPS = 9
 # Regime labels follow increasing Reynolds-like difficulty, hence viscosity falls.
 VISCOSITY_BY_REGIME = {"low": 0.04, "medium": 0.015, "high": 0.004}
+DISCONTINUOUS_SETTINGS = frozenset({"piecewise_blocks", "threshold_level_set", "front_ring_shock"})
 
 
 def generate(
@@ -59,6 +60,11 @@ def generate(
     viscosity = VISCOSITY_BY_REGIME[regime]
     initial = make_setting_field(setting, (height, width), make_rng(seed, 600))
     apply_scalar_boundary(initial, boundary)
+    advection_scheme = (
+        "spectral"
+        if boundary == "periodic" and setting not in DISCONTINUOUS_SETTINGS
+        else "rusanov"
+    )
 
     states = [initial.copy()]
     total_substeps = 0
@@ -70,7 +76,13 @@ def generate(
         state = initial.copy()
         for _ in range(1, steps):
             state, diagnostics = advance_burgers(
-                state, viscosity, frame_dt, dx, dy, boundary
+                state,
+                viscosity,
+                frame_dt,
+                dx,
+                dy,
+                boundary,
+                advection_scheme=advection_scheme,
             )
             substeps = int(diagnostics["substeps"])
             max_courant = max(max_courant, float(diagnostics["max_courant"]))
@@ -109,12 +121,21 @@ def generate(
             "substep_cap_hits": 0,
             "clip_count": 0,
             "linear_solver_iterations_max": maximum_diffusion_iterations,
+            "advection_scheme": advection_scheme,
             "integrator_id": (
                 "dealiased_pseudospectral_imex_v2"
+                if advection_scheme == "spectral"
+                else "periodic_rusanov_fv_fourier_diffusion_v2"
                 if boundary == "periodic"
                 else "fd2_rk2_imex_boundary_v2"
             ),
-            "quality_residual_contract": "pdeobs.quality.burgers.fd2_saved_frame_v1",
+            "quality_residual_contract": (
+                "pdeobs.quality.burgers.post_initial_dealiased_spectral_plus_replay_v2"
+                if advection_scheme == "spectral"
+                else "pdeobs.quality.burgers.post_initial_rusanov_fv_fourier_plus_replay_v2"
+                if boundary == "periodic"
+                else "pdeobs.quality.burgers.post_initial_rusanov_fv_fd2_plus_replay_v2"
+            ),
         },
         dtype=dtype,
     )

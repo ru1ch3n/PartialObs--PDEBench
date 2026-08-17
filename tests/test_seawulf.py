@@ -138,5 +138,8 @@ def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:
     assert "configs/dataset/recovery_signal.yaml" in guide
     assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in guide
     assert '--dependency="afterok:${generation_job}"' in guide
-    assert '--dependency="afterok:${signal_train_job}"' in guide
+    assert "does **not** submit model training" in guide
+    assert "short-96core-shared" in guide
+    assert "4.4 TB raw" in guide
+    assert '"$PDEOBS_DATA/plans/tiny.resolved.yaml"' in guide
     assert "conservative safety cap" in guide

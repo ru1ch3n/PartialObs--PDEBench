@@ -59,9 +59,12 @@ geometry    [N, H, W, 1]
 ```
 
 Static PDEs use `T=1`. The reference temporal generators retain trajectories
-for heat, reaction-diffusion, Burgers, and Navier-Stokes; the paper protocol
-uses nine states. Periodic Navier-Stokes stores vorticity. Bounded and obstacle
-cases store two velocity channels and an obstacle/wall mask.
+for heat, reaction-diffusion, Burgers, and Navier-Stokes. The compact starter
+protocol uses nine states, while the numerical-validation/release plan records
+case-specific saved-frame counts required by the audited residual. All current
+Navier-Stokes validation routes store one vorticity channel; periodic,
+rectangular bounded, and obstacle cases record different registered velocity-
+reconstruction operators. The geometry array stores walls/obstacles.
 
 Data are written as independent compressed HDF5 shards. Each array task owns
 one shard and first writes a temporary file; the final name appears only after
@@ -128,10 +131,12 @@ two-dimensional transport equation, and the compact Helmholtz reference stores
 a real-valued damped response. The Navier-Stokes difficulty regime changes both
 viscosity and initial-vorticity scale; it is not a single-factor causal sweep.
 
-Boundary enforcement in the compact temporal/Helmholtz implementations is an
-approximation and the bounded obstacle-flow reference is not yet backed by the
-required divergence/no-penetration convergence evidence. Before a scientific
+The current validation candidates replace periodic-interior-plus-overwrite
+bounded updates with boundary-in-operator sparse/FD/FV or bounded
+vorticity--streamfunction routes. They have passed the complete one-sample
+factor preflight but are not yet release ground truth. Before a scientific
 release, pass and publish [the numerical validation gate](NUMERICAL_VALIDATION.md)
-against trusted solvers and freeze the calibrated quality thresholds before
-generation. The PDE registry permits replacing a generator without changing
-storage, masks, split views, or benchmark methods.
+over the 20-sample-per-case campaign, add independent spatial/refinement
+evidence, and freeze calibrated thresholds before generation. The PDE registry
+permits replacing a case solver without changing storage, observation masks,
+split views, or benchmark methods.

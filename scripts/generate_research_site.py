@@ -1849,7 +1849,7 @@ def benchmark_builder_options() -> Dict[str, Any]:
         "navier_stokes": (
             "Navier-Stokes",
             "omega_t + velocity dot grad(omega) - nu Laplacian(omega)",
-            "Periodic vorticity residual; bounded velocity-only data use a labeled partial curl diagnostic, plus divergence and boundary losses.",
+            "Periodic, rectangular bounded, and obstacle routes store vorticity and use their registered spectral, DST, or masked-streamfunction reconstruction; divergence and boundary losses are reported separately.",
         ),
     }
     boundaries = {
@@ -2068,7 +2068,7 @@ def benchmark_builder_options() -> Dict[str, Any]:
             {
                 "value": "publication",
                 "label": "Publication-candidate quality gate",
-                "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, a per-stratum frozen threshold table, and a complete bounded Navier-Stokes residual contract. The current package intentionally keeps the candidate gate and publication_ready false.",
+                "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, and a per-stratum frozen threshold table. The current package intentionally keeps the candidate gate and publication_ready false.",
             },
         ],
         "quality_outputs": [
@@ -2224,9 +2224,9 @@ def render_builder() -> str:
   </div>
   <div class="grid2">
     <div class="card"><h3>Always produced</h3><ul id="builder-quality-outputs"></ul></div>
-    <div class="card"><h3>Gate levels</h3><ol><li><b>Report:</b> report scientific losses without applying an unfrozen PDE threshold; malformed array/geometry contracts are still quarantined.</li><li><b>Strict:</b> reject structural/BC/IC failures, log them to <code>*.quality-failures.jsonl</code>, and apply a PDE limit only when calibrated.</li><li><b>Publication candidate:</b> expert-only and intentionally blocked by this Builder until validated solver evidence, a per-stratum threshold table, and a complete bounded Navier-Stokes residual contract exist. It does not by itself set <code>publication_ready</code>.</li></ol></div>
+    <div class="card"><h3>Gate levels</h3><ol><li><b>Report:</b> report scientific losses without applying an unfrozen PDE threshold; malformed array/geometry contracts are still quarantined.</li><li><b>Strict:</b> reject structural/BC/IC failures, log them to <code>*.quality-failures.jsonl</code>, and apply a PDE limit only when calibrated.</li><li><b>Publication candidate:</b> expert-only and intentionally blocked by this Builder until validated solver evidence and a per-stratum threshold table exist. It does not by itself set <code>publication_ready</code>.</li></ol></div>
   </div>
-  <div class="note"><b>Important interpretation:</b> saved-frame residuals are not the same as integrator replay error. Helmholtz nominal residual and regularized transfer defect stay separate. Bounded Navier-Stokes velocity-only data receive a labeled partial curl diagnostic, not a falsely complete momentum residual.</div>
+  <div class="note"><b>Important interpretation:</b> saved-frame residuals are not the same as integrator replay error. Helmholtz nominal residual and legacy regularized transfer defect stay separate. Bounded Navier-Stokes uses a versioned vorticity/streamfunction residual plus divergence and boundary diagnostics.</div>
 </section>
 """
     return page(

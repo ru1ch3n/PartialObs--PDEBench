@@ -329,9 +329,10 @@ def observation_training_contract() -> dict[str, Any]:
             },
             "scientific_caveats": [
                 (
-                    "Periodic Navier-Stokes stores one-channel vorticity while bounded and "
-                    "obstacle cases store two-channel velocity; one cross-boundary checkpoint "
-                    "requires a standardized representation or representation-specific models."
+                    "All current Navier-Stokes validation routes store one-channel "
+                    "vorticity, but periodic, rectangular, and obstacle cases use different "
+                    "registered velocity-reconstruction and geometry operators; a "
+                    "cross-boundary checkpoint must retain that topology metadata."
                 ),
                 (
                     "Gappy POD must fit only on the canonical training split; fitting the basis "

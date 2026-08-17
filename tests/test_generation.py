@@ -16,7 +16,7 @@ from pdeobs.generation import (
     write_generation_plan,
     write_job_manifest,
 )
-from pdeobs.quality import QualityGateError
+from pdeobs.quality import QUALITY_SCHEMA_VERSION, QualityGateError
 from pdeobs.registry import PDE_REGISTRY
 from pdeobs.schema import GenerationSpec, Sample
 from pdeobs.storage import (
@@ -59,6 +59,74 @@ def test_job_grid_canonicalizes_setting_aliases_in_ids_and_paths(tmp_path):
     assert job.setting == "dipole_vortex_pair"
     assert "dipole_vortex_pair" in Path(job.output_path).parts
     assert "dipole_vortex_pair" in job.case_key.split("/")
+
+
+def test_job_grid_supports_family_specific_saved_time_resolution(tmp_path):
+    jobs = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        time_steps=9,
+        time_steps_by_family={"reaction-diffusion": 65, "burgers": 129},
+        families=("heat", "reaction_diffusion", "burgers"),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+    )
+
+    assert {job.pde: job.time_steps for job in jobs} == {
+        "heat": 9,
+        "reaction_diffusion": 65,
+        "burgers": 129,
+    }
+
+
+def test_job_grid_supports_case_specific_solver_and_saved_frames(tmp_path):
+    jobs = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        time_steps=9,
+        time_steps_by_case={
+            "navier_stokes/periodic": 33,
+            "navier_stokes/periodic/multi_frequency_fourier": 65,
+            "navier_stokes/robin_obstacle": 257,
+        },
+        options={"shared": True},
+        options_by_case={
+            "navier_stokes/periodic": {"solver": "fno_spectral_vorticity"},
+            "navier_stokes/robin_obstacle": {"solver": "masked_obstacle_vorticity"},
+        },
+        families=("navier_stokes",),
+        boundaries=("periodic", "robin_obstacle"),
+        settings=("smooth_grf", "multi_frequency_fourier"),
+        regimes=("low",),
+    )
+
+    by_case = {(job.boundary, job.setting): job for job in jobs}
+    assert by_case[("periodic", "smooth_grf")].time_steps == 33
+    assert by_case[("periodic", "multi_frequency_fourier")].time_steps == 65
+    assert by_case[("robin_obstacle", "smooth_grf")].time_steps == 257
+    assert by_case[("periodic", "smooth_grf")].options == {
+        "shared": True,
+        "solver": "fno_spectral_vorticity",
+    }
+    assert by_case[("robin_obstacle", "smooth_grf")].options == {
+        "shared": True,
+        "solver": "masked_obstacle_vorticity",
+    }
+
+
+@pytest.mark.parametrize("value", (0, -1))
+def test_job_grid_rejects_invalid_family_time_steps(tmp_path, value):
+    with pytest.raises(ValueError, match="must be positive"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            time_steps_by_family={"burgers": value},
+            families=("burgers",),
+            boundaries=("periodic",),
+            settings=("smooth_grf",),
+            regimes=("low",),
+        )
 
 
 def test_job_grid_rejects_unregistered_setting_path(tmp_path):
@@ -511,7 +579,7 @@ def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
         assert metadata["solver_version"] == "0.1.0"
         assert metadata["solver_implementation"].startswith("pdeobs.pdes.heat:")
         quality = metadata["quality"]
-        assert quality["schema_version"] == "1.0"
+        assert quality["schema_version"] == QUALITY_SCHEMA_VERSION
         assert quality["pde"] == "heat"
         assert quality["stored_dtype"] == "float32"
         assert quality["pde_loss"]["status"] == "measured"

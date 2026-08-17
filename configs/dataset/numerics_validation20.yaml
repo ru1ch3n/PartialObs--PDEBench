@@ -6,8 +6,51 @@ include: default.yaml
 name: pdeobs-numerics-validation20
 tier: debug
 
+# Saved-frame residuals are calibrated at a topology- and family-specific
+# temporal resolution.  This changes storage density, never the ground-truth
+# solve or the later observation-mask protocol.
+trajectory_steps_by_family:
+  heat: 129
+  reaction_diffusion: 257
+  burgers: 257
+
+# Solver and saved-frame choices are case-specific.  They affect only complete
+# ground-truth trajectories; observation masks are applied later by Dataset.
+trajectory_steps_by_case:
+  # Discontinuous Burgers fields need denser saved frames for a stable
+  # saved-frame conservation residual.  The integrator already takes its own
+  # CFL-limited substeps; this only increases the audited trajectory density.
+  burgers/periodic/threshold_level_set: 513
+  burgers/dirichlet/threshold_level_set: 513
+  burgers/neumann/threshold_level_set: 513
+  burgers/robin_obstacle/threshold_level_set: 513
+  # High-frequency vorticity needs denser saved frames for the continuous
+  # equation-balance audit.  Exact first-transition replay remains separate.
+  navier_stokes/periodic/multi_frequency_fourier: 65
+  navier_stokes/neumann/multi_frequency_fourier: 65
+  navier_stokes/robin_obstacle/multi_frequency_fourier: 513
+  navier_stokes/periodic: 33
+  navier_stokes/dirichlet: 257
+  navier_stokes/neumann: 33
+  navier_stokes/robin_obstacle: 257
+
+solver_options_by_case:
+  navier_stokes/periodic: {solver: fno_spectral_vorticity}
+  navier_stokes/dirichlet: {solver: dst_no_slip_vorticity}
+  navier_stokes/neumann: {solver: dst_free_slip_vorticity}
+  navier_stokes/robin_obstacle: {solver: masked_obstacle_vorticity}
+
+# Candidate numerical gate for the 20-sample campaign. Any rejected sample is
+# quarantined with a *.quality-failures.jsonl record; this is not a publication
+# threshold table and cannot make publication_ready true.
+quality:
+  profile: strict
+  require_pde_loss: true
+  thresholds:
+    pde_loss_normalized_max: 0.05
+    divergence_loss_normalized_max: 1.0e-6
+
 output:
   root: ${PDEOBS_DATA:-datasets}/numerics-validation20
   atomic: true
   checksum: sha256
-

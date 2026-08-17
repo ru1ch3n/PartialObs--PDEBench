@@ -61,13 +61,9 @@ def generate(
         frame_dt = float(final_time) / (steps - 1)
         state = initial.copy()
         for _ in range(1, steps):
-            state, solver = crank_nicolson_diffusion(
-                state, diffusivity, frame_dt, dx, dy, boundary
-            )
+            state, solver = crank_nicolson_diffusion(state, diffusivity, frame_dt, dx, dy, boundary)
             maximum_solver_iterations = max(maximum_solver_iterations, solver.iterations)
-            maximum_solver_residual = max(
-                maximum_solver_residual, solver.relative_residual
-            )
+            maximum_solver_residual = max(maximum_solver_residual, solver.relative_residual)
             states.append(state.copy())
     trajectory = add_channel(np.stack(states, axis=0))
     geometry = make_geometry(
@@ -96,7 +92,11 @@ def generate(
                 if boundary == "periodic"
                 else "fd2_crank_nicolson_boundary_v2"
             ),
-            "quality_residual_contract": "pdeobs.quality.heat.fd2_saved_frame_v1",
+            "quality_residual_contract": (
+                "pdeobs.quality.heat.post_initial_spectral_plus_replay_v2"
+                if boundary == "periodic"
+                else "pdeobs.quality.heat.post_initial_fd2_plus_replay_v2"
+            ),
         },
         dtype=dtype,
     )

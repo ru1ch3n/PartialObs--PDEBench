@@ -24,7 +24,7 @@ import numpy as np
 
 from .schema import Sample, json_safe
 
-QUALITY_SCHEMA_VERSION = "1.0"
+QUALITY_SCHEMA_VERSION = "1.1"
 BUILTIN_PDE_FAMILIES = (
     "darcy",
     "poisson",
@@ -45,12 +45,20 @@ _EQUATION_PARAMETER_NAMES: dict[str, tuple[str, ...]] = {
     "heat": ("final_time", "diffusivity"),
     "reaction_diffusion": ("final_time", "diffusivity", "reaction_rate"),
     "burgers": ("final_time", "viscosity"),
-    "navier_stokes": ("final_time", "viscosity", "inflow_speed", "vorticity_scale"),
+    "navier_stokes": (
+        "final_time",
+        "viscosity",
+        "inflow_speed",
+        "vorticity_scale",
+        "forcing_id",
+        "forcing_amplitude",
+    ),
 }
 _SOLVER_PARAMETER_NAMES: dict[str, tuple[str, ...]] = {
     "darcy": ("solver_steps",),
     "poisson": ("solver_steps",),
     "helmholtz": ("damping_ratio",),
+    "burgers": ("advection_scheme",),
 }
 VALIDATED_SOLVER_FIDELITIES = frozenset(
     {"validated", "validated_reference", "trusted", "trusted_reference"}
@@ -63,6 +71,7 @@ _DEFAULT_THRESHOLDS: dict[str, float | None] = {
     "geometry_binary_max_error_max": 1.0e-6,
     "initial_condition_loss_normalized_max": 1.0e-6,
     "boundary_condition_loss_normalized_max": 1.0e-4,
+    "initial_transition_replay_loss_normalized_max": 5.0e-6,
     # PDE and divergence thresholds must be frozen by the release protocol.
     "pde_loss_normalized_max": None,
     "divergence_loss_normalized_max": None,
@@ -257,6 +266,121 @@ def _gradient(
     return (east - west) / (2.0 * dx), (north - south) / (2.0 * dy)
 
 
+def _spectral_operators(
+    values: np.ndarray, dx: float, dy: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return Fourier x/y derivatives and Laplacian on a periodic grid.
+
+    ``values`` may contain arbitrary leading axes (for example saved time
+    frames); the final two axes are always interpreted as ``(y, x)``.
+    """
+
+    array = np.asarray(values, dtype=np.float64)
+    height, width = array.shape[-2:]
+    ky = 2.0 * np.pi * np.fft.fftfreq(height, d=dy)
+    kx = 2.0 * np.pi * np.fft.fftfreq(width, d=dx)
+    kkx, kky = np.meshgrid(kx, ky)
+    transform = np.fft.fft2(array, axes=(-2, -1))
+    grad_x = np.fft.ifft2(1j * kkx * transform, axes=(-2, -1)).real
+    grad_y = np.fft.ifft2(1j * kky * transform, axes=(-2, -1)).real
+    laplace = np.fft.ifft2(
+        -(kkx**2 + kky**2) * transform,
+        axes=(-2, -1),
+    ).real
+    return grad_x, grad_y, laplace
+
+
+def _dealias_periodic(values: np.ndarray) -> np.ndarray:
+    """Apply the same rectangular two-thirds filter as the generators."""
+
+    array = np.asarray(values, dtype=np.float64)
+    height, width = array.shape[-2:]
+    modes_x = np.fft.fftfreq(width) * width
+    modes_y = np.fft.fftfreq(height) * height
+    keep = (np.abs(modes_y)[:, None] <= height // 3) & (np.abs(modes_x)[None, :] <= width // 3)
+    transform = np.fft.fft2(array, axes=(-2, -1))
+    return np.fft.ifft2(transform * keep, axes=(-2, -1)).real
+
+
+def _rusanov_flux_divergence(values: np.ndarray, boundary: str, dx: float, dy: float) -> np.ndarray:
+    """Conservative finite-volume divergence used for nonsmooth Burgers data."""
+
+    state = np.asarray(values, dtype=np.float64)
+    if boundary == "periodic":
+        center = state
+        east = np.roll(state, -1, axis=-1)
+        west = np.roll(state, 1, axis=-1)
+        north = np.roll(state, -1, axis=-2)
+        south = np.roll(state, 1, axis=-2)
+    else:
+        pad_width = [(0, 0)] * state.ndim
+        pad_width[-2] = (1, 1)
+        pad_width[-1] = (1, 1)
+        padded = np.pad(state, pad_width, mode="edge")
+        base = [slice(None)] * state.ndim
+        center_slice = base.copy()
+        east_slice = base.copy()
+        west_slice = base.copy()
+        north_slice = base.copy()
+        south_slice = base.copy()
+        center_slice[-2], center_slice[-1] = slice(1, -1), slice(1, -1)
+        east_slice[-2], east_slice[-1] = slice(1, -1), slice(2, None)
+        west_slice[-2], west_slice[-1] = slice(1, -1), slice(None, -2)
+        north_slice[-2], north_slice[-1] = slice(2, None), slice(1, -1)
+        south_slice[-2], south_slice[-1] = slice(None, -2), slice(1, -1)
+        center = padded[tuple(center_slice)]
+        east = padded[tuple(east_slice)]
+        west = padded[tuple(west_slice)]
+        north = padded[tuple(north_slice)]
+        south = padded[tuple(south_slice)]
+
+    def flux(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        physical = 0.25 * (left * left + right * right)
+        speed = np.maximum(np.abs(left), np.abs(right))
+        return physical - 0.5 * speed * (right - left)
+
+    return (flux(center, east) - flux(west, center)) / dx + (
+        flux(center, north) - flux(south, center)
+    ) / dy
+
+
+def _pde_laplacian(values: np.ndarray, boundary: str, dx: float, dy: float) -> np.ndarray:
+    if boundary == "periodic":
+        return _spectral_operators(values, dx, dy)[2]
+    return _laplacian(values, boundary, dx, dy)
+
+
+def _pde_gradient(
+    values: np.ndarray, boundary: str, dx: float, dy: float
+) -> tuple[np.ndarray, np.ndarray]:
+    if boundary == "periodic":
+        grad_x, grad_y, _ = _spectral_operators(values, dx, dy)
+        return grad_x, grad_y
+    return _gradient(values, boundary, dx, dy)
+
+
+def _periodic_channel_gradient(
+    values: np.ndarray, dx: float, dy: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Second-order derivatives for periodic x and bounded y.
+
+    The quality mask removes the outer y rows and the obstacle halo, so centered
+    y differences are evaluated only where their stencil is physically valid.
+    """
+
+    array = np.asarray(values, dtype=np.float64)
+    grad_x = (np.roll(array, -1, axis=-1) - np.roll(array, 1, axis=-1)) / (2.0 * dx)
+    grad_y = (np.roll(array, -1, axis=-2) - np.roll(array, 1, axis=-2)) / (2.0 * dy)
+    return grad_x, grad_y
+
+
+def _periodic_channel_laplacian(values: np.ndarray, dx: float, dy: float) -> np.ndarray:
+    array = np.asarray(values, dtype=np.float64)
+    return (np.roll(array, -1, axis=-1) - 2.0 * array + np.roll(array, 1, axis=-1)) / dx**2 + (
+        np.roll(array, -1, axis=-2) - 2.0 * array + np.roll(array, 1, axis=-2)
+    ) / dy**2
+
+
 def _variable_diffusion(
     values: np.ndarray,
     coefficient: np.ndarray,
@@ -279,9 +403,17 @@ def _masked_values(values: np.ndarray, mask: np.ndarray | None) -> np.ndarray:
     array = np.asarray(values, dtype=np.float64)
     if mask is None:
         return array.reshape(-1)
-    expanded = np.asarray(mask, dtype=bool)
-    while expanded.ndim < array.ndim:
-        expanded = expanded[None, ...]
+    spatial_mask = np.asarray(mask, dtype=bool)
+    if (
+        spatial_mask.ndim == 2
+        and array.ndim >= 3
+        and tuple(array.shape[-3:-1]) == tuple(spatial_mask.shape)
+    ):
+        expanded = spatial_mask.reshape((1,) * (array.ndim - 3) + spatial_mask.shape + (1,))
+    else:
+        expanded = spatial_mask
+        while expanded.ndim < array.ndim:
+            expanded = expanded[None, ...]
     expanded = np.broadcast_to(expanded, array.shape)
     selected = array[expanded]
     return selected
@@ -365,14 +497,44 @@ def _residual_metrics(
     components: Sequence[np.ndarray],
     mask: np.ndarray | None,
 ) -> dict[str, float]:
+    def normalized(
+        selected_residual: np.ndarray,
+        selected_components: Sequence[np.ndarray],
+    ) -> float:
+        numerator = _rms(selected_residual, mask)
+        denominator = float(sum(_rms(component, mask) for component in selected_components))
+        return _relative(numerator, denominator)
+
     rms = _rms(residual, mask)
     denominator = float(sum(_rms(component, mask) for component in components))
-    return {
+    metrics = {
         "mse": _mse(residual, mask),
         "rms": rms,
         "denominator_rms": denominator,
         "normalized": _relative(rms, denominator),
     }
+    array = np.asarray(residual)
+    if array.ndim >= 3 and array.shape[0] > 0:
+
+        def select_step(component: np.ndarray, index: int | slice) -> np.ndarray:
+            component_array = np.asarray(component)
+            if component_array.ndim == array.ndim and component_array.shape[0] == array.shape[0]:
+                return component_array[index]
+            return component_array
+
+        per_step = [
+            normalized(
+                array[index], tuple(select_step(component, index) for component in components)
+            )
+            for index in range(array.shape[0])
+        ]
+        metrics["first_step_normalized"] = per_step[0]
+        metrics["max_step_normalized"] = max(per_step)
+        if array.shape[0] > 1:
+            metrics["post_initial_normalized"] = normalized(
+                array[1:], tuple(select_step(component, slice(1, None)) for component in components)
+            )
+    return metrics
 
 
 def _boundary_loss(
@@ -388,7 +550,142 @@ def _boundary_loss(
     values = np.asarray(trajectory, dtype=np.float64)
     scale = _rms(values)
     residuals: list[np.ndarray] = []
-    if family == "navier_stokes" and values.shape[-1] == 2:
+    if (
+        family == "navier_stokes"
+        and values.shape[-1] == 1
+        and parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1"
+    ):
+        from .pdes.numerics import (
+            apply_masked_vorticity_boundary,
+            solve_masked_streamfunction,
+        )
+
+        height, width = values.shape[1:3]
+        dx, dy = 1.0 / (width - 1), 1.0 / (height - 1)
+        omega = values[..., 0]
+        scale = _rms(omega)
+        solid = np.asarray(geometry[..., 0] > 0.5, dtype=bool)
+        for frame in omega:
+            expected = frame.copy()
+            _, _, psi = solve_masked_streamfunction(expected, geometry[..., 0], dx, dy)
+            apply_masked_vorticity_boundary(expected, psi, geometry[..., 0], dx, dy)
+            residuals.append((frame - expected)[solid])
+    elif (
+        family == "navier_stokes" and values.shape[-1] == 1 and boundary in {"dirichlet", "neumann"}
+    ):
+        from .pdes.numerics import bounded_velocity_from_vorticity
+
+        height, width = values.shape[1:3]
+        dx, dy = 1.0 / (width - 1), 1.0 / (height - 1)
+        omega = values[..., 0]
+        scale = _rms(omega)
+        if boundary == "neumann":
+            residuals.extend((omega[:, [0, -1], :], omega[:, :, [0, -1]]))
+        else:
+            for frame in omega:
+                _, _, psi = bounded_velocity_from_vorticity(frame, dx, dy)
+                residuals.extend(
+                    (
+                        frame[0, 1:-1] + 2.0 * psi[1, 1:-1] / dy**2,
+                        frame[-1, 1:-1] + 2.0 * psi[-2, 1:-1] / dy**2,
+                        frame[1:-1, 0] + 2.0 * psi[1:-1, 1] / dx**2,
+                        frame[1:-1, -1] + 2.0 * psi[1:-1, -2] / dx**2,
+                    )
+                )
+    elif (
+        family == "navier_stokes"
+        and values.shape[-1] == 3
+        and parameters.get("integrator_id") == "d2q9_bgk_bounceback_channel_v1"
+    ):
+        scale = _rms(values[..., :2])
+        residuals.extend((values[:, [0, -1], :, :2],))
+        solid = np.asarray(geometry[..., 0] > 0.5, dtype=bool).copy()
+        solid[:, [0, -1]] = False
+        solid[[0, -1], :] = True
+        residuals.append(values[:, solid, :2])
+    elif (
+        family == "navier_stokes"
+        and values.shape[-1] == 3
+        and parameters.get("integrator_id") == "periodic_channel_fd2_ssprk2_mac_projection_v1"
+    ):
+        height, width = values.shape[1:3]
+        scale = _rms(values[..., :2])
+        u = np.zeros((values.shape[0], height, width + 1), dtype=np.float64)
+        v = np.zeros((values.shape[0], height + 1, width), dtype=np.float64)
+        u[:, :, :-1] = values[..., 0]
+        u[:, :, -1] = u[:, :, 0]
+        v[:, :-1, :] = values[..., 1]
+        solid = np.asarray(geometry[..., 0] > 0.5, dtype=bool).copy()
+        solid[:, [0, -1]] = False
+        solid[[0, -1], :] = True
+        blocked_u = np.zeros((height, width + 1), dtype=bool)
+        blocked_v = np.zeros((height + 1, width), dtype=bool)
+        blocked_u[:, 1:-1] = solid[:, :-1] | solid[:, 1:]
+        blocked_u[:, 0] = solid[:, -1] | solid[:, 0]
+        blocked_u[:, -1] = blocked_u[:, 0]
+        blocked_v[1:-1, :] = solid[:-1, :] | solid[1:, :]
+        blocked_v[[0, -1], :] = True
+        residuals.extend(
+            (
+                u[:, [0, -1], :],
+                v[:, [0, -1], :],
+                u[:, blocked_u],
+                v[:, blocked_v],
+                u[:, :, 0] - u[:, :, -1],
+            )
+        )
+    elif family == "navier_stokes" and values.shape[-1] == 3:
+        height, width = values.shape[1:3]
+        velocity_scale = _rms(values[..., :2])
+        scale = velocity_scale
+        u = np.zeros((values.shape[0], height, width + 1), dtype=np.float64)
+        v = np.zeros((values.shape[0], height + 1, width), dtype=np.float64)
+        u[:, :, :-1] = values[..., 0]
+        v[:, :-1, :] = values[..., 1]
+        if boundary == "dirichlet":
+            residuals.extend(
+                (
+                    u[:, [0, -1], :],
+                    v[:, :, [0, -1]],
+                    u[:, :, [0, -1]],
+                    v[:, [0, -1], :],
+                )
+            )
+        elif boundary == "neumann":
+            residuals.extend(
+                (
+                    u[:, :, [0, -1]],
+                    v[:, [0, -1], :],
+                    u[:, 0, :] - u[:, 1, :],
+                    u[:, -1, :] - u[:, -2, :],
+                    v[:, :, 0] - v[:, :, 1],
+                    v[:, :, -1] - v[:, :, -2],
+                )
+            )
+        else:
+            y = (np.arange(height, dtype=np.float64) + 0.5) / height
+            speed = _required_finite_parameter(parameters, "inflow_speed", minimum=0.0)
+            profile = 4.0 * speed * y * (1.0 - y)
+            profile[[0, -1]] = 0.0
+            u[:, :, -1] = profile[None, :]
+            residuals.extend(
+                (
+                    u[:, [0, -1], :],
+                    v[:, :, [0, -1]],
+                    v[:, [0, -1], :],
+                    u[:, :, 0] - profile[None, :],
+                    u[:, :, -1] - profile[None, :],
+                )
+            )
+            solid = np.asarray(geometry[..., 0] > 0.5, dtype=bool).copy()
+            solid[:, [0, -1]] = False
+            solid[[0, -1], :] = True
+            blocked_u = np.zeros((height, width + 1), dtype=bool)
+            blocked_v = np.zeros((height + 1, width), dtype=bool)
+            blocked_u[:, 1:-1] = solid[:, :-1] | solid[:, 1:]
+            blocked_v[1:-1, :] = solid[:-1, :] | solid[1:, :]
+            residuals.extend((u[:, blocked_u], v[:, blocked_v]))
+    elif family == "navier_stokes" and values.shape[-1] == 2:
         if boundary == "dirichlet":
             residuals.extend((values[:, [0, -1], :, :], values[:, :, [0, -1], :]))
         elif boundary == "neumann":
@@ -522,7 +819,10 @@ def _static_pde_loss(
     dy: float,
 ) -> tuple[str, dict[str, float]]:
     solution = trajectory[0, ..., 0]
-    if parameters.get("domain_id") != "unit_square_cell_centered_v1":
+    if parameters.get("domain_id") not in {
+        "unit_square_cell_centered_v1",
+        "unit_square_node_centered_v1",
+    }:
         raise QualityError("stored domain_id is missing or unsupported")
     if family == "poisson":
         source = condition[..., 0]
@@ -554,13 +854,17 @@ def _static_pde_loss(
 def _temporal_pde_loss(
     family: str,
     trajectory: np.ndarray,
+    geometry: np.ndarray,
     boundary: str,
     parameters: Mapping[str, Any],
     fluid: np.ndarray,
     dx: float,
     dy: float,
 ) -> tuple[str, dict[str, float], dict[str, float]]:
-    if parameters.get("domain_id") != "unit_square_cell_centered_v1":
+    if parameters.get("domain_id") not in {
+        "unit_square_cell_centered_v1",
+        "unit_square_node_centered_v1",
+    }:
         raise QualityError("stored domain_id is missing or unsupported")
     steps = trajectory.shape[0]
     final_time = _required_finite_parameter(
@@ -575,7 +879,7 @@ def _temporal_pde_loss(
         state = trajectory[..., 0]
         midpoint = 0.5 * (state[:-1] + state[1:])
         time_term = (state[1:] - state[:-1]) / dt
-        laplace = _laplacian(midpoint, boundary, dx, dy)
+        laplace = _pde_laplacian(midpoint, boundary, dx, dy)
         if family == "heat":
             diffusivity = _required_finite_parameter(parameters, "diffusivity", minimum=0.0)
             diffusion = diffusivity * laplace
@@ -592,12 +896,22 @@ def _temporal_pde_loss(
             components = (time_term, diffusion, reaction)
             physics["state_bound_excess"] = float(np.max(np.maximum(np.abs(state) - 1.25, 0.0)))
         else:
-            grad_x, grad_y = _gradient(midpoint, boundary, dx, dy)
-            advection = midpoint * (grad_x + grad_y)
+            advection_scheme = str(parameters.get("advection_scheme", "")).lower()
+            if advection_scheme == "rusanov":
+                advection = _rusanov_flux_divergence(midpoint, boundary, dx, dy)
+            else:
+                grad_x, grad_y = _pde_gradient(midpoint, boundary, dx, dy)
+                advection = midpoint * (grad_x + grad_y)
+                if boundary == "periodic":
+                    advection = _dealias_periodic(advection)
             viscosity = _required_finite_parameter(parameters, "viscosity", minimum=0.0)
             diffusion = viscosity * laplace
             residual = time_term + advection - diffusion
-            operator = "u_t+u*(u_x+u_y)=nu*laplace(u)"
+            operator = (
+                "u_t+div(u^2/2)=nu*laplace(u)"
+                if advection_scheme == "rusanov"
+                else "u_t+u*(u_x+u_y)=nu*laplace(u)"
+            )
             components = (time_term, advection, diffusion)
         return operator, _residual_metrics(residual, components, fluid), physics
 
@@ -605,37 +919,166 @@ def _temporal_pde_loss(
         raise QualityError(f"no temporal PDE residual is registered for {family!r}")
 
     viscosity = _required_finite_parameter(parameters, "viscosity", minimum=0.0)
+    if trajectory.shape[-1] == 3:
+        height, width = trajectory.shape[1:3]
+        collocated_lbm = parameters.get("integrator_id") == "d2q9_bgk_bounceback_channel_v1"
+        projected_channel = (
+            parameters.get("integrator_id") == "periodic_channel_fd2_ssprk2_mac_projection_v1"
+        )
+        if collocated_lbm:
+            velocity_x = trajectory[..., 0]
+            velocity_y = trajectory[..., 1]
+            u_faces = v_faces = None
+        else:
+            u_faces = np.zeros((trajectory.shape[0], height, width + 1), dtype=np.float64)
+            v_faces = np.zeros((trajectory.shape[0], height + 1, width), dtype=np.float64)
+            u_faces[:, :, :-1] = trajectory[..., 0]
+            v_faces[:, :-1, :] = trajectory[..., 1]
+            if projected_channel:
+                u_faces[:, :, -1] = u_faces[:, :, 0]
+            elif boundary == "robin":
+                y = (np.arange(height, dtype=np.float64) + 0.5) / height
+                speed = _required_finite_parameter(parameters, "inflow_speed", minimum=0.0)
+                profile = 4.0 * speed * y * (1.0 - y)
+                profile[[0, -1]] = 0.0
+                u_faces[:, :, -1] = profile[None, :]
+            velocity_x = 0.5 * (u_faces[:, :, :-1] + u_faces[:, :, 1:])
+            velocity_y = 0.5 * (v_faces[:, :-1, :] + v_faces[:, 1:, :])
+        pressure = trajectory[..., 2]
+        u_mid = 0.5 * (velocity_x[:-1] + velocity_x[1:])
+        v_mid = 0.5 * (velocity_y[:-1] + velocity_y[1:])
+        p_mid = 0.5 * (pressure[:-1] + pressure[1:])
+        u_t = (velocity_x[1:] - velocity_x[:-1]) / dt
+        v_t = (velocity_y[1:] - velocity_y[:-1]) / dt
+        derivative_boundary = "periodic_channel" if projected_channel else boundary
+        if derivative_boundary == "periodic_channel":
+            du_dx, du_dy = _periodic_channel_gradient(u_mid, dx, dy)
+            dv_dx, dv_dy = _periodic_channel_gradient(v_mid, dx, dy)
+            pressure_x, pressure_y = _periodic_channel_gradient(p_mid, dx, dy)
+            diffusion_u = viscosity * _periodic_channel_laplacian(u_mid, dx, dy)
+            diffusion_v = viscosity * _periodic_channel_laplacian(v_mid, dx, dy)
+        else:
+            du_dx, du_dy = _pde_gradient(u_mid, boundary, dx, dy)
+            dv_dx, dv_dy = _pde_gradient(v_mid, boundary, dx, dy)
+            pressure_x, pressure_y = _pde_gradient(p_mid, boundary, dx, dy)
+            diffusion_u = viscosity * _pde_laplacian(u_mid, boundary, dx, dy)
+            diffusion_v = viscosity * _pde_laplacian(v_mid, boundary, dx, dy)
+        advection_u = u_mid * du_dx + v_mid * du_dy
+        advection_v = u_mid * dv_dx + v_mid * dv_dy
+        residual = np.stack(
+            (
+                u_t + advection_u + pressure_x - diffusion_u,
+                v_t + advection_v + pressure_y - diffusion_v,
+            ),
+            axis=-1,
+        )
+        components = (
+            np.stack((u_t, v_t), axis=-1),
+            np.stack((advection_u, advection_v), axis=-1),
+            np.stack((pressure_x, pressure_y), axis=-1),
+            np.stack((diffusion_u, diffusion_v), axis=-1),
+        )
+        if collocated_lbm or projected_channel:
+            expected_forcing_id = (
+                "constant_body_force_v1" if projected_channel else "lbm_constant_body_force_v1"
+            )
+            if parameters.get("forcing_id") != expected_forcing_id:
+                raise QualityError("channel momentum residual requires its stored body-force id")
+            body_force = np.zeros_like(residual)
+            body_force[..., 0] = _required_finite_parameter(parameters, "forcing_amplitude")
+            residual -= body_force
+            components = (*components, body_force)
+        if collocated_lbm:
+            divergence_x, _ = _pde_gradient(velocity_x, boundary, dx, dy)
+            _, divergence_y = _pde_gradient(velocity_y, boundary, dx, dy)
+        else:
+            if u_faces is None or v_faces is None:  # pragma: no cover - invariant
+                raise QualityError("MAC faces were not reconstructed")
+            divergence_x = (u_faces[:, :, 1:] - u_faces[:, :, :-1]) / dx
+            divergence_y = (v_faces[:, 1:, :] - v_faces[:, :-1, :]) / dy
+        divergence = divergence_x + divergence_y
+        gradient_scale = _rms(divergence_x, fluid) + _rms(divergence_y, fluid)
+        vorticity = dv_dx - du_dy
+        physics.update(
+            {
+                "divergence_loss_mse": _mse(divergence, fluid),
+                "divergence_loss_normalized": _relative(_rms(divergence, fluid), gradient_scale),
+                "kinetic_energy_relative_change": _relative(
+                    abs(
+                        float(np.mean(velocity_x[-1] ** 2 + velocity_y[-1] ** 2))
+                        - float(np.mean(velocity_x[0] ** 2 + velocity_y[0] ** 2))
+                    ),
+                    float(np.mean(velocity_x[0] ** 2 + velocity_y[0] ** 2)),
+                ),
+                "enstrophy_relative_change": _relative(
+                    abs(float(np.mean(vorticity[-1] ** 2)) - float(np.mean(vorticity[0] ** 2))),
+                    float(np.mean(vorticity[0] ** 2)),
+                ),
+            }
+        )
+        return (
+            "u_t+u*grad(u)=-grad(p)+nu*laplace(u), div(u)=0",
+            _residual_metrics(residual, components, fluid),
+            physics,
+        )
     if trajectory.shape[-1] == 1:
         vorticity = trajectory[..., 0]
-        velocity_x, velocity_y = _stream_velocity(vorticity, dx, dy)
+        if boundary == "periodic":
+            velocity_x, velocity_y = _stream_velocity(vorticity, dx, dy)
+        elif parameters.get("integrator_id") == "dst_vorticity_streamfunction_ssprk2_v1":
+            from .pdes.numerics import bounded_velocity_from_vorticity
+
+            reconstructed = [
+                bounded_velocity_from_vorticity(frame, dx, dy)[:2] for frame in vorticity
+            ]
+            velocity_x = np.stack([item[0] for item in reconstructed])
+            velocity_y = np.stack([item[1] for item in reconstructed])
+        elif parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1":
+            from .pdes.numerics import solve_masked_streamfunction
+
+            reconstructed = [
+                solve_masked_streamfunction(frame, geometry[..., 0], dx, dy)[:2]
+                for frame in vorticity
+            ]
+            velocity_x = np.stack([item[0] for item in reconstructed])
+            velocity_y = np.stack([item[1] for item in reconstructed])
+        else:
+            raise QualityError(
+                "bounded scalar Navier-Stokes state lacks a registered velocity reconstruction"
+            )
     elif trajectory.shape[-1] == 2:
         velocity_x = trajectory[..., 0]
         velocity_y = trajectory[..., 1]
-        dv_dx, _ = _gradient(velocity_y, boundary, dx, dy)
-        _, du_dy = _gradient(velocity_x, boundary, dx, dy)
+        dv_dx, _ = _pde_gradient(velocity_y, boundary, dx, dy)
+        _, du_dy = _pde_gradient(velocity_x, boundary, dx, dy)
         vorticity = dv_dx - du_dy
     else:
-        raise QualityError("Navier-Stokes state must be vorticity1 or velocity2")
+        raise QualityError(
+            "Navier-Stokes state must be vorticity1, legacy velocity2, or MAC velocity-pressure3"
+        )
 
     midpoint = 0.5 * (vorticity[:-1] + vorticity[1:])
     omega_t = (vorticity[1:] - vorticity[:-1]) / dt
-    omega_x, omega_y = _gradient(midpoint, boundary, dx, dy)
+    omega_x, omega_y = _pde_gradient(midpoint, boundary, dx, dy)
     u_mid = 0.5 * (velocity_x[:-1] + velocity_x[1:])
     v_mid = 0.5 * (velocity_y[:-1] + velocity_y[1:])
     advection = u_mid * omega_x + v_mid * omega_y
-    diffusion = viscosity * _laplacian(midpoint, boundary, dx, dy)
+    if boundary == "periodic":
+        advection = _dealias_periodic(advection)
+    diffusion = viscosity * _pde_laplacian(midpoint, boundary, dx, dy)
     forcing_id = parameters.get("forcing_id", "none")
-    if forcing_id == "fno_sine_cosine_v1":
+    if forcing_id in {"fno_sine_cosine_v1", "bounded_sine_cosine_v1"}:
         height, width = midpoint.shape[1:3]
-        x = (np.arange(width, dtype=np.float64) + 0.5) / width
-        y = (np.arange(height, dtype=np.float64) + 0.5) / height
+        if forcing_id == "bounded_sine_cosine_v1":
+            x = np.linspace(0.0, 1.0, width)
+            y = np.linspace(0.0, 1.0, height)
+        else:
+            x = (np.arange(width, dtype=np.float64) + 0.5) / width
+            y = (np.arange(height, dtype=np.float64) + 0.5) / height
         xx, yy = np.meshgrid(x, y)
-        forcing_amplitude = _required_finite_parameter(
-            parameters, "forcing_amplitude", minimum=0.0
-        )
+        forcing_amplitude = _required_finite_parameter(parameters, "forcing_amplitude", minimum=0.0)
         forcing = forcing_amplitude * (
-            np.sin(2.0 * np.pi * (xx + yy))
-            + np.cos(2.0 * np.pi * (xx + yy))
+            np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy))
         )
         residual = omega_t + advection - diffusion - forcing
         components = (omega_t, advection, diffusion, forcing)
@@ -645,8 +1088,8 @@ def _temporal_pde_loss(
     else:
         raise QualityError(f"unsupported Navier-Stokes forcing_id {forcing_id!r}")
 
-    du_dx, _ = _gradient(velocity_x, boundary, dx, dy)
-    _, dv_dy = _gradient(velocity_y, boundary, dx, dy)
+    du_dx, _ = _pde_gradient(velocity_x, boundary, dx, dy)
+    _, dv_dy = _pde_gradient(velocity_y, boundary, dx, dy)
     divergence = du_dx + dv_dy
     gradient_scale = _rms(du_dx, fluid) + _rms(dv_dy, fluid)
     divergence_rms = _rms(divergence, fluid)
@@ -672,6 +1115,216 @@ def _temporal_pde_loss(
         _residual_metrics(residual, components, fluid),
         physics,
     )
+
+
+def _initial_transition_replay_loss(
+    family: str,
+    trajectory: np.ndarray,
+    geometry: np.ndarray,
+    boundary: str,
+    parameters: Mapping[str, Any],
+    dx: float,
+    dy: float,
+) -> float:
+    """Replay only the first saved transition with the declared integrator."""
+
+    from .pdes.numerics import (
+        advance_bounded_mac_state,
+        advance_bounded_velocity,
+        advance_burgers,
+        advance_lbm_channel,
+        advance_masked_vorticity,
+        advance_periodic_vorticity,
+        advance_projected_channel_velocity,
+        advance_reaction_diffusion,
+        crank_nicolson_diffusion,
+        initialize_lbm_distributions,
+        lbm_macroscopic,
+    )
+
+    if trajectory.shape[0] < 2:
+        raise QualityError("initial-transition replay requires at least two frames")
+    final_time = _required_finite_parameter(
+        parameters, "final_time", minimum=0.0, strictly_greater=True
+    )
+    frame_dt = final_time / (trajectory.shape[0] - 1)
+    if family == "heat":
+        expected, _ = crank_nicolson_diffusion(
+            trajectory[0, ..., 0],
+            _required_finite_parameter(parameters, "diffusivity", minimum=0.0),
+            frame_dt,
+            dx,
+            dy,
+            boundary,
+        )
+        observed = trajectory[1, ..., 0]
+    elif family == "reaction_diffusion":
+        expected, _ = advance_reaction_diffusion(
+            trajectory[0, ..., 0],
+            _required_finite_parameter(parameters, "diffusivity", minimum=0.0),
+            _required_finite_parameter(parameters, "reaction_rate", minimum=0.0),
+            frame_dt,
+            dx,
+            dy,
+            boundary,
+        )
+        observed = trajectory[1, ..., 0]
+    elif family == "burgers":
+        expected, _ = advance_burgers(
+            trajectory[0, ..., 0],
+            _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+            frame_dt,
+            dx,
+            dy,
+            boundary,
+            advection_scheme=str(parameters.get("advection_scheme") or "") or None,
+        )
+        observed = trajectory[1, ..., 0]
+    elif family == "navier_stokes" and trajectory.shape[-1] == 1:
+        if boundary == "periodic":
+            if parameters.get("forcing_id") != "fno_sine_cosine_v1":
+                raise QualityError("periodic Navier-Stokes replay requires the stored forcing_id")
+            height, width = trajectory.shape[1:3]
+            x = (np.arange(width, dtype=np.float64) + 0.5) / width
+            y = (np.arange(height, dtype=np.float64) + 0.5) / height
+            xx, yy = np.meshgrid(x, y)
+            amplitude = _required_finite_parameter(parameters, "forcing_amplitude", minimum=0.0)
+            forcing = amplitude * (
+                np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy))
+            )
+            expected, _ = advance_periodic_vorticity(
+                trajectory[0, ..., 0],
+                forcing,
+                _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+                frame_dt,
+                dx,
+                dy,
+                internal_dt=_required_finite_parameter(
+                    parameters,
+                    "internal_time_step",
+                    minimum=0.0,
+                    strictly_greater=True,
+                ),
+            )
+        elif parameters.get("integrator_id") == "dst_vorticity_streamfunction_ssprk2_v1":
+            from .pdes.numerics import advance_bounded_vorticity
+
+            expected, _ = advance_bounded_vorticity(
+                trajectory[0, ..., 0],
+                _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+                frame_dt,
+                dx,
+                dy,
+                boundary,
+            )
+        elif parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1":
+            if parameters.get("forcing_id") != "bounded_sine_cosine_v1":
+                raise QualityError("masked Navier-Stokes replay requires bounded_sine_cosine_v1")
+            height, width = trajectory.shape[1:3]
+            xx, yy = np.meshgrid(
+                np.linspace(0.0, 1.0, width),
+                np.linspace(0.0, 1.0, height),
+            )
+            amplitude = _required_finite_parameter(parameters, "forcing_amplitude", minimum=0.0)
+            forcing = amplitude * (
+                np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy))
+            )
+            expected, _ = advance_masked_vorticity(
+                trajectory[0, ..., 0],
+                geometry[..., 0],
+                forcing,
+                _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+                frame_dt,
+                dx,
+                dy,
+            )
+        else:
+            raise QualityError("bounded vorticity replay lacks a registered integrator")
+        observed = trajectory[1, ..., 0]
+    elif family == "navier_stokes" and trajectory.shape[-1] == 3:
+        integrator_id = parameters.get("integrator_id")
+        if integrator_id == "periodic_channel_fd2_ssprk2_mac_projection_v1":
+            height, width = trajectory.shape[1:3]
+            u_faces = np.zeros((height, width + 1), dtype=np.float64)
+            v_faces = np.zeros((height + 1, width), dtype=np.float64)
+            u_faces[:, :-1] = trajectory[0, ..., 0]
+            u_faces[:, -1] = u_faces[:, 0]
+            v_faces[:-1, :] = trajectory[0, ..., 1]
+            initial_velocity = np.stack(
+                (
+                    0.5 * (u_faces[:, :-1] + u_faces[:, 1:]),
+                    0.5 * (v_faces[:-1, :] + v_faces[1:, :]),
+                ),
+                axis=-1,
+            )
+            expected, _, _ = advance_projected_channel_velocity(
+                initial_velocity,
+                geometry[..., 0],
+                _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+                frame_dt,
+                dx,
+                dy,
+                body_force_x=_required_finite_parameter(parameters, "forcing_amplitude"),
+            )
+        elif integrator_id == "d2q9_bgk_bounceback_channel_v1":
+            lbm_dt = _required_finite_parameter(
+                parameters, "lbm_internal_time_step", minimum=0.0, strictly_greater=True
+            )
+            relaxation = _required_finite_parameter(
+                parameters, "lbm_relaxation_time", minimum=0.5, strictly_greater=True
+            )
+            substeps_value = parameters.get("substeps_per_frame", [])
+            if not isinstance(substeps_value, Sequence) or not substeps_value:
+                raise QualityError("LBM replay requires substeps_per_frame")
+            substeps = int(substeps_value[0])
+            initial_velocity = trajectory[0, ..., :2]
+            initial_pressure = trajectory[0, ..., 2]
+            distributions = initialize_lbm_distributions(
+                initial_velocity, initial_pressure, lbm_dt, dx
+            )
+            distributions = advance_lbm_channel(
+                distributions,
+                geometry[..., 0],
+                substeps,
+                lbm_dt,
+                dx,
+                relaxation,
+                inflow_speed=_required_finite_parameter(parameters, "inflow_speed", minimum=0.0),
+                body_force_x=_required_finite_parameter(parameters, "forcing_amplitude"),
+            )
+            solid = np.asarray(geometry[..., 0] > 0.5, dtype=bool).copy()
+            solid[:, [0, -1]] = False
+            solid[[0, -1], :] = True
+            u, v, pressure = lbm_macroscopic(distributions, solid, lbm_dt, dx)
+            expected = np.stack((u, v, pressure), axis=-1)
+        else:
+            expected, _ = advance_bounded_mac_state(
+                trajectory[0],
+                geometry[..., 0],
+                _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+                frame_dt,
+                dx,
+                dy,
+                boundary,
+                inflow_speed=_required_finite_parameter(parameters, "inflow_speed", minimum=0.0),
+            )
+        observed = trajectory[1]
+    elif family == "navier_stokes" and trajectory.shape[-1] == 2:
+        expected, _ = advance_bounded_velocity(
+            trajectory[0],
+            geometry[..., 0],
+            _required_finite_parameter(parameters, "viscosity", minimum=0.0),
+            frame_dt,
+            dx,
+            dy,
+            boundary,
+            inflow_speed=_required_finite_parameter(parameters, "inflow_speed", minimum=0.0),
+        )
+        observed = trajectory[1]
+    else:
+        raise QualityError(f"no initial-transition replay is registered for {family!r}")
+    error = np.asarray(observed, dtype=np.float64) - np.asarray(expected, dtype=np.float64)
+    return _relative(_rms(error), _rms(observed) + _rms(expected))
 
 
 def _check_max(value: float | None, threshold: float | None) -> str:
@@ -701,7 +1354,10 @@ def evaluate_sample_quality(
     trajectory = np.asarray(sample.trajectory, dtype=np.float64)
     geometry = np.asarray(sample.geometry, dtype=np.float64)
     height, width = trajectory.shape[1:3]
-    dx, dy = 1.0 / width, 1.0 / height
+    if parameters.get("domain_id") == "unit_square_node_centered_v1":
+        dx, dy = 1.0 / (width - 1), 1.0 / (height - 1)
+    else:
+        dx, dy = 1.0 / width, 1.0 / height
     fluid = _active_stencil_mask(geometry, boundary)
 
     array_contract_errors: list[str] = []
@@ -709,10 +1365,24 @@ def evaluate_sample_quality(
         array_contract_errors.append(f"geometry channels={geometry.shape[-1]} (expected 1)")
     stored_representation = metadata.get("state_representation")
     if is_builtin:
-        expected_channels = 2 if family == "navier_stokes" and boundary != "periodic" else 1
+        expected_channels = (
+            1
+            if family == "navier_stokes"
+            and boundary == "robin"
+            and parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1"
+            else 3
+            if family == "navier_stokes" and boundary == "robin"
+            else 1
+        )
         expected_representation = (
-            "velocity"
-            if expected_channels == 2
+            "bounded_obstacle_vorticity"
+            if family == "navier_stokes"
+            and boundary == "robin"
+            and parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1"
+            else "collocated_velocity_pressure"
+            if family == "navier_stokes" and boundary == "robin"
+            else "bounded_vorticity"
+            if family == "navier_stokes" and boundary in {"dirichlet", "neumann"}
             else "vorticity"
             if family == "navier_stokes"
             else "scalar"
@@ -799,6 +1469,7 @@ def evaluate_sample_quality(
                 pde_operator, pde_metrics, physics = _temporal_pde_loss(
                     family,
                     trajectory,
+                    geometry,
                     boundary,
                     parameters,
                     fluid,
@@ -812,6 +1483,34 @@ def evaluate_sample_quality(
             pde_reason = str(exc)
     elif active_cells > 0:
         pde_reason = "no family-specific residual is registered"
+
+    initial_transition_replay: float | None = None
+    initial_transition_reason: str | None = None
+    if is_builtin and family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}:
+        try:
+            initial_transition_replay = _initial_transition_replay_loss(
+                family,
+                trajectory,
+                geometry,
+                boundary,
+                parameters,
+                dx,
+                dy,
+            )
+        except (QualityError, FloatingPointError, ValueError, RuntimeError) as exc:
+            initial_transition_reason = str(exc)
+        else:
+            if not np.isfinite(initial_transition_replay):
+                initial_transition_reason = "initial-transition replay produced a non-finite loss"
+                initial_transition_replay = None
+
+    if (
+        pde_available
+        and initial_transition_replay is not None
+        and "post_initial_normalized" in pde_metrics
+    ):
+        pde_metrics["all_steps_normalized"] = pde_metrics["normalized"]
+        pde_metrics["normalized"] = pde_metrics["post_initial_normalized"]
 
     first = trajectory[0]
     last = trajectory[-1]
@@ -921,7 +1620,11 @@ def evaluate_sample_quality(
                 "does not identify that transfer."
             )
     elif family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}:
-        pde_loss_interpretation = "saved_frame_balance_not_integrator_replay_error"
+        pde_loss_interpretation = (
+            "post_initial_saved_frame_balance_with_separate_initial_transition_replay"
+        )
+        if initial_transition_reason:
+            notes.append("Initial-transition replay unavailable: " + initial_transition_reason)
     if array_contract_errors:
         notes.append("Array contract failed: " + "; ".join(array_contract_errors))
     if boundary_reason:
@@ -933,11 +1636,52 @@ def evaluate_sample_quality(
             "pressure and the hidden transported vorticity are not stored."
         )
     if boundary != "periodic" and family == "navier_stokes":
-        notes.append(
-            "The bounded solver uses a MAC pressure projection.  The stored velocity-only "
-            "state still permits only a curl-reconstructed PDE diagnostic; pressure is not "
-            "part of the canonical state."
-        )
+        if trajectory.shape[-1] == 3:
+            if parameters.get("integrator_id") == "periodic_channel_fd2_ssprk2_mac_projection_v1":
+                notes.append(
+                    "The B3 obstacle state stores MAC face velocities and pressure from "
+                    "a streamwise-periodic D2Q9 predictor followed by an explicit "
+                    "pressure projection; momentum, discrete divergence, walls, obstacle "
+                    "faces, and exact first-frame replay are all measured."
+                )
+            elif parameters.get("integrator_id") == "d2q9_bgk_bounceback_channel_v1":
+                notes.append(
+                    "The B3 obstacle state stores collocated velocity and pressure from a "
+                    "streamwise-periodic D2Q9 channel; momentum, divergence, walls, and "
+                    "bounce-back obstacle values are measured explicitly."
+                )
+            else:
+                notes.append(
+                    "The bounded state stores native MAC face velocities and cell pressure; "
+                    "momentum and discrete incompressibility are evaluated without inferring "
+                    "a hidden pressure."
+                )
+        elif trajectory.shape[-1] == 1:
+            if parameters.get("integrator_id") == "masked_vorticity_streamfunction_ssprk2_v1":
+                notes.append(
+                    "The obstacle state stores vorticity; the registered sparse "
+                    "masked-streamfunction reconstruction and Thom boundary update "
+                    "measure the complete fluid-domain vorticity equation, discrete "
+                    "incompressibility, walls, and obstacle constraints."
+                )
+            elif boundary == "neumann":
+                notes.append(
+                    "The rectangular free-slip state stores vorticity; the registered "
+                    "DST streamfunction reconstruction measures the complete vorticity "
+                    "equation, discrete incompressibility, and free-slip boundary."
+                )
+            else:
+                notes.append(
+                    "The rectangular no-slip state stores vorticity; the registered "
+                    "DST streamfunction reconstruction and wall-vorticity update "
+                    "measure the complete vorticity equation, discrete "
+                    "incompressibility, and no-slip boundary."
+                )
+        else:
+            notes.append(
+                "The legacy bounded velocity-only state permits only a curl-reconstructed "
+                "PDE diagnostic; pressure is not stored."
+            )
 
     metrics: dict[str, float | None] = {
         "finite_fraction": finite_fraction,
@@ -947,10 +1691,17 @@ def evaluate_sample_quality(
         "active_stencil_fraction": float(active_cells / max(height * width, 1)),
         "initial_condition_loss_normalized": initial_loss,
         "boundary_condition_loss_normalized": boundary_loss,
+        "initial_transition_replay_loss_normalized": initial_transition_replay,
         "pde_loss_mse": pde_metrics.get("mse") if pde_available else None,
         "pde_loss_rms": pde_metrics.get("rms") if pde_available else None,
         "pde_loss_denominator_rms": (pde_metrics.get("denominator_rms") if pde_available else None),
         "pde_loss_normalized": pde_metrics.get("normalized") if pde_available else None,
+        "pde_loss_all_steps_normalized": (
+            pde_metrics.get("all_steps_normalized") if pde_available else None
+        ),
+        "pde_loss_first_step_strong_normalized": (
+            pde_metrics.get("first_step_normalized") if pde_available else None
+        ),
         **physics,
     }
     thresholds = dict(quality_config["thresholds"])
@@ -982,6 +1733,14 @@ def evaluate_sample_quality(
             else ("fail" if quality_config["require_pde_loss"] else "unavailable")
         ),
     }
+    if is_builtin and family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}:
+        checks["initial_transition_contract"] = (
+            "pass" if initial_transition_replay is not None else "fail"
+        )
+        checks["initial_transition_replay"] = _check_max(
+            initial_transition_replay,
+            thresholds["initial_transition_replay_loss_normalized_max"],
+        )
     if is_builtin:
         # Built-in generation promises a registered, finite residual even in
         # report mode.  Missing/invalid physical parameters must quarantine the
@@ -1001,9 +1760,17 @@ def evaluate_sample_quality(
         if family == "helmholtz" and parameters.get("quality_residual_contract"):
             operator_id = str(parameters["quality_residual_contract"])
     elif is_builtin and family == "navier_stokes" and trajectory.shape[-1] == 2:
-        operator_id = "pdeobs.quality.navier_stokes.curl_fd2_saved_frame_partial_v1"
+        operator_id = str(
+            parameters.get("quality_residual_contract")
+            or "pdeobs.quality.navier_stokes.curl_fd2_saved_frame_partial_v1"
+        )
     elif is_builtin:
-        operator_id = f"pdeobs.quality.{family}.midpoint_fd2_saved_frame_v1"
+        declared_contract = parameters.get("quality_residual_contract")
+        if declared_contract:
+            operator_id = str(declared_contract)
+        else:
+            spatial_scheme = "spectral" if boundary == "periodic" else "fd2"
+            operator_id = f"pdeobs.quality.{family}.midpoint_{spatial_scheme}_saved_frame_v1"
     if trajectory.shape[0] > 1:
         try:
             saved_dt = _required_finite_parameter(
@@ -1170,6 +1937,7 @@ def generation_quality_rejected(quality: Mapping[str, Any]) -> bool:
         "array_contract",
         "active_domain",
         "pde_residual_contract",
+        "initial_transition_contract",
     )
     if isinstance(checks, Mapping) and any(
         checks.get(name) == "fail" for name in hard_contract_checks

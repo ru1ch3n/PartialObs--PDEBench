@@ -344,7 +344,6 @@
     }
     if (state.quality === "publication") {
       reasons.push("use an explicit expert config only after an external trusted verifier exists for solver evidence and the per-stratum threshold table");
-      reasons.push("use a complete bounded Navier-Stokes residual contract; velocity-only storage is currently partial");
     }
     if (!reasons.length) return "";
     return [
@@ -367,17 +366,19 @@
         "# Then paste the remaining commands only after the SeaWulf prompt appears.",
         "set -Eeuo pipefail",
         "module load slurm",
-        ...common,
+        'export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"',
+        'mkdir -p "$PDEOBS_BASE"',
+        'git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git "$PDEOBS_BASE/PartialObs--PDEBench"',
+        'cd "$PDEOBS_BASE/PartialObs--PDEBench"',
         "git checkout YOUR_RELEASE_TAG_OR_COMMIT",
-        `export PDEOBS_GROUP=${shellQuote(state.group)}`,
         'export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"',
-        'export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"',
+        'export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"',
         `export PDEOBS_DATA=${shellQuote(state.dataRoot)}`,
         `export PDEOBS_RUNS=${shellQuote(state.runRoot)}`,
         'mkdir -p logs "$PDEOBS_DATA" "$PDEOBS_RUNS"',
         "",
         "# Build only inside a compute allocation, never on the login node.",
-        "srun --partition=short-40core-shared --nodes=1 --ntasks=1 \\",
+        "srun --partition=short-96core-shared --nodes=1 --ntasks=1 \\",
         "  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l",
         "bash hpc/seawulf/bootstrap.sh",
         "exit",
@@ -455,12 +456,6 @@
       !["heat", "reaction_diffusion", "burgers", "navier_stokes"].includes(state.pde)
     ) {
       return "world modeling requires a temporal PDE family";
-    }
-    if (
-      state.pde === "navier_stokes" &&
-      state.boundary !== "periodic"
-    ) {
-      return "bounded Navier-Stokes stores two-channel velocity and needs an explicit two-channel experiment preset";
     }
     return "";
   }
@@ -775,8 +770,8 @@
     if (state.quality === "publication") {
       if (state.pde !== "all") messages.push("Publication-candidate mode requires all seven PDE families.");
       if (state.threshold === null) messages.push("Publication-candidate mode requires a frozen, family/boundary/resolution-calibrated PDE-loss limit.");
-      messages.push("The Builder will not submit publication-candidate generation. Use an explicit expert config only after validated solver/evidence, a per-stratum threshold table, and a complete bounded Navier-Stokes residual contract exist.");
-      messages.push("A validated plugin alone is insufficient for bounded Navier-Stokes while velocity-only storage permits only a partial residual diagnostic.");
+      messages.push("The Builder will not submit publication-candidate generation. Use an explicit expert config only after validated solver/evidence and a per-stratum threshold table exist.");
+      messages.push("Current bounded Navier-Stokes quality uses a registered vorticity/streamfunction residual; any replacement solver must register an equally complete versioned contract.");
       messages.push("Even after this candidate gate passes, publication_ready remains false until the canonical full-factor expected plan/checksums and independent release evidence pass.");
     }
     if (state.tier === "full") {

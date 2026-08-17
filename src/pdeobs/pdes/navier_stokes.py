@@ -11,9 +11,7 @@ from .common import (
     Resolution,
     add_channel,
     apply_scalar_boundary,
-    apply_velocity_boundary,
     build_output,
-    gradient,
     grid,
     make_geometry,
     make_rng,
@@ -24,48 +22,30 @@ from .common import (
     parse_resolution,
     resolve_time_steps,
 )
-from .numerics import advance_bounded_velocity, advance_periodic_vorticity
+from .numerics import (
+    advance_bounded_vorticity,
+    advance_masked_vorticity,
+    advance_periodic_vorticity,
+    apply_masked_vorticity_boundary,
+    apply_vorticity_wall_boundary,
+    bounded_velocity_from_vorticity,
+    solve_masked_streamfunction,
+)
 
 FAMILY = "navier_stokes"
 DEFAULT_TIME_STEPS = 9
 # Regime labels increase Reynolds-like difficulty, so viscosity decreases.
 VISCOSITY_BY_REGIME = {"low": 0.02, "medium": 0.008, "high": 0.0025}
 VORTICITY_SCALE_BY_REGIME = {"low": 2.0, "medium": 3.0, "high": 4.0}
-
-
-def _interior_obstacle(geometry: np.ndarray) -> np.ndarray:
-    solid = geometry > 0.5
-    solid = solid.copy()
-    solid[[0, -1], :] = False
-    solid[:, [0, -1]] = False
-    return solid
-
-
-def _velocity_state(
-    latent: np.ndarray,
-    boundary: str,
-    geometry: np.ndarray,
-    dx: float,
-    dy: float,
-    inflow_speed: float,
-) -> np.ndarray:
-    # A bounded streamfunction construction gives a discretely compatible
-    # initial velocity without invoking the periodic Biot--Savart inverse.
-    height, width = latent.shape
-    x = (np.arange(width, dtype=np.float64) + 0.5) / width
-    y = (np.arange(height, dtype=np.float64) + 0.5) / height
-    xx, yy = np.meshgrid(x, y)
-    streamfunction = latent * np.sin(np.pi * xx) * np.sin(np.pi * yy)
-    psi_x, psi_y = gradient(streamfunction, "dirichlet", dx, dy)
-    velocity_x, velocity_y = psi_y, -psi_x
-    velocity = np.stack((velocity_x, velocity_y), axis=-1)
-    apply_velocity_boundary(
-        velocity,
-        boundary,
-        geometry=add_channel(geometry),
-        inflow_speed=inflow_speed,
-    )
-    return velocity
+# Match the reference Fourier Neural Operator data-generation solver.  This is
+# the integrator step, independent of the much coarser saved-frame cadence.
+PERIODIC_INTERNAL_TIME_STEP = 1.0e-4
+SOLVER_BY_BOUNDARY = {
+    "periodic": "fno_spectral_vorticity",
+    "dirichlet": "dst_no_slip_vorticity",
+    "neumann": "dst_free_slip_vorticity",
+    "robin": "masked_obstacle_vorticity",
+}
 
 
 def generate(
@@ -77,24 +57,33 @@ def generate(
     time_steps: int | None = None,
     *,
     final_time: float = 0.4,
-    inflow_speed: float = 0.75,
+    inflow_speed: float = 0.08,
+    solver: str | None = None,
     dtype: Any = np.float32,
 ) -> PDEOutput:
     """Generate an incompressible flow with topology-matched solvers.
 
-    Periodic samples expose scalar vorticity, matching spectral flow
-    benchmarks.  Wall and B3 obstacle/inflow samples expose two velocity
-    channels.  Periodic samples use the FNO-style dealiased vorticity
-    pseudospectral integrator.  Bounded samples use a staggered pressure
-    projection; no periodic update is hidden under their wall values.
+    Every route stores scalar vorticity. Periodic samples use the FNO-style
+    dealiased pseudospectral integrator. Rectangular wall cases use a
+    DST-diagonalized bounded streamfunction, and B3 obstacle cases use a sparse
+    streamfunction solve on the true fluid mask with Thom wall vorticity. No
+    bounded route hides a periodic update beneath overwritten wall values.
     """
 
     boundary = normalize_boundary(boundary)
     setting = normalize_setting(setting)
     regime = normalize_regime(regime)
+    solver_route = str(solver or SOLVER_BY_BOUNDARY[boundary]).strip().lower()
+    if solver_route != SOLVER_BY_BOUNDARY[boundary]:
+        raise ValueError(
+            f"solver {solver_route!r} is not registered for Navier-Stokes "
+            f"boundary {boundary!r}; expected {SOLVER_BY_BOUNDARY[boundary]!r}"
+        )
     steps = resolve_time_steps(time_steps, temporal=True)
     height, width = parse_resolution(resolution)
     _, _, dx, dy = grid((height, width))
+    if boundary != "periodic":
+        dx, dy = 1.0 / (width - 1), 1.0 / (height - 1)
     if float(final_time) < 0.0:
         raise ValueError("final_time must be non-negative")
     if float(inflow_speed) < 0.0:
@@ -109,7 +98,7 @@ def generate(
     )
     if boundary == "periodic":
         vorticity -= float(np.mean(vorticity))
-    else:
+    elif boundary in {"dirichlet", "neumann"}:
         apply_scalar_boundary(vorticity, boundary)
     geometry = make_geometry(
         boundary,
@@ -117,69 +106,93 @@ def generate(
         family=FAMILY,
         rng=make_rng(seed, 701),
     )
-    obstacle = _interior_obstacle(geometry)
+    frame_dt = float(final_time) / max(steps - 1, 1)
     if boundary == "periodic":
         initial_encoded = add_channel(vorticity.copy())
+        initial_projection: dict[str, float | int] = {}
+    elif boundary in {"dirichlet", "neumann"}:
+        _, _, initial_streamfunction = bounded_velocity_from_vorticity(vorticity, dx, dy)
+        apply_vorticity_wall_boundary(vorticity, initial_streamfunction, boundary, dx, dy)
+        initial_encoded = add_channel(vorticity.copy())
+        initial_projection = {}
     else:
-        initial_encoded = _velocity_state(
-            vorticity, boundary, geometry, dx, dy, float(inflow_speed)
-        )
-        initial_encoded[obstacle] = 0.0
+        _, _, initial_streamfunction = solve_masked_streamfunction(vorticity, geometry, dx, dy)
+        apply_masked_vorticity_boundary(vorticity, initial_streamfunction, geometry, dx, dy)
+        initial_encoded = add_channel(vorticity.copy())
+        initial_projection = {}
     encoded_states = [initial_encoded.copy()]
     total_substeps = 0
     substeps_per_frame: list[int] = []
     max_courant = 0.0
-    pressure_iterations_max = 0
-    pressure_relative_residual_max = 0.0
-    divergence_loss_normalized_solver = 0.0
-    xx, yy, _, _ = grid((height, width))
-    forcing = 0.1 * (
-        np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy))
+    pressure_iterations_max = int(initial_projection.get("pressure_iterations_max", 0))
+    pressure_relative_residual_max = float(
+        initial_projection.get("pressure_relative_residual_max", 0.0)
     )
+    divergence_loss_normalized_solver = float(
+        initial_projection.get("divergence_loss_normalized_solver", 0.0)
+    )
+    if boundary == "robin":
+        xx, yy = np.meshgrid(
+            np.linspace(0.0, 1.0, width),
+            np.linspace(0.0, 1.0, height),
+        )
+    else:
+        xx, yy, _, _ = grid((height, width))
+    forcing = 0.1 * (np.sin(2.0 * np.pi * (xx + yy)) + np.cos(2.0 * np.pi * (xx + yy)))
     if steps > 1:
-        frame_dt = float(final_time) / (steps - 1)
         if boundary == "periodic":
             for _ in range(1, steps):
                 vorticity, substeps = advance_periodic_vorticity(
-                    vorticity, forcing, viscosity, frame_dt, dx, dy
+                    vorticity,
+                    forcing,
+                    viscosity,
+                    frame_dt,
+                    dx,
+                    dy,
+                    internal_dt=PERIODIC_INTERNAL_TIME_STEP,
                 )
                 total_substeps += substeps
                 substeps_per_frame.append(substeps)
                 encoded_states.append(add_channel(vorticity.copy()))
-        else:
-            velocity = initial_encoded.copy()
+        elif boundary in {"dirichlet", "neumann"}:
             for _ in range(1, steps):
-                speed = np.linalg.norm(velocity, axis=-1)
-                max_courant = max(
-                    max_courant,
-                    float(np.max(speed)) * frame_dt / min(dx, dy),
-                )
-                velocity, diagnostics = advance_bounded_velocity(
-                    velocity,
-                    geometry,
+                vorticity, diagnostics = advance_bounded_vorticity(
+                    vorticity,
                     viscosity,
                     frame_dt,
                     dx,
                     dy,
                     boundary,
-                    inflow_speed=float(inflow_speed),
                 )
                 substeps = int(diagnostics["substeps"])
                 total_substeps += substeps
                 substeps_per_frame.append(substeps)
-                pressure_iterations_max = max(
-                    pressure_iterations_max,
-                    int(diagnostics["pressure_iterations_max"]),
-                )
-                pressure_relative_residual_max = max(
-                    pressure_relative_residual_max,
-                    float(diagnostics["pressure_relative_residual_max"]),
-                )
+                max_courant = max(max_courant, float(diagnostics["max_courant"]))
                 divergence_loss_normalized_solver = max(
                     divergence_loss_normalized_solver,
                     float(diagnostics["divergence_loss_normalized_solver"]),
                 )
-                encoded_states.append(velocity.copy())
+                encoded_states.append(add_channel(vorticity.copy()))
+        else:
+            for _ in range(1, steps):
+                vorticity, diagnostics = advance_masked_vorticity(
+                    vorticity,
+                    geometry,
+                    forcing,
+                    viscosity,
+                    frame_dt,
+                    dx,
+                    dy,
+                )
+                substeps = int(diagnostics["substeps"])
+                total_substeps += substeps
+                substeps_per_frame.append(substeps)
+                max_courant = max(max_courant, float(diagnostics["max_courant"]))
+                divergence_loss_normalized_solver = max(
+                    divergence_loss_normalized_solver,
+                    float(diagnostics["divergence_loss_normalized_solver"]),
+                )
+                encoded_states.append(add_channel(vorticity.copy()))
 
     trajectory = np.stack(encoded_states, axis=0)
     return build_output(
@@ -206,19 +219,52 @@ def generate(
             "pressure_iterations_max": pressure_iterations_max,
             "pressure_relative_residual_max": pressure_relative_residual_max,
             "divergence_loss_normalized_solver": divergence_loss_normalized_solver,
-            "forcing_id": "fno_sine_cosine_v1" if boundary == "periodic" else "none",
-            "forcing_amplitude": 0.1 if boundary == "periodic" else 0.0,
+            "forcing_id": (
+                "fno_sine_cosine_v1"
+                if boundary == "periodic"
+                else "bounded_sine_cosine_v1"
+                if boundary == "robin"
+                else "none"
+            ),
+            "forcing_amplitude": (
+                0.1 if boundary == "periodic" else 0.1 if boundary == "robin" else 0.0
+            ),
+            "internal_time_step": (PERIODIC_INTERNAL_TIME_STEP if boundary == "periodic" else 0.0),
             "integrator_id": (
                 "fno_dealiased_vorticity_cn_v2"
                 if boundary == "periodic"
-                else "mac_projection_fd2_v2"
+                else "dst_vorticity_streamfunction_ssprk2_v1"
+                if boundary in {"dirichlet", "neumann"}
+                else "masked_vorticity_streamfunction_ssprk2_v1"
             ),
             "quality_residual_contract": (
-                "pdeobs.quality.navier_stokes.vorticity_forced_fd2_v2"
+                "pdeobs.quality.navier_stokes.post_initial_vorticity_spectral_plus_replay_v3"
                 if boundary == "periodic"
-                else "pdeobs.quality.navier_stokes.velocity_curl_partial_v2"
+                else "pdeobs.quality.navier_stokes.post_initial_vorticity_fd2_plus_replay_v1"
+                if boundary in {"dirichlet", "neumann"}
+                else "pdeobs.quality.navier_stokes.masked_vorticity_fd2_plus_replay_v1"
+            ),
+            "state_representation": (
+                "vorticity"
+                if boundary == "periodic"
+                else "bounded_vorticity"
+                if boundary in {"dirichlet", "neumann"}
+                else "bounded_obstacle_vorticity"
+            ),
+            "domain_id": (
+                "unit_square_node_centered_v1"
+                if boundary != "periodic"
+                else "unit_square_cell_centered_v1"
+            ),
+            "boundary_operator_id": (
+                f"pdeobs.navier_stokes.{boundary}.vorticity_streamfunction_v1"
+                if boundary in {"dirichlet", "neumann"}
+                else f"pdeobs.navier_stokes.{boundary}.masked_vorticity_streamfunction_v1"
+                if boundary == "robin"
+                else "pdeobs.navier_stokes.periodic.spectral_v1"
             ),
             "state_channels": int(trajectory.shape[-1]),
+            "solver_route": solver_route,
         },
         dtype=dtype,
     )

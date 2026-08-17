@@ -35,6 +35,7 @@ if [[ "$task_count" != 840 || "$sample_count" != 5600 ]]; then
 fi
 
 concurrency="${PDEOBS_GENERATION_CONCURRENCY:-20}"
+partition="${PDEOBS_CPU_PARTITION:-short-96core-shared}"
 if [[ ! "$concurrency" =~ ^[1-9][0-9]*$ ]] || (( concurrency > 40 )); then
   echo "PDEOBS_GENERATION_CONCURRENCY must be an integer from 1 through 40." >&2
   exit 2
@@ -48,7 +49,7 @@ for start in 0 100 200 300 400 500 600 700 800; do
   dependency=()
   [[ -n "$previous" ]] && dependency=(--dependency="afterok:$previous")
   job="$(sbatch --parsable \
-    --partition=short-40core-shared \
+    --partition="$partition" \
     --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=4G --time=04:00:00 \
     --array="${start}-${stop}%${concurrency}" \
     "${dependency[@]}" \
@@ -59,7 +60,7 @@ for start in 0 100 200 300 400 500 600 700 800; do
 done
 
 aggregate="$(sbatch --parsable \
-  --partition=short-40core-shared \
+  --partition="$partition" \
   --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=04:00:00 \
   --dependency="afterok:$previous" \
   hpc/seawulf/aggregate_cpu.sbatch \
@@ -76,6 +77,7 @@ campaign="$PDEOBS_DATA/numerics-validation20.campaign.txt"
   echo "task_count=$task_count"
   echo "sample_count=$sample_count"
   echo "concurrency=$concurrency"
+  echo "partition=$partition"
   echo "window_jobs=${window_ids[*]}"
   echo "aggregate_job=$aggregate"
   echo "publication_ready=false"
@@ -87,4 +89,3 @@ echo "aggregate: $aggregate"
 echo "campaign record: $campaign"
 echo "No model-training job was submitted."
 squeue -j "$(IFS=,; echo "${window_ids[*]}")",$aggregate
-

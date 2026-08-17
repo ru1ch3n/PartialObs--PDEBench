@@ -74,7 +74,8 @@ def test_navier_stokes_state_channels_follow_geometry_protocol():
     periodic = generate_sample("navier_stokes", boundary="periodic", resolution=8)
     obstacle = generate_sample("navier_stokes", boundary="robin_obstacle", resolution=8)
     assert periodic.trajectory.shape == (9, 8, 8, 1)  # vorticity
-    assert obstacle.trajectory.shape == (9, 8, 8, 2)  # velocity components
+    assert obstacle.trajectory.shape == (9, 8, 8, 1)  # obstacle-domain vorticity
+    assert obstacle.parameters["state_representation"] == "bounded_obstacle_vorticity"
     assert obstacle.geometry[..., 0].any()
 
 

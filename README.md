@@ -28,8 +28,9 @@ this repository.
 
 > **Scientific status:** the generator is undergoing numerical revalidation.
 > Periodic solvers now follow the FNO/DiffusionPDE spectral protocols and
-> bounded solvers use boundary-consistent finite-difference/finite-volume or
-> pressure-projection operators. They are **not paper ground truth until the
+> bounded solvers use boundary-consistent finite-difference/finite-volume and
+> topology-matched vorticity--streamfunction operators. They are **not paper
+> ground truth until the
 > checked-in convergence gate passes**. The active campaign is data-only: first
 > the seven-PDE demo, then 20 samples for every factor combination (5,600 total).
 > No model training and no 560,000-sample full generation should be submitted
@@ -134,14 +135,14 @@ For a tailored PDE/boundary/setting slice, use the
 It generates local, Linux-server, and SeaWulf commands together with report and
 strict quality profiles plus per-PDE loss reporting. The publication-candidate
 choice is shown but intentionally blocked until a trusted external evidence
-verifier, per-stratum thresholds, and a complete bounded Navier-Stokes residual
-contract exist. Rejected samples are logged in `*.quality-failures.jsonl`.
+verifier and frozen per-stratum thresholds exist. Rejected samples are logged
+in `*.quality-failures.jsonl`.
 
 The same planner can describe `medium` and `full`, but do not publish those
 outputs from the bundled compact solvers as benchmark ground truth. First
 complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md). A
-validated solver plugin is also required, but by itself is insufficient for the
-current velocity-only bounded Navier-Stokes quality contract.
+validated solver plugin is also required and must provide a registered
+case-specific residual/solver-evidence contract.
 
 For the primary IID observation comparison, normal trainable operator
 baselines use a separate checkpoint for every PDE family and every one of the

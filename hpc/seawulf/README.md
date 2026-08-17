@@ -12,6 +12,17 @@ combination. Do not submit the 560,000-sample paper tier until its PDE-loss and
 refinement reports are accepted. See
 [`docs/NUMERICAL_VALIDATION.md`](../../docs/NUMERICAL_VALIDATION.md).
 
+Ground truth is generated before any observation protocol is selected. Solver
+routes may differ by PDE/boundary/setting/regime, but random/grid/block/line/
+boundary/clustered masks are applied only later by `BenchmarkDataset`; they
+never change the stored physical field or trajectory.
+
+The current validated route map uses spectral FNO-style periodic flow,
+DST vorticity--streamfunction solvers for rectangular no-slip/free-slip flow,
+and a masked sparse streamfunction/Thom-wall solver for obstacle flow. The
+resolved plan also records denser saved frames for the difficult Burgers
+threshold and Navier--Stokes multi-frequency cases.
+
 For a scratch-only working layout (checkout, environment, caches, data, runs,
 and logs), use:
 
@@ -71,6 +82,7 @@ Only after the demo passes:
 
 ```bash
 export PDEOBS_GENERATION_CONCURRENCY=20
+export PDEOBS_CPU_PARTITION=short-96core-shared
 bash hpc/seawulf/submit_validation20.sh
 ```
 
@@ -80,6 +92,11 @@ strict aggregate job. It writes
 `$PDEOBS_DATA/numerics-validation20.campaign.txt`. No training job is submitted.
 Use `PDEOBS_GENERATION_CONCURRENCY=8` for the first filesystem pilot if the
 current queue or GPFS load is high; increase only after `seff`/throughput data.
+Each generation task is intentionally single-core: one plan row is serial, so
+requesting 8 CPUs for one row wastes cores. Use more CPU capacity by running
+more independent array elements concurrently, while watching GPFS throughput
+and `MaxRSS`. The current tested starting point is 20 one-core writers on
+`short-96core-shared`; the script permits up to 40 after measurement.
 
 ### C. Approval boundary
 
@@ -97,8 +114,11 @@ the campaign revision:
 ```bash
 ssh YOUR_NETID@milan.seawulf.stonybrook.edu
 module load slurm
-git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
-cd PartialObs--PDEBench
+export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"
+mkdir -p "$PDEOBS_BASE"
+git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git \
+  "$PDEOBS_BASE/PartialObs--PDEBench"
+cd "$PDEOBS_BASE/PartialObs--PDEBench"
 git checkout YOUR_RELEASE_TAG_OR_COMMIT
 ```
 
@@ -108,9 +128,8 @@ the revision recorded at submission.
 ## 2. Choose persistent and scratch locations
 
 ```bash
-export PDEOBS_GROUP=YOUR_GROUP
 export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
-export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
 export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
 export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
 mkdir -p logs "$(dirname "$PDEOBS_ENV")" \
@@ -156,7 +175,7 @@ wheelhouse, including `setuptools` and `wheel`, and set `PDEOBS_WHEELHOUSE`
 before running the bootstrap script. For an archival campaign, also save an
 exact environment export beside its plan and validation report.
 
-## 4. Run the dependency-chained smoke workflow
+## 4. Run the dependency-chained storage smoke workflow
 
 ```bash
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \
@@ -176,25 +195,19 @@ aggregation_job="$(sbatch --parsable \
   "$PDEOBS_DATA/plans/smoke.jsonl")"
 aggregation_job="${aggregation_job%%;*}"
 
-training_job="$(sbatch --parsable \
-  --dependency="afterok:${aggregation_job}" \
-  hpc/seawulf/train_gpu.sbatch \
-  configs/experiment/recovery_unet_smoke.yaml \
-  --output "$PDEOBS_RUNS/smoke-train")"
-training_job="${training_job%%;*}"
-
-echo "generation=$generation_job aggregation=$aggregation_job training=$training_job"
-squeue -j "$generation_job,$aggregation_job,$training_job"
+echo "generation=$generation_job aggregation=$aggregation_job"
+squeue -j "$generation_job,$aggregation_job"
 ```
 
 The aggregate job validates checksums and exact plan coverage. Because each
 step uses `afterok`, a failure prevents downstream work from starting. Inspect
 `logs/`, `sacct -j JOB_ID`, and `seff JOB_ID` before proceeding.
 
-## 5. Run the strict signal-tier recovery example
+## 5. Run a strict signal-tier data example
 
 This focused example generates one 34-sample low-regime shard with real
-train/validation/test coverage, validates it, trains, and evaluates:
+train/validation/test coverage and validates its stored data. It submits no
+model training:
 
 ```bash
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \
@@ -213,19 +226,8 @@ signal_check_job="$(sbatch --parsable --dependency="afterok:${signal_job}" \
   "$PDEOBS_DATA/plans/recovery-signal.jsonl")"
 signal_check_job="${signal_check_job%%;*}"
 
-signal_train_job="$(sbatch --parsable --dependency="afterok:${signal_check_job}" \
-  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet.yaml \
-  --output "$PDEOBS_RUNS/recovery-signal")"
-signal_train_job="${signal_train_job%%;*}"
-
-signal_eval_job="$(sbatch --parsable --dependency="afterok:${signal_train_job}" \
-  hpc/seawulf/evaluate_gpu.sbatch configs/experiment/recovery_unet.yaml \
-  "$PDEOBS_RUNS/recovery-signal/checkpoints/best.pt" \
-  --output "$PDEOBS_RUNS/recovery-signal/metrics.json")"
-signal_eval_job="${signal_eval_job%%;*}"
-
-echo "generation=$signal_job validation=$signal_check_job training=$signal_train_job evaluation=$signal_eval_job"
-squeue -j "$signal_job,$signal_check_job,$signal_train_job,$signal_eval_job"
+echo "generation=$signal_job validation=$signal_check_job"
+squeue -j "$signal_job,$signal_check_job"
 ```
 
 ## 6. Scale to a factorized tier
@@ -237,7 +239,7 @@ squeue -j "$signal_job,$signal_check_job,$signal_train_job,$signal_eval_job"
 
 bash hpc/seawulf/submit_generation.sh \
   "$PDEOBS_DATA/plans/tiny.jsonl" \
-  configs/dataset/default.yaml \
+  "$PDEOBS_DATA/plans/tiny.resolved.yaml" \
   "$PDEOBS_DATA/tiny" \
   0 99
 ```
@@ -255,11 +257,14 @@ plan index; `%${PDEOBS_GENERATION_CONCURRENCY:-4}` in the array request limits
 simultaneously running tasks. Confirm current site policy before changing either
 limit.
 
-The 560,000-sample full tier is approximately **296 GiB raw** before HDF5
-compression. Compression depends strongly on the generated fields. Budget
-additional scratch space for partial shards, logs, metadata, and any curated
-copy to project storage; generate `tiny` first and measure its realized size
-before reserving space for `full`.
+With the current per-case saved-frame protocol, the 560,000-sample full tier is
+approximately **4.4 TB raw** before HDF5 compression, not the old 296 GiB
+estimate based on nine frames everywhere. Compression depends strongly on the
+fields. Budget substantial headroom for partial shards, logs, metadata, and a
+curated copy. The eventual full config should use shards of at most 200 samples
+so the slowest bounded Burgers tasks remain under the four-hour CPU-queue
+limit; this implies about 3,360 independent generation tasks. Measure the
+5,600-sample validation campaign before freezing those resources.
 
 After every array window succeeds, strictly validate the exact plan:
 
@@ -305,26 +310,21 @@ matching dataset checksum/quality gate and checkpoint succeed. See
 method-specific reuse rules, Navier-Stokes representation constraints, and the
 reduced full-tier anchor recommendation.
 
-## 8. Monitor, resume, and evaluate
+## 8. Monitor and resume data generation
 
 ```bash
 squeue --user="$USER"
 sacct -j JOB_ID
 seff JOB_ID
 
-sbatch hpc/seawulf/train_gpu.sbatch \
-  configs/experiment/recovery_unet.yaml \
-  --output "$PDEOBS_RUNS/recovery-signal" \
-  --resume "$PDEOBS_RUNS/recovery-signal/checkpoints/last.pt"
 ```
 
-The default A100 scripts request one GPU, eight CPU cores, 64 GB memory, and
-eight hours. Change resources at submission time when measurements justify it;
-variables are not expanded in `#SBATCH` headers. The trainer writes resumable
-checkpoints; if a run reaches the time limit, resubmit with
-`--resume /path/to/checkpoints/last.pt`. Always ensure a training configuration's
-`data.root` matches the tier you generated; the checked-in recovery example
-uses `$PDEOBS_DATA/signal`.
+Generation resumes at shard boundaries and within atomic partial shards.
+Completed shards are skipped only after checksum and completion-record
+validation. Do not use `--force` for normal recovery. If a task dies while
+holding a shard lock, use `squeue` and `sacct` to prove the owning job is gone
+before removing only that exact stale lock. Model-training instructions are
+intentionally deferred until the dataset campaign is accepted.
 
 Official references:
 

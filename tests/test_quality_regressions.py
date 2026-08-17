@@ -231,7 +231,7 @@ def test_nonfinite_bounded_navier_stokes_parameter_remains_unsupported() -> None
 
     report = evaluate_sample_quality(malformed)
 
-    assert sample.trajectory.shape[-1] == 2
+    assert sample.trajectory.shape[-1] == 1
     assert report["pde_loss"]["available"] is False
     assert report["pde_loss"]["status"] == "unsupported"
     assert "viscosity" in report["pde_loss"]["reason"]

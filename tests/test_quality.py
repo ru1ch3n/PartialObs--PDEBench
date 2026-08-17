@@ -72,6 +72,37 @@ def test_every_builtin_family_reports_finite_json_quality(periodic_samples, fami
     json.dumps(report, allow_nan=False, sort_keys=True)
 
 
+@pytest.mark.parametrize(
+    "family",
+    ("heat", "reaction_diffusion", "burgers", "navier_stokes"),
+)
+def test_periodic_temporal_quality_uses_declared_spectral_operator(periodic_samples, family):
+    report = evaluate_sample_quality(periodic_samples[family])
+
+    assert "spectral" in report["operator_id"]
+    assert (
+        report["operator_id"]
+        == periodic_samples[family].metadata["parameters"]["quality_residual_contract"]
+    )
+
+
+@pytest.mark.parametrize(
+    "family",
+    ("heat", "reaction_diffusion", "burgers", "navier_stokes"),
+)
+def test_temporal_quality_separates_initial_replay_from_saved_frame_balance(
+    periodic_samples, family
+):
+    report = evaluate_sample_quality(periodic_samples[family])
+
+    assert report["checks"]["initial_transition_contract"] == "pass"
+    assert report["checks"]["initial_transition_replay"] == "pass"
+    assert report["metrics"]["initial_transition_replay_loss_normalized"] < 5.0e-6
+    assert report["metrics"]["pde_loss_all_steps_normalized"] is not None
+    assert report["metrics"]["pde_loss_first_step_strong_normalized"] is not None
+    assert report["pde_loss"]["normalized"] == report["pde_loss"]["post_initial_normalized"]
+
+
 @pytest.mark.parametrize("family", BUILTIN_PDE_FAMILIES)
 def test_family_residual_is_sensitive_to_grid_scale_trajectory_error(periodic_samples, family):
     sample = periodic_samples[family]
@@ -272,8 +303,7 @@ def test_helmholtz_report_is_nominal_equation_loss_not_a_validation_claim(period
     assert report["publication_ready"] is False
 
 
-
-def test_bounded_navier_stokes_reports_curl_and_divergence_without_paper_ready_claim():
+def test_bounded_navier_stokes_reports_vorticity_and_divergence():
     output = generate_sample(
         "navier_stokes",
         boundary="dirichlet",
@@ -286,10 +316,10 @@ def test_bounded_navier_stokes_reports_curl_and_divergence_without_paper_ready_c
     sample = _as_sample(output)
     report = evaluate_sample_quality(sample)
 
-    assert sample.trajectory.shape[-1] == 2
+    assert sample.trajectory.shape[-1] == 1
     assert report["operator"] == "omega_t+u*omega_x+v*omega_y=nu*laplace(omega)"
     assert report["pde_loss"]["available"] is True
-    assert report["pde_loss"]["status"] == "partial"
+    assert report["pde_loss"]["status"] == "measured"
     assert np.isfinite(report["metrics"]["divergence_loss_normalized"])
     assert report["checks"]["incompressibility"] == "reported"
     assert report["status"] == "warning"
@@ -352,7 +382,7 @@ def test_dataset_gate_rejects_missing_records_and_partial_pde_losses(periodic_sa
     assert summary["missing_quality_count"] == 1
     assert gate["status"] == "fail"
     assert any("no quality record" in reason for reason in gate["reasons"])
-    assert any("not fully measured" in reason for reason in gate["reasons"])
+    assert summary["by_pde"]["navier_stokes"]["pde_loss_status_counts"].get("partial", 0) == 0
     assert gate["publication_ready"] is False
 
 

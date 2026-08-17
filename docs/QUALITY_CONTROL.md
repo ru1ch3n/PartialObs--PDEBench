@@ -56,13 +56,13 @@ resolution, saved-frame interval, and solver implementation.
 |---|---|---|
 | Darcy | `-div(a grad(u)) - f` | Uses arithmetic face coefficients. The compact reference uses the identified fixed forcing `unit_square_sine_mix_v1`; an external solver must record its forcing identity or field. |
 | Poisson | `-laplace(u) - f` | A static nominal-equation residual on the stored solution. |
-| Helmholtz | `(-laplace - k^2)u - f` | This is the **nominal real Helmholtz loss**. The compact solver uses a damped, regularized real spectral transfer. A separate transfer-consistency defect is required before interpreting this loss as validation of that regularized solver. |
+| Helmholtz | `(-laplace - k^2)u - f` | This is the nominal real Helmholtz loss. The current validation candidate uses the boundary-specific sparse FD BVP operator. Legacy regularized-transfer shards retain a separate transfer defect and must not be mixed with this operator version. |
 | Heat | `u_t - D laplace(u)` | Uses differences between saved frames and a midpoint spatial operator. It is a saved-frame defect, not an integrator replay/local-truncation error. |
 | Reaction-diffusion | `u_t - D laplace(u) - r(u-u^3)` | Measures the implemented scalar Allen-Cahn-like equation and also reports state-bound excess. |
 | Burgers | `u_t + u(u_x+u_y) - nu laplace(u)` | Measures the implemented scalar two-dimensional transport equation. It is not a vector Burgers momentum residual. |
-| Navier-Stokes | `omega_t + u omega_x + v omega_y - nu laplace(omega)` | Periodic samples store vorticity, from which velocity is reconstructed. Bounded samples store velocity and the report differentiates it to obtain curl. For bounded/obstacle data this is a **partial curl diagnostic**, not a full momentum-plus-pressure residual; divergence and boundary losses must be inspected separately. |
+| Navier-Stokes | `omega_t + u omega_x + v omega_y - nu laplace(omega)` | All current validation routes store vorticity. Periodic velocity is reconstructed spectrally; rectangular bounded velocity uses a DST streamfunction; obstacle velocity uses the registered sparse masked streamfunction. The complete vorticity balance, divergence, boundary/obstacle defect, and exact first-transition replay are reported separately. |
 
-The version 1.0 residual mask excludes the outer stencil cell for bounded
+The version 1.1 residual mask excludes the outer stencil cell for bounded
 domains and excludes solid geometry plus a one-cell obstacle halo. Release
 calibration must validate and freeze that mask together with the operators; it
 must not tune the mask after seeing benchmark results.
@@ -189,8 +189,8 @@ Before changing `report` data into publication data:
 Threshold changes create a new quality-protocol version. They must never be
 selected to improve a submitted model's benchmark score.
 
-The current bounded Navier-Stokes representation stores velocity only. Its curl
-residual is necessarily `partial`; a validated plugin alone cannot make the
-full 7×4×10 matrix publication-ready without a versioned state/residual contract
-that stores enough information for a complete momentum/pressure or equivalent
-vetted diagnostic.
+The current bounded Navier-Stokes validation representation stores native
+vorticity and records the exact rectangular or masked velocity-reconstruction
+operator. A future plugin may use a different state, but it must register and
+version an equally complete residual, divergence, geometry, and boundary
+contract; changing only a fidelity label is never sufficient.

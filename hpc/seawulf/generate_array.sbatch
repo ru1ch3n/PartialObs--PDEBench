@@ -3,8 +3,8 @@
 #SBATCH --partition=short-40core-shared
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4G
 #SBATCH --time=04:00:00
 #SBATCH --array=0-0
 #SBATCH --output=logs/%x_%A_%a.out

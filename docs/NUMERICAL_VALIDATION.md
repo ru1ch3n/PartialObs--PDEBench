@@ -9,8 +9,9 @@ The previous compact bounded solvers applied a periodic Fourier interior step
 and then overwrote boundary cells. That is not a consistent bounded-domain
 discretization and is no longer the numerical protocol:
 
-- periodic Navier--Stokes uses the FNO/DiffusionPDE vorticity--streamfunction
-  pseudospectral method, 2/3 dealiasing, and a Crank--Nicolson viscosity update;
+- periodic Navier--Stokes uses the FNO vorticity--streamfunction
+  pseudospectral method, 2/3 dealiasing, a Crank--Nicolson viscosity update,
+  and the reference solver's `1e-4` internal time step;
 - periodic scalar diffusion uses its Fourier solution operator;
 - bounded scalar elliptic/diffusion problems use second-order flux/finite-
   difference operators whose Dirichlet, Neumann, or Robin equations are part of
@@ -19,18 +20,24 @@ discretization and is no longer the numerical protocol:
   Jacobi count;
 - Helmholtz solves the nominal real BVP. It no longer substitutes the real
   part of a damped periodic transfer;
-- bounded Navier--Stokes uses staggered face velocities, a pressure-Poisson
-  solve, and a MAC projection. Periodic Biot--Savart reconstruction is not
-  used as a bounded solver;
+- rectangular no-slip and free-slip Navier--Stokes use a DST-diagonalized
+  bounded streamfunction solve and wall-vorticity updates;
+- obstacle/Robin Navier--Stokes uses a sparse streamfunction solve on the true
+  fluid mask, Thom wall/obstacle vorticity, and SSP-RK2. It never applies a
+  periodic update and then overwrites wall cells;
 - nonlinear temporal solvers use substeps and record their Courant number,
   iteration counts, convergence residuals, and any clipping.
 
 The FNO reference directly covers Burgers, Darcy, and periodic Navier--Stokes.
-DiffusionPDE uses the same family of generators, adds second-order finite
-differences for Poisson/Helmholtz, and describes MAC pressure projection for
-bounded Navier--Stokes. Our four-boundary, ten-setting matrix is an explicit
-extension and must therefore pass its own convergence study; an upstream name
-is not validation by itself.
+DiffusionPDE uses the same family of generators and adds second-order finite
+differences for Poisson/Helmholtz. Our four-boundary, ten-setting matrix and
+bounded-flow routes are explicit extensions and must therefore pass their own
+convergence study; an upstream name is not validation by itself.
+
+Solver choice and saved-frame density are explicit per-case protocol fields.
+They may vary by PDE, boundary, setting, and regime. Observation masks are not
+solver inputs: every complete ground-truth field/trajectory is generated and
+checksummed first, and masks are deterministic dataset views applied later.
 
 Primary references:
 
@@ -54,6 +61,14 @@ paper tier. Its aggregate must report all seven normalized PDE losses,
 boundary losses, divergence where applicable, missing/invalid quality counts,
 and worst sample IDs. The true `full=2000` campaign remains blocked until the
 report and refinement evidence are reviewed.
+
+The SeaWulf one-sample-per-stratum preflight covered all 840
+PDE/boundary/setting/regime combinations at 128x128. After targeted saved-frame
+refinement, the observed worst normalized PDE loss was below `0.05`; exact
+first-transition replay remained about `1e-8`, bounded-flow divergence about
+`1e-15`, and boundary losses about `1e-7` or smaller. These are preflight
+results, not release evidence: the 5,600-sample run is required to test seed
+variation before thresholds are frozen.
 
 The bundled PDE generators are compact development references. This checklist
 defines the minimum gate before generated arrays can be called PDE-OBS paper
@@ -93,10 +108,11 @@ For every family, boundary, setting, and physical regime used in a release:
   not validate the latter.
 - For periodic Navier-Stokes, validate the vorticity residual, velocity
   reconstruction, divergence, energy, and enstrophy behavior.
-- For bounded/obstacle Navier-Stokes, a curl residual reconstructed from stored
-  velocity is only a partial diagnostic. Release evidence also needs a full
-  momentum/pressure residual or hidden validated state, plus divergence,
-  no-penetration, wall/obstacle constraints, and interface-convergence tests.
+- For bounded/obstacle Navier-Stokes, the stored state is native vorticity.
+  The registered rectangular or masked streamfunction reconstruction measures
+  the complete vorticity equation, discrete incompressibility, wall/obstacle
+  constraints, and exact first-transition replay. Release evidence still
+  requires spatial/interface refinement against an independent reference.
 - For temporal families, distinguish the residual between saved frames from an
   integrator replay or local-truncation defect and report both when claiming
   time-integration accuracy.

@@ -341,12 +341,12 @@ def validate_hdf5_shard(
                     family = str(spec.get("pde"))
                     boundary = str(spec.get("boundary", "periodic"))
                     if family in BUILTIN_PDE_FAMILIES:
-                        expected_channels = (
-                            2 if family == "navier_stokes" and boundary != "periodic" else 1
-                        )
+                        expected_channels = 1
                         expected_representation = (
-                            "velocity"
-                            if expected_channels == 2
+                            "bounded_obstacle_vorticity"
+                            if family == "navier_stokes" and boundary in {"robin", "robin_obstacle"}
+                            else "bounded_vorticity"
+                            if family == "navier_stokes" and boundary in {"dirichlet", "neumann"}
                             else "vorticity"
                             if family == "navier_stokes"
                             else "scalar"
@@ -416,7 +416,12 @@ def validate_hdf5_shard(
                             expected_channels = {
                                 "scalar": 1,
                                 "vorticity": 1,
+                                "bounded_vorticity": 1,
+                                "bounded_obstacle_vorticity": 1,
                                 "velocity": 2,
+                                "mac_velocity_pressure": 3,
+                                "collocated_velocity_pressure": 3,
+                                "projected_mac_velocity_pressure": 3,
                             }.get(str(representation))
                             if (
                                 expected_channels is not None
@@ -433,7 +438,7 @@ def validate_hdf5_shard(
                                     f"{shard}:metadata[{index}].quality must be a mapping"
                                 )
                             expected_quality = {
-                                "schema_version": "1.0",
+                                "schema_version": QUALITY_SCHEMA_VERSION,
                                 "pde": row.get("pde"),
                                 "boundary": row.get("boundary"),
                                 "resolution": spatial_list,

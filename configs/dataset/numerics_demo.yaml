@@ -13,8 +13,23 @@ families:
 boundaries: [periodic]
 settings: [smooth_grf]
 
+trajectory_steps_by_family:
+  heat: 129
+  reaction_diffusion: 257
+  burgers: 257
+  navier_stokes: 33
+
+solver_options_by_case:
+  navier_stokes/periodic: {solver: fno_spectral_vorticity}
+
+quality:
+  profile: strict
+  require_pde_loss: true
+  thresholds:
+    pde_loss_normalized_max: 0.05
+    divergence_loss_normalized_max: 1.0e-6
+
 output:
   root: ${PDEOBS_DATA:-datasets}/numerics-demo
   atomic: true
   checksum: sha256
-

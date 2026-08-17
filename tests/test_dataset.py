@@ -45,6 +45,41 @@ def test_recovery_dataset_filters_and_applies_exact_mask(tmp_path: Path) -> None
     assert np.count_nonzero(batch["observations"]) == 5
 
 
+def test_observation_protocol_never_changes_stored_ground_truth(tmp_path: Path) -> None:
+    shard = tmp_path / "immutable-ground-truth.h5"
+    trajectory = np.arange(3 * 8 * 8, dtype=np.float32).reshape(3, 8, 8, 1)
+    condition = trajectory[0].copy()
+    geometry = np.zeros((8, 8, 1), dtype=bool)
+    with AtomicHDF5ShardWriter(shard, expected_count=1, spec={"test": True}) as writer:
+        writer.append(
+            Sample(
+                condition=condition,
+                trajectory=trajectory,
+                geometry=geometry,
+                metadata={"sample_id": "immutable-0", "split": "train", "pde": "heat"},
+            )
+        )
+
+    sparse = BenchmarkDataset(
+        shard,
+        task="recovery",
+        mask={"protocol": "random", "count": 5},
+        verify=True,
+    )[0]
+    structured = BenchmarkDataset(
+        shard,
+        task="recovery",
+        mask={"protocol": "grid", "spacing": 2},
+        verify=True,
+    )[0]
+
+    assert not np.array_equal(sparse["mask"], structured["mask"])
+    np.testing.assert_array_equal(sparse["target"], trajectory[-1])
+    np.testing.assert_array_equal(structured["target"], trajectory[-1])
+    np.testing.assert_array_equal(sparse["target"], structured["target"])
+    np.testing.assert_array_equal(sparse["geometry"], structured["geometry"])
+
+
 def test_rollout_uses_requested_sparse_history_and_future_horizon(tmp_path: Path) -> None:
     shard = tmp_path / "temporal.h5"
     trajectory = np.arange(6 * 8 * 8, dtype=np.float32).reshape(6, 8, 8, 1)

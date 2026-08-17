@@ -57,7 +57,7 @@
       "value": "navier_stokes",
       "label": "Navier-Stokes",
       "loss": "omega_t + velocity dot grad(omega) - nu Laplacian(omega)",
-      "note": "Periodic vorticity residual; bounded velocity-only data use a labeled partial curl diagnostic, plus divergence and boundary losses."
+      "note": "Periodic, rectangular bounded, and obstacle routes store vorticity and use their registered spectral, DST, or masked-streamfunction reconstruction; divergence and boundary losses are reported separately."
     }
   ],
   "boundaries": [
@@ -840,7 +840,7 @@
       "warning": "These are unmeasured planning estimates, not benchmark results. Dataset-size quartering is not a validated scaling law for PINNs, diffusion sampling, or fixed-cost prior training. SeaWulf uses a shared A100 queue, so this dedicated-A6000 scenario is not a SeaWulf capacity promise."
     },
     "scientific_caveats": [
-      "Periodic Navier-Stokes stores one-channel vorticity while bounded and obstacle cases store two-channel velocity; one cross-boundary checkpoint requires a standardized representation or representation-specific models.",
+      "All current Navier-Stokes validation routes store one-channel vorticity, but periodic, rectangular, and obstacle cases use different registered velocity-reconstruction and geometry operators; a cross-boundary checkpoint must retain that topology metadata.",
       "Gappy POD must fit only on the canonical training split; fitting the basis on validation or test records is leakage.",
       "The block-missing view observes 75% of the grid and is not density-matched to the approximately 3% structured views.",
       "Classical per-instance PINN and amortized PINO are not interchangeable; the frozen job counts require one operator-level implementation choice.",
@@ -1255,7 +1255,7 @@
     {
       "value": "publication",
       "label": "Publication-candidate quality gate",
-      "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, a per-stratum frozen threshold table, and a complete bounded Navier-Stokes residual contract. The current package intentionally keeps the candidate gate and publication_ready false."
+      "note": "Expert-only and blocked by the Builder: requires all seven families, an external trusted verifier for solver evidence, and a per-stratum frozen threshold table. The current package intentionally keeps the candidate gate and publication_ready false."
     }
   ],
   "quality_outputs": [

@@ -22,7 +22,7 @@ from .common import (
     parse_resolution,
     resolve_time_steps,
 )
-from .numerics import crank_nicolson_diffusion
+from .numerics import advance_reaction_diffusion
 
 FAMILY = "reaction_diffusion"
 DEFAULT_TIME_STEPS = 9
@@ -63,36 +63,26 @@ def generate(
     maximum_solver_residual = 0.0
     if steps > 1:
         frame_dt = float(final_time) / (steps - 1)
-        substeps = max(1, int(np.ceil(reaction_rate * frame_dt / 0.18)))
-        dt = frame_dt / substeps
         state = initial.copy()
         for _ in range(1, steps):
-            for _ in range(substeps):
-                half_decay = np.exp(-reaction_rate * dt)
-                denominator = np.sqrt(
-                    np.maximum(
-                        state**2 + (1.0 - state**2) * half_decay,
-                        np.finfo(np.float64).eps,
-                    )
-                )
-                state = state / denominator
-                state, solver = crank_nicolson_diffusion(
-                    state, float(diffusivity), dt, dx, dy, boundary
-                )
-                maximum_solver_iterations = max(
-                    maximum_solver_iterations, solver.iterations
-                )
-                maximum_solver_residual = max(
-                    maximum_solver_residual, solver.relative_residual
-                )
-                denominator = np.sqrt(
-                    np.maximum(
-                        state**2 + (1.0 - state**2) * half_decay,
-                        np.finfo(np.float64).eps,
-                    )
-                )
-                state = state / denominator
-                apply_scalar_boundary(state, boundary)
+            state, diagnostics = advance_reaction_diffusion(
+                state,
+                float(diffusivity),
+                reaction_rate,
+                frame_dt,
+                dx,
+                dy,
+                boundary,
+            )
+            substeps = int(diagnostics["substeps"])
+            maximum_solver_iterations = max(
+                maximum_solver_iterations,
+                int(diagnostics["linear_solver_iterations_max"]),
+            )
+            maximum_solver_residual = max(
+                maximum_solver_residual,
+                float(diagnostics["linear_solver_relative_residual_max"]),
+            )
             states.append(state.copy())
     else:
         substeps = 0
@@ -128,7 +118,9 @@ def generate(
                 else "strang_exact_reaction_fd2_cn_boundary_v2"
             ),
             "quality_residual_contract": (
-                "pdeobs.quality.reaction_diffusion.fd2_saved_frame_v1"
+                "pdeobs.quality.reaction_diffusion.post_initial_spectral_plus_replay_v2"
+                if boundary == "periodic"
+                else "pdeobs.quality.reaction_diffusion.post_initial_fd2_plus_replay_v2"
             ),
         },
         dtype=dtype,
