@@ -103,6 +103,33 @@ def test_temporal_quality_separates_initial_replay_from_saved_frame_balance(
     assert report["pde_loss"]["normalized"] == report["pde_loss"]["post_initial_normalized"]
 
 
+def test_periodic_heat_uses_exact_semigroup_loss_and_reports_fd2_strong_form():
+    output = generate_sample(
+        "heat",
+        boundary="periodic",
+        setting="multi_frequency_fourier",
+        regime="high",
+        seed=17,
+        resolution=32,
+        time_steps=33,
+    )
+    report = evaluate_sample_quality(
+        _as_sample(output),
+        config={"profile": "strict", "thresholds": {"pde_loss_normalized_max": 5.0e-5}},
+    )
+
+    assert report["status"] == "pass"
+    assert report["operator"] == "u[n+1]=exp(D*dt*laplace)u[n]"
+    assert "spectral_semigroup" in report["operator_id"]
+    assert report["metrics"]["pde_loss_normalized"] < 5.0e-5
+    assert report["metrics"]["initial_transition_replay_loss_normalized"] < 5.0e-6
+    assert report["metrics"]["auxiliary_fd2_strong_form_normalized"] is not None
+    assert (
+        report["metrics"]["pde_loss_first_step_strong_normalized"]
+        == report["metrics"]["auxiliary_fd2_strong_form_first_step_normalized"]
+    )
+
+
 @pytest.mark.parametrize("family", BUILTIN_PDE_FAMILIES)
 def test_family_residual_is_sensitive_to_grid_scale_trajectory_error(periodic_samples, family):
     sample = periodic_samples[family]

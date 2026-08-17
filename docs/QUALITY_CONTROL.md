@@ -14,7 +14,7 @@ until the independent convergence and reference-solver gate in
 
 ## Stable report contract
 
-Quality records use `schema_version: "1.0"` and contain only JSON-compatible
+Quality records use `schema_version: "1.3"` and contain only JSON-compatible
 values. Every sample record includes:
 
 - PDE family, boundary protocol, discrete operator label, and solver fidelity;
@@ -57,12 +57,14 @@ resolution, saved-frame interval, and solver implementation.
 | Darcy | `-div(a grad(u)) - f` | Uses arithmetic face coefficients. The compact reference uses the identified fixed forcing `unit_square_sine_mix_v1`; an external solver must record its forcing identity or field. |
 | Poisson | `-laplace(u) - f` | A static nominal-equation residual on the stored solution. |
 | Helmholtz | `(-laplace - k^2)u - f` | This is the nominal real Helmholtz loss. The current validation candidate uses the boundary-specific sparse FD BVP operator. Legacy regularized-transfer shards retain a separate transfer defect and must not be mixed with this operator version. |
-| Heat | `u_t - D laplace(u)` | Uses differences between saved frames and a midpoint spatial operator. It is a saved-frame defect, not an integrator replay/local-truncation error. |
+| Heat | periodic: `u[n+1] - exp(D dt laplace)u[n]`; bounded: `u_t - D laplace(u)` | The periodic FNO-style Fourier route uses its exact discrete heat-semigroup defect as the primary PDE loss and also reports the FD2 saved-frame strong form as an auxiliary metric. Bounded routes use their boundary-consistent FD2/CN operator. |
 | Reaction-diffusion | `u_t - D laplace(u) - r(u-u^3)` | Measures the implemented scalar Allen-Cahn-like equation and also reports state-bound excess. |
 | Burgers | `u_t + u(u_x+u_y) - nu laplace(u)` | Measures the implemented scalar two-dimensional transport equation. It is not a vector Burgers momentum residual. |
 | Navier-Stokes | `omega_t + u omega_x + v omega_y - nu laplace(omega)` | All current validation routes store vorticity. Periodic velocity is reconstructed spectrally; rectangular bounded velocity uses a DST streamfunction; obstacle velocity uses the registered sparse masked streamfunction. The complete vorticity balance, divergence, boundary/obstacle defect, and exact first-transition replay are reported separately. |
 
-The version 1.1 residual mask excludes the outer stencil cell for bounded
+The version 1.3 residual contract selects the measurement operator by solver
+route; this prevents a spectral solution from being rejected merely because a
+different FD stencil was used for auditing. The residual mask excludes the outer stencil cell for bounded
 domains and excludes solid geometry plus a one-cell obstacle halo. Release
 calibration must validate and freeze that mask together with the operators; it
 must not tune the mask after seeing benchmark results.

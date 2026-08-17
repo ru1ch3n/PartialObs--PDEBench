@@ -82,21 +82,27 @@ Only after the demo passes:
 
 ```bash
 export PDEOBS_GENERATION_CONCURRENCY=20
-export PDEOBS_CPU_PARTITION=short-96core-shared
+export PDEOBS_CPU_PARTITION=short-40core-shared
+export PDEOBS_VALIDATION_CAMPAIGN="numerics-validation20-$(git rev-parse --short=8 HEAD)"
 bash hpc/seawulf/submit_validation20.sh
 ```
 
-The script verifies exactly 840 generation rows and 5,600 samples, submits nine
-dependency-chained windows of at most 100 single-core tasks, then submits one
-strict aggregate job. It writes
-`$PDEOBS_DATA/numerics-validation20.campaign.txt`. No training job is submitted.
+The script verifies exactly 840 generation rows and 5,600 samples and submits
+one window of at most 99 single-core tasks per invocation. SeaWulf currently
+counts array elements against a 100-job per-user QOS, so immediately queueing
+all nine windows is unsafe. Wait until every element in the recorded window is
+`COMPLETED`, inspect any failure records, then rerun the same command; the
+campaign ledger supplies the next start index and refuses to continue after a
+failure. The final invocation submits the strict aggregate job. It writes
+`$PDEOBS_DATA/$PDEOBS_VALIDATION_CAMPAIGN.campaign.txt`. No training job is
+submitted.
 Use `PDEOBS_GENERATION_CONCURRENCY=8` for the first filesystem pilot if the
 current queue or GPFS load is high; increase only after `seff`/throughput data.
 Each generation task is intentionally single-core: one plan row is serial, so
 requesting 8 CPUs for one row wastes cores. Use more CPU capacity by running
 more independent array elements concurrently, while watching GPFS throughput
 and `MaxRSS`. The current tested starting point is 20 one-core writers on
-`short-96core-shared`; the script permits up to 40 after measurement.
+`short-40core-shared`; the script permits up to 40 after measurement.
 
 ### C. Approval boundary
 

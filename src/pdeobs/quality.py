@@ -24,7 +24,7 @@ import numpy as np
 
 from .schema import Sample, json_safe
 
-QUALITY_SCHEMA_VERSION = "1.2"
+QUALITY_SCHEMA_VERSION = "1.3"
 BUILTIN_PDE_FAMILIES = (
     "darcy",
     "poisson",
@@ -887,9 +887,34 @@ def _temporal_pde_loss(
         if family == "heat":
             diffusivity = _required_finite_parameter(parameters, "diffusivity", minimum=0.0)
             diffusion = diffusivity * laplace
-            residual = time_term - diffusion
-            operator = "u_t=D*laplace(u)"
-            components = (time_term, diffusion)
+            strong_residual = time_term - diffusion
+            strong_components = (time_term, diffusion)
+            if (
+                boundary == "periodic"
+                and parameters.get("integrator_id") == "fourier_exact_diffusion_v2"
+            ):
+                height, width = state.shape[1:]
+                ky = 2.0 * np.pi * np.fft.fftfreq(height, d=dy)
+                kx = 2.0 * np.pi * np.fft.fftfreq(width, d=dx)
+                kkx, kky = np.meshgrid(kx, ky)
+                propagator = np.exp(-diffusivity * dt * (kkx**2 + kky**2))
+                expected = np.stack(
+                    [np.fft.ifft2(np.fft.fft2(frame) * propagator).real for frame in state[:-1]]
+                )
+                residual = state[1:] - expected
+                operator = "u[n+1]=exp(D*dt*laplace)u[n]"
+                components = (state[1:], expected)
+                strong_metrics = _residual_metrics(
+                    strong_residual,
+                    strong_components,
+                    fluid,
+                )
+                for name, value in strong_metrics.items():
+                    physics[f"auxiliary_fd2_strong_form_{name}"] = value
+            else:
+                residual = strong_residual
+                operator = "u_t=D*laplace(u)"
+                components = strong_components
         elif family == "reaction_diffusion":
             diffusivity = _required_finite_parameter(parameters, "diffusivity", minimum=0.0)
             reaction_rate = _required_finite_parameter(parameters, "reaction_rate", minimum=0.0)
@@ -1623,6 +1648,16 @@ def evaluate_sample_quality(
                 "No compact transfer defect was computed because the stored solver_id "
                 "does not identify that transfer."
             )
+    elif (
+        family == "heat"
+        and boundary == "periodic"
+        and parameters.get("integrator_id") == "fourier_exact_diffusion_v2"
+    ):
+        pde_loss_interpretation = (
+            "exact_discrete_fourier_heat_semigroup_defect_with_fd2_strong_form_auxiliary"
+        )
+        if initial_transition_reason:
+            notes.append("Initial-transition replay unavailable: " + initial_transition_reason)
     elif family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}:
         pde_loss_interpretation = (
             "post_initial_saved_frame_balance_with_separate_initial_transition_replay"
@@ -1703,8 +1738,18 @@ def evaluate_sample_quality(
         "pde_loss_all_steps_normalized": (
             pde_metrics.get("all_steps_normalized") if pde_available else None
         ),
-        "pde_loss_first_step_strong_normalized": (
+        "pde_loss_first_step_normalized": (
             pde_metrics.get("first_step_normalized") if pde_available else None
+        ),
+        "pde_loss_first_step_strong_normalized": (
+            physics.get("auxiliary_fd2_strong_form_first_step_normalized")
+            if pde_available
+            and family == "heat"
+            and boundary == "periodic"
+            and parameters.get("integrator_id") == "fourier_exact_diffusion_v2"
+            else pde_metrics.get("first_step_normalized")
+            if pde_available
+            else None
         ),
         **physics,
     }

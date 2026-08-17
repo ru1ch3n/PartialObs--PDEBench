@@ -93,7 +93,7 @@ def generate(
                 else "fd2_crank_nicolson_boundary_v2"
             ),
             "quality_residual_contract": (
-                "pdeobs.quality.heat.post_initial_spectral_plus_replay_v2"
+                "pdeobs.quality.heat.periodic_spectral_semigroup_plus_fd2_v3"
                 if boundary == "periodic"
                 else "pdeobs.quality.heat.post_initial_fd2_plus_replay_v2"
             ),
