@@ -33,6 +33,11 @@ trajectory_steps_by_case:
   # equation-balance audit.  Exact first-transition replay remains separate.
   navier_stokes/periodic/multi_frequency_fourier: 65
   navier_stokes/neumann/multi_frequency_fourier: 65
+  # The low/medium free-slip multi-frequency cases narrowly exceeded the
+  # frozen 0.05 saved-frame residual gate at T=65 (0.0588 and 0.0546), while
+  # replay, divergence, and boundary checks passed. Halve only their saved dt.
+  navier_stokes/neumann/multi_frequency_fourier/low: 129
+  navier_stokes/neumann/multi_frequency_fourier/medium: 129
   navier_stokes/robin_obstacle/multi_frequency_fourier: 513
   navier_stokes/periodic: 33
   navier_stokes/dirichlet: 257

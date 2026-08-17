@@ -41,6 +41,18 @@ def test_validation20_uses_dense_frames_only_for_failed_burgers_strata() -> None
     assert selected[("burgers", "periodic", "dipole_vortex_pair", "medium")] == 257
 
 
+def test_validation20_densifies_only_failed_free_slip_ns_regimes() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = load_config(root / "configs" / "dataset" / "numerics_validation20.yaml")
+    jobs = jobs_from_config(config, output_root="validation20-test", include_tier_dir=False)
+    selected = {(job.pde, job.boundary, job.setting, job.regime): job.time_steps for job in jobs}
+
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "low")] == 129
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "medium")] == 129
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "high")] == 65
+    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "low")] == 65
+
+
 def test_experiment_preset_is_strict_and_uses_paper_aliases(tmp_path: Path) -> None:
     config = build_experiment_preset(
         task="sparse_recovery",
