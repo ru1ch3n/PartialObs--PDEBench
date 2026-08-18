@@ -3,24 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#f4f6f9" />
+  <meta name="theme-color" content="#071225" />
   <title>PartialObs–PDEBench</title>
-  <link rel="stylesheet" href="assets/style.css?v=2026-08-18-design-v3" />
-  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  /* Enable clickable Mermaid nodes on GitHub Pages. */  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#dff2ef',primaryTextColor:'#0b1730',primaryBorderColor:'#0d6b68',lineColor:'#6f7d8d',secondaryColor:'#fff1df',tertiaryColor:'#ffffff'}});  mermaid.run({querySelector:'.mermaid'});});</script>
+  <link rel="stylesheet" href="assets/style.css?v=2026-08-18-design-v4" />
+  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  /* Enable clickable Mermaid nodes on GitHub Pages. */  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#e9eeff',primaryTextColor:'#0f172a',primaryBorderColor:'#3555d1',lineColor:'#6f7d8d',secondaryColor:'#e8faff',tertiaryColor:'#ffffff'}});  mermaid.run({querySelector:'.mermaid'});});</script>
 </head>
 
-<body>
+<body class="home">
   <header class="hero">
     <div class="container">
       <div class="hero-top">
         <div>
-          <h1>PartialObs–PDEBench</h1>
+          <h1><span>PartialObs–</span>PDEBench</h1>
           <p class="subtitle">The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> plus a supporting partial-observation research map.</p>
+          <div class="hero-actions">
+            <a class="hero-button primary" href="builder/">Build a benchmark →</a>
+            <a class="hero-button" href="benchmark/">Read the protocol</a>
+            <a class="hero-button" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
           <div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div></div>
         </div>
 
-        <div class="hero-card">  <div class="smallcaps">Benchmark status</div>  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>  <p class="muted" style="margin-top:8px;">    Deterministic generation, verified shards, strict splits, baselines,     OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in.  </p>  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>  <p><a href="benchmark/">Benchmark-paper contract</a> ·   <a href="builder/">Build a dataset</a> ·   <a href="server/">Run on a server</a></p></div>
+        <div class="hero-card">  <p class="field-caption">Generated Poisson field · official 3% mask</p>  <div class="smallcaps">Benchmark status</div>  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>  <p class="muted" style="margin-top:8px;">    Deterministic generation, verified shards, strict splits, baselines,     OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in.  </p>  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>  <p><a href="benchmark/">Benchmark-paper contract</a> ·   <a href="builder/">Build a dataset</a> ·   <a href="server/">Run on a server</a></p></div>
       </div>
+
+      <dl class="hero-stats" aria-label="Benchmark overview">
+        <div><dt>7</dt><dd>PDE families</dd></div>
+        <div><dt>4</dt><dd>Boundary protocols</dd></div>
+        <div><dt>10</dt><dd>Condition generators</dd></div>
+        <div><dt>301</dt><dd>Indexed AI4PDE papers</dd></div>
+      </dl>
 
       <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="builder/">Builder</a><a href="server/">Run</a><a href="contribute/">Contribute</a></nav>
     </div>
@@ -186,8 +198,8 @@
   click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
 
   %% Theme tweaks
-  classDef cat fill:#dff2ef,stroke:#0d6b68,color:#0b1730;
-  classDef node fill:#ffffff,stroke:#c7d0da,color:#0b1730;
+  classDef cat fill:#e9eeff,stroke:#3555d1,color:#0f172a;
+  classDef node fill:#ffffff,stroke:#c9d4e4,color:#0f172a;
   class Root,PI,OL,DiffGen,GraphSim,Bench cat;
   class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;</pre>
   </div>
