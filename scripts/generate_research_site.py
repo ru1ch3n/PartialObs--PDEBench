@@ -212,8 +212,8 @@ flowchart TD
   click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
 
   %% Theme tweaks
-  classDef cat fill:#dff2ef,stroke:#0d6b68,color:#0b1730;
-  classDef node fill:#ffffff,stroke:#c7d0da,color:#0b1730;
+  classDef cat fill:#e9eeff,stroke:#3555d1,color:#0f172a;
+  classDef node fill:#ffffff,stroke:#c9d4e4,color:#0f172a;
   class Root,PI,OL,DiffGen,GraphSim,Bench cat;
   class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;
 """.strip("\n")
@@ -886,22 +886,26 @@ def page(
     hero_subtitle_html: str,
     hero_meta_html: str = "",
     hero_card_html: str = "",
+    hero_stats_html: str = "",
+    body_class: str = "",
     extra_head: str = "",
     body_html: str,
 ) -> str:
+
+    body_class_attribute = f' class="{html_escape(body_class)}"' if body_class else ""
 
     return f"""<!doctype html>
 <html lang=\"en\">
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
-  <meta name=\"theme-color\" content=\"#f4f6f9\" />
+  <meta name=\"theme-color\" content=\"#071225\" />
   <title>{html_escape(title)}</title>
-  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-18-design-v3\" />
+  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-18-design-v4\" />
   {extra_head}
 </head>
 
-<body>
+<body{body_class_attribute}>
   <header class=\"hero\">
     <div class=\"container\">
       <div class=\"hero-top\">
@@ -913,6 +917,8 @@ def page(
 
         {hero_card_html}
       </div>
+
+      {hero_stats_html}
 
       {nav(root, current)}
     </div>
@@ -1213,7 +1219,7 @@ def render_paper_page(p: Dict[str, Any]) -> str:
             "<script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}};</script>"
             '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
             '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
-            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#dff2ef',primaryTextColor:'#0b1730',primaryBorderColor:'#0d6b68',lineColor:'#6f7d8d',secondaryColor:'#fff1df',tertiaryColor:'#ffffff'}});}});</script>"
+            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#e9eeff',primaryTextColor:'#0f172a',primaryBorderColor:'#3555d1',lineColor:'#6f7d8d',secondaryColor:'#e8faff',tertiaryColor:'#ffffff'}});}});</script>"
         ),
         body_html=body,
     )
@@ -1227,6 +1233,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     # Keep the homepage status concise; full commands live on the Run page.
     hero_card = (
         '<div class="hero-card">'
+        '  <p class="field-caption">Generated Poisson field · official 3% mask</p>'
         '  <div class="smallcaps">Benchmark status</div>'
         '  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>'
         '  <p class="muted" style="margin-top:8px;">'
@@ -1291,18 +1298,32 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         title="PartialObs–PDEBench",
         root=root,
         current="home",
-        hero_h1="PartialObs–PDEBench",
+        hero_h1="<span>PartialObs–</span>PDEBench",
         hero_subtitle_html=(
             "The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> "
             "plus a supporting partial-observation research map."
         ),
         hero_meta_html=(
+            '<div class="hero-actions">'
+            '  <a class="hero-button primary" href="builder/">Build a benchmark →</a>'
+            '  <a class="hero-button" href="benchmark/">Read the protocol</a>'
+            '  <a class="hero-button" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub ↗</a>'
+            "</div>"
             '<div class="meta">'
             '  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>'
             '  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div>'
             "</div>"
         ),
         hero_card_html=hero_card,
+        hero_stats_html=(
+            '<dl class="hero-stats" aria-label="Benchmark overview">'
+            '  <div><dt>7</dt><dd>PDE families</dd></div>'
+            '  <div><dt>4</dt><dd>Boundary protocols</dd></div>'
+            '  <div><dt>10</dt><dd>Condition generators</dd></div>'
+            f'  <div><dt>{n_total}</dt><dd>Indexed AI4PDE papers</dd></div>'
+            "</dl>"
+        ),
+        body_class="home",
         extra_head=(
             "<script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}};</script>"
             '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
@@ -1310,7 +1331,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
             "<script>document.addEventListener('DOMContentLoaded',()=>{"
             "  if(!window.mermaid) return;"
             "  /* Enable clickable Mermaid nodes on GitHub Pages. */"
-            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#dff2ef',primaryTextColor:'#0b1730',primaryBorderColor:'#0d6b68',lineColor:'#6f7d8d',secondaryColor:'#fff1df',tertiaryColor:'#ffffff'}});"
+            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#e9eeff',primaryTextColor:'#0f172a',primaryBorderColor:'#3555d1',lineColor:'#6f7d8d',secondaryColor:'#e8faff',tertiaryColor:'#ffffff'}});"
             "  mermaid.run({querySelector:'.mermaid'});"
             "});</script>"
         ),
