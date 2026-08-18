@@ -1,0 +1,10 @@
+protocol,observed_pixels,total_pixels,observed_percent
+random_1pct,164,16384,1.000977
+random_3pct,500,16384,3.051758
+random_5pct,819,16384,4.998779
+random_10pct,1638,16384,9.997559
+regular_grid,441,16384,2.691650
+block_missing,12288,16384,75.000000
+line_sensors,508,16384,3.100586
+boundary_sensors,508,16384,3.100586
+clustered_sensors,492,16384,3.002930

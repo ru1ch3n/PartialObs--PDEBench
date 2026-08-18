@@ -1,0 +1,8 @@
+pde,mean,max
+Darcy,2.262e-05,0.00033192
+Poisson,1.553e-05,8.154e-05
+Helmholtz,3.1e-05,0.00126776
+Heat,3.48e-06,4.155e-05
+Reaction--diffusion,0.00257861,0.03826684
+Burgers,0.01279232,0.04900286
+Navier--Stokes,0.01205351,0.04825938

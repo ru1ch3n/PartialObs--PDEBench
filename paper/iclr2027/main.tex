@@ -1,0 +1,59 @@
+\PassOptionsToPackage{dvipsnames,table}{xcolor}
+\documentclass{article}
+
+\usepackage{iclr2027_conference,times}
+\input{math_commands.tex}
+
+\usepackage{amsmath,bm}
+\usepackage{booktabs,tabularx,longtable,multirow,array}
+\usepackage{graphicx}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usepackage{url}
+
+\definecolor{PDEBlue}{HTML}{153B5B}
+\definecolor{PDELight}{HTML}{E9EFF3}
+\definecolor{PDEOrange}{HTML}{E07A3F}
+\definecolor{PDERed}{HTML}{B84842}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\dataset}{\textsc{PDE-OBS}}
+\providecommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\obs}{\Omega_{\mathrm{obs}}}
+
+\setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=2pt,topsep=3pt}
+\captionsetup{belowskip=3pt}
+\renewcommand{\arraystretch}{1.12}
+
+\title{\dataset: A Benchmark Builder for Learning\\
+PDE Dynamics from Partial Observations}
+
+% Keep authors anonymous for the ICLR submission version.
+\author{Anonymous Authors}
+
+% \iclrfinalcopy
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\end{abstract}
+
+% The main paper body is intentionally left empty at this stage.
+
+\clearpage
+\bibliographystyle{iclr2027_conference}
+\bibliography{references}
+
+\clearpage
+\appendix
+\def\PDEOBSAPPENDIXINPUT{1}
+\input{../appendix/pdeobs_appendix_A_D.tex}
+
+\end{document}

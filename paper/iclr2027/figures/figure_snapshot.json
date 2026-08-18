@@ -1,0 +1,71 @@
+{
+  "created_at_utc": "2026-08-18T22:38:44.684756+00:00",
+  "data_root": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31",
+  "interpretation": "Read-only snapshot of completed, accepted shards. This is not the final strict aggregate and excludes absent or rejected shards.",
+  "observation_protocols": {
+    "mask_counts": {
+      "block_missing": 12288,
+      "boundary_sensors": 508,
+      "clustered_sensors": 492,
+      "line_sensors": 508,
+      "random_10pct": 1638,
+      "random_1pct": 164,
+      "random_3pct": 500,
+      "random_5pct": 819,
+      "regular_grid": 441
+    },
+    "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/smooth_grf/medium/shard_00000.h5"
+  },
+  "pde_gallery": {
+    "source_shards": {
+      "burgers": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/burgers/periodic/smooth_grf/medium/shard_00000.h5",
+      "darcy": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/darcy/periodic/smooth_grf/medium/shard_00000.h5",
+      "heat": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/smooth_grf/medium/shard_00000.h5",
+      "helmholtz": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/helmholtz/periodic/smooth_grf/medium/shard_00000.h5",
+      "navier_stokes": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/navier_stokes/periodic/smooth_grf/medium/shard_00000.h5",
+      "poisson": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/poisson/periodic/smooth_grf/medium/shard_00000.h5",
+      "reaction_diffusion": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/reaction_diffusion/periodic/smooth_grf/medium/shard_00000.h5"
+    }
+  },
+  "quality_snapshot": {
+    "accepted_samples": 557733,
+    "by_pde": {
+      "burgers": {
+        "count": 78400,
+        "max": 0.04950670001521073,
+        "mean": 0.012286164811943022
+      },
+      "darcy": {
+        "count": 80000,
+        "max": 0.0006428388415954191,
+        "mean": 2.343608039490742e-05
+      },
+      "heat": {
+        "count": 80000,
+        "max": 5.362849868674929e-05,
+        "mean": 3.769684883329572e-06
+      },
+      "helmholtz": {
+        "count": 80000,
+        "max": 0.0012892006338720166,
+        "mean": 3.0473683314726645e-05
+      },
+      "navier_stokes": {
+        "count": 79333,
+        "max": 0.0485157612782196,
+        "mean": 0.010264345781047169
+      },
+      "poisson": {
+        "count": 80000,
+        "max": 8.828035553827985e-05,
+        "mean": 1.5676945372484343e-05
+      },
+      "reaction_diffusion": {
+        "count": 80000,
+        "max": 0.04991468784379508,
+        "mean": 0.002354175723315586
+      }
+    },
+    "quality_sidecars": 3348
+  }
+}
