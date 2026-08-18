@@ -60,7 +60,10 @@ def test_seawulf_environment_is_wheel_installed_and_commit_guarded() -> None:
     bootstrap = (SEAWULF / "bootstrap.sh").read_text(encoding="utf-8")
     common = (SEAWULF / "common.sh").read_text(encoding="utf-8")
     environment = (ROOT / "environment.yml").read_text(encoding="utf-8")
+    generation_environment = (ROOT / "environment-generation.yml").read_text(encoding="utf-8")
 
+    assert "PDEOBS_ENV_FILE" in bootstrap
+    assert "environment-generation.yml" in bootstrap
     assert "-m pip wheel" in bootstrap
     assert "--force-reinstall --no-deps" in bootstrap
     assert ".pdeobs-git-commit" in bootstrap
@@ -68,6 +71,8 @@ def test_seawulf_environment_is_wheel_installed_and_commit_guarded() -> None:
     assert "environment/checkout mismatch" in common
     assert "-e ." not in bootstrap
     assert "-e ." not in environment
+    assert "pytorch" not in generation_environment.lower()
+    assert "h5py" in generation_environment.lower()
 
 
 def test_cluster_yaml_is_explicitly_documentation_only() -> None:

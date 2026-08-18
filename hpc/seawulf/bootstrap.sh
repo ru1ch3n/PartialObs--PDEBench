@@ -14,6 +14,11 @@ module load anaconda/3
 
 repository_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repository_dir"
+environment_file="${PDEOBS_ENV_FILE:-environment-generation.yml}"
+if [[ ! -f "$environment_file" ]]; then
+  echo "PDEOBS environment file does not exist: $environment_file" >&2
+  exit 2
+fi
 
 if ! repository_commit="$(git rev-parse --verify HEAD 2>/dev/null)"; then
   echo "bootstrap.sh must run from a Git checkout." >&2
@@ -35,9 +40,9 @@ if [[ -n "${PDEOBS_WHEELHOUSE:-}" ]]; then
     --no-index --find-links "$PDEOBS_WHEELHOUSE" "setuptools>=68" wheel
 else
   if [[ -x "$PDEOBS_ENV/bin/python" ]]; then
-    conda env update --yes --prefix "$PDEOBS_ENV" --file environment.yml --prune
+    conda env update --yes --prefix "$PDEOBS_ENV" --file "$environment_file" --prune
   else
-    conda env create --yes --prefix "$PDEOBS_ENV" --file environment.yml
+    conda env create --yes --prefix "$PDEOBS_ENV" --file "$environment_file"
   fi
 fi
 
@@ -67,6 +72,7 @@ esac
 commit_marker="$PDEOBS_ENV/.pdeobs-git-commit"
 printf '%s\n' "$repository_commit" > "${commit_marker}.tmp"
 mv -f "${commit_marker}.tmp" "$commit_marker"
+printf '%s\n' "$environment_file" > "$PDEOBS_ENV/.pdeobs-environment-file"
 
 doctor_args=(doctor --cluster seawulf --offline)
 if [[ "${PDEOBS_REQUIRE_GPU:-0}" == "1" ]]; then

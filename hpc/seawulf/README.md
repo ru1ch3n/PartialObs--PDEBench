@@ -33,6 +33,7 @@ export PDEOBS_DATA="$PDEOBS_BASE/data"
 export PDEOBS_RUNS="$PDEOBS_BASE/runs"
 export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
 export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_ENV_FILE="environment-generation.yml"
 export CONDA_PKGS_DIRS="$PDEOBS_BASE/conda-pkgs"
 export PIP_CACHE_DIR="$PDEOBS_BASE/pip-cache"
 export XDG_CACHE_HOME="$PDEOBS_BASE/cache"
@@ -182,7 +183,11 @@ non-editably. It records that commit inside `$PDEOBS_ENV`; every job refuses to
 run when the environment and checkout revisions differ. Use a commit-specific
 environment path as above, or rerun the bootstrap after changing revisions.
 
-`environment.yml` selects the reference PyTorch 2.5 / CUDA 12.4 environment. Set
+The current dataset-only phase uses `environment-generation.yml`, which omits
+PyTorch/CUDA and avoids downloading gigabytes of training dependencies for each
+numerical commit. When model training begins, set
+`PDEOBS_ENV_FILE=environment.yml` and use a separate commit-specific environment;
+that file selects the reference PyTorch 2.5 / CUDA 12.4 stack. Set
 `PDEOBS_CUDA_MODULE` if the selected SeaWulf architecture requires an explicit
 CUDA module, and confirm the available module/driver combination before setup.
 For a GPU preflight, set `PDEOBS_REQUIRE_GPU=1` inside a GPU allocation; the GPU
@@ -192,6 +197,10 @@ If compute nodes cannot access package servers, populate a compatible
 wheelhouse, including `setuptools` and `wheel`, and set `PDEOBS_WHEELHOUSE`
 before running the bootstrap script. For an archival campaign, also save an
 exact environment export beside its plan and validation report.
+
+Keep `CONDA_PKGS_DIRS`, `PIP_CACHE_DIR`, and `XDG_CACHE_HOME` on scratch as in
+the setup block. If they are omitted, Conda may fill the much smaller home quota
+while extracting PyTorch or Qt packages.
 
 ## 4. Run the dependency-chained storage smoke workflow
 

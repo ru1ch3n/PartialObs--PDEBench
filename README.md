@@ -397,13 +397,18 @@ and run:
 module load slurm
 cd PartialObs--PDEBench
 
-export PDEOBS_GROUP=YOUR_GROUP
+export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"
 export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
-export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
-export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
-export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
+export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_ENV_FILE="environment-generation.yml"
+export PDEOBS_DATA="$PDEOBS_BASE/data"
+export PDEOBS_RUNS="$PDEOBS_BASE/runs"
+export CONDA_PKGS_DIRS="$PDEOBS_BASE/conda-pkgs"
+export PIP_CACHE_DIR="$PDEOBS_BASE/pip-cache"
+export XDG_CACHE_HOME="$PDEOBS_BASE/cache"
 mkdir -p logs "$(dirname "$PDEOBS_ENV")" \
-  "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
+  "$PDEOBS_DATA/plans" "$PDEOBS_RUNS" "$CONDA_PKGS_DIRS" \
+  "$PIP_CACHE_DIR" "$XDG_CACHE_HOME"
 
 # Bootstrap only inside a compute allocation, never on the login node.
 srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
@@ -411,7 +416,8 @@ srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
 bash hpc/seawulf/bootstrap.sh
 exit
 
-# Make an exact smoke plan, then chain generation, validation, and training.
+# Make an exact smoke plan, then chain generation and validation. Model
+# training is a later phase and uses a separate full environment.
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \
   --config configs/dataset/smoke.yaml --tier tiny \
   --output "$PDEOBS_DATA/plans/smoke.jsonl"
@@ -425,12 +431,7 @@ check_job="$(sbatch --parsable --dependency="afterok:$smoke_job" \
   "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/smoke/summary.json" \
   "$PDEOBS_DATA/plans/smoke.jsonl")"
 check_job="${check_job%%;*}"
-train_job="$(sbatch --parsable --dependency="afterok:$check_job" \
-  hpc/seawulf/train_gpu.sbatch \
-  configs/experiment/recovery_unet_smoke.yaml \
-  --output "$PDEOBS_RUNS/smoke-train")"
-train_job="${train_job%%;*}"
-echo "generation=$smoke_job validation=$check_job training=$train_job"
+echo "generation=$smoke_job validation=$check_job"
 squeue --user="$USER"
 ```
 
