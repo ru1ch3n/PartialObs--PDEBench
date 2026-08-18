@@ -1,0 +1,44 @@
+include: numerics_validation20.yaml
+
+# Paper-size numerical campaign: 2,000 samples per PDE/boundary/setting case,
+# 560,000 samples total. Static PDEs remain T=1. Temporal HDF5 arrays store
+# exactly 15 ordered, uniformly spaced solver frames; the denser trajectories
+# below exist only in memory for PDE-loss measurement.
+name: pdeobs-numerics-full-t15
+tier: full
+stored_trajectory_steps: 15
+# Keep each regime shard at no more than 200 samples so one CPU worker remains
+# comfortably resumable inside the 48-hour long-queue limit.
+shard_size: 200
+
+# Every dense T is 1 + 14k, so the 15 stored snapshots are exact solver frames
+# with a uniform integer stride. Values are rounded upward from the validated
+# T=30 audit grids rather than weakening their saved-frame residual cadence.
+trajectory_steps_by_family:
+  heat: 155
+  reaction_diffusion: 267
+  burgers: 267
+
+trajectory_steps_by_case:
+  burgers/periodic/threshold_level_set: 533
+  burgers/dirichlet/threshold_level_set: 533
+  burgers/neumann/threshold_level_set: 533
+  burgers/robin_obstacle/threshold_level_set: 533
+  burgers/neumann/front_ring_shock/high: 533
+  burgers/periodic/dipole_vortex_pair/high: 533
+  navier_stokes/periodic/multi_frequency_fourier: 99
+  navier_stokes/periodic/multi_frequency_fourier/low: 267
+  navier_stokes/periodic/multi_frequency_fourier/medium: 155
+  navier_stokes/neumann/multi_frequency_fourier: 99
+  navier_stokes/neumann/multi_frequency_fourier/low: 267
+  navier_stokes/neumann/multi_frequency_fourier/medium: 155
+  navier_stokes/robin_obstacle/multi_frequency_fourier: 533
+  navier_stokes/periodic: 71
+  navier_stokes/dirichlet: 267
+  navier_stokes/neumann: 71
+  navier_stokes/robin_obstacle: 267
+
+output:
+  root: ${PDEOBS_DATA:-datasets}/numerics-full-t15
+  atomic: true
+  checksum: sha256

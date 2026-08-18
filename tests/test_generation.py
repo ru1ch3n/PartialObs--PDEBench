@@ -305,6 +305,36 @@ def test_config_adapters_write_plan_and_produce_json_safe_dry_run(tmp_path):
     assert Path(summary["jobs"][0]["output_path"]).is_relative_to(tmp_path / "cli-output")
 
 
+def test_array_bundle_selects_consecutive_plan_rows_and_workers(tmp_path):
+    config = {
+        "tier": "tiny",
+        "resolution": 8,
+        "shard_size": 700,
+        "families": ["poisson"],
+        "boundaries": ["periodic"],
+        "settings": ["smooth_grf"],
+        "regimes": ["low", "medium", "high"],
+    }
+    plan = tmp_path / "bundle.jsonl"
+    write_generation_plan(config, plan)
+
+    summary = run_generation(
+        config,
+        tmp_path / "bundle-output",
+        plan_path=plan,
+        array_index=0,
+        array_bundle_size=2,
+        num_workers=40,
+        dry_run=True,
+    )
+
+    assert summary["selected_plan_start"] == 0
+    assert summary["selected_plan_stop"] == 1
+    assert summary["selected_job_count"] == 2
+    assert summary["num_workers"] == 2
+    assert [job["regime"] for job in summary["jobs"]] == ["low", "medium"]
+
+
 def test_plan_rejects_a_different_runtime_code_identity(tmp_path):
     planned_config = {
         "tier": "tiny",

@@ -57,6 +57,22 @@ def test_validation20_densifies_only_failed_ns_regimes() -> None:
     assert {job.stored_time_steps for job in jobs if job.pde == "navier_stokes"} == {30}
 
 
+def test_full_t15_plan_has_exact_size_and_uniform_frame_stride() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = load_config(root / "configs" / "dataset" / "numerics_full_t15.yaml")
+    jobs = jobs_from_config(config, output_root="full-t15-test", include_tier_dir=False)
+    temporal = [
+        job for job in jobs if job.pde in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}
+    ]
+
+    assert len(jobs) == 3360
+    assert sum(job.sample_count for job in jobs) == 560000
+    assert len(temporal) == 1920
+    assert {job.stored_time_steps for job in temporal} == {15}
+    assert all(job.time_steps is not None and (job.time_steps - 1) % 14 == 0 for job in temporal)
+    assert max(job.sample_count for job in jobs) == 200
+
+
 def test_experiment_preset_is_strict_and_uses_paper_aliases(tmp_path: Path) -> None:
     config = build_experiment_preset(
         task="sparse_recovery",

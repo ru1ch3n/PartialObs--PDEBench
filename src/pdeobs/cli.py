@@ -127,6 +127,12 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--tier", choices=("tiny", "debug", "signal", "medium", "full"))
     generate.add_argument("--plan", type=Path, help="JSONL plan produced by pdeobs plan")
     generate.add_argument("--array-index", type=int, help="run only this zero-based plan row")
+    generate.add_argument(
+        "--array-bundle-size",
+        type=int,
+        default=1,
+        help="number of consecutive plan rows owned by one array element",
+    )
     generate.add_argument("--force", action="store_true")
     generate.add_argument("--dry-run", action="store_true")
     generate.add_argument("--num-workers", type=int, default=1, help="local shard processes")
@@ -422,6 +428,7 @@ def _cmd_generate(args: argparse.Namespace) -> int:
         output_root=output,
         plan_path=args.plan,
         array_index=args.array_index,
+        array_bundle_size=args.array_bundle_size,
         force=args.force,
         dry_run=args.dry_run,
         num_workers=args.num_workers,

@@ -857,11 +857,12 @@ def run_generation(
     output_root: str | Path,
     plan_path: str | Path | None = None,
     array_index: int | None = None,
+    array_bundle_size: int = 1,
     force: bool = False,
     dry_run: bool = False,
     num_workers: int = 1,
 ) -> dict[str, Any]:
-    """CLI adapter for a local tier or one manifest-selected array task.
+    """CLI adapter for a local tier or one manifest-selected array bundle.
 
     The returned mapping contains only JSON-compatible values so it can be
     printed directly or captured as scheduler provenance.
@@ -870,6 +871,9 @@ def run_generation(
     workers = int(num_workers)
     if workers < 1:
         raise ValueError("num_workers must be positive")
+    bundle_size = int(array_bundle_size)
+    if bundle_size < 1:
+        raise ValueError("array_bundle_size must be positive")
     if plan_path is None:
         all_jobs = jobs_from_config(config, output_root=output_root, include_tier_dir=False)
     else:
@@ -890,15 +894,29 @@ def run_generation(
             )
         all_jobs = [_rebase_job(job, output_root) for job in loaded_jobs]
     if array_index is None:
+        if bundle_size != 1:
+            raise ValueError("array_bundle_size requires array_index")
         selected_jobs = all_jobs
     else:
-        selected_jobs = [select_array_job(all_jobs, index=array_index)]
+        if array_index < 0:
+            raise IndexError("array index must be non-negative")
+        start = array_index * bundle_size
+        stop = min(start + bundle_size, len(all_jobs))
+        if start >= len(all_jobs):
+            raise IndexError(
+                f"array bundle {array_index} starts at plan row {start}, "
+                f"but the plan has {len(all_jobs)} rows"
+            )
+        selected_jobs = all_jobs[start:stop]
 
     summary: dict[str, Any] = {
         "status": "dry_run" if dry_run else "complete",
         "planned_job_count": len(all_jobs),
         "selected_job_count": len(selected_jobs),
         "array_index": array_index,
+        "array_bundle_size": bundle_size,
+        "selected_plan_start": None if array_index is None else start,
+        "selected_plan_stop": None if array_index is None else stop - 1,
         "output_root": str(Path(output_root)),
         "plan_path": None if plan_path is None else str(Path(plan_path)),
         "force": bool(force),

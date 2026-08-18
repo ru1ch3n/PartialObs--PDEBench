@@ -130,7 +130,11 @@ pdeobs plan \
 The exact scratch-only SeaWulf commands, CPU policy, dependency windows, and
 quality-report paths are in the [SeaWulf guide](hpc/seawulf/README.md).
 
-Temporal release rows now store exactly 30 ordered snapshots. Difficult cases
+Default/debug temporal rows store exactly 30 ordered snapshots; the checked-in
+560,000-sample full campaign stores `T=15` (`T=1` for static PDEs) and can use
+up to 240 CPU cores through independent shard processes. Its dependent strict
+aggregate reports all seven PDE losses, and it submits no model training.
+Difficult cases
 may use a denser in-memory time grid for PDE-loss measurement, but those audit
 frames are discarded after quality evaluation; metadata preserves the dense
 `quality_T`, exact selected frame indices, and physical times.

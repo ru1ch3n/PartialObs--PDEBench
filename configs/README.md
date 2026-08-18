@@ -21,6 +21,10 @@ The checked-in configurations are executable reference protocols:
   dense `trajectory_steps_by_case` values are used only for in-memory PDE-loss
   measurement; `stored_trajectory_steps: 30` fixes the temporal HDF5 size.
   Solver mappings remain independent of observation masks.
+- `dataset/numerics_full_t15.yaml`: the 560,000-sample, dataset-only SeaWulf
+  campaign. It inherits the topology-matched numerical routes and strict PDE
+  loss gate, stores `T=15` for temporal data (`T=1` for static data), keeps the
+  denser audit path in memory, and limits each resumable shard to 200 samples.
 - `dataset/smoke.yaml`: a tiny local or SeaWulf preflight run.
 - `dataset/recovery_signal.yaml` and `dataset/rollout_signal.yaml`: focused
   34-sample cases with strict train/validation/test coverage for the default

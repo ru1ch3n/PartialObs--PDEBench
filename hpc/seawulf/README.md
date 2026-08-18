@@ -285,15 +285,48 @@ simultaneously running tasks. Confirm current site policy before changing either
 limit.
 
 The earlier 5,600-sample validation stored all dense audit frames and occupied
-27 GiB. The new format stores 30 frames and keeps the dense audit trajectory
-only in task memory. Extrapolating the measured family compression gives about
-4.3 GiB for a repeated 5,600-sample pass and about 425 GiB for 560,000 samples;
-these are planning estimates until the new SeaWulf demo is measured. Budget
-headroom for partial shards, logs, metadata, and a curated copy. The eventual
-full config should use shards of at most 200 samples
-so the slowest bounded Burgers tasks remain under the four-hour CPU-queue
-limit; this implies about 3,360 independent generation tasks. Measure the
-5,600-sample validation campaign before freezing those resources.
+27 GiB. The default/debug format now stores 30 frames and keeps the dense audit
+trajectory only in task memory. The full campaign deliberately stores only 15
+temporal frames, so its initial compressed-storage estimate is about 215 GiB
+(plus partial shards, logs, metadata, and archive headroom). This is a planning
+estimate until the submitted campaign provides measured family compression.
+
+The checked-in `configs/dataset/numerics_full_t15.yaml` uses at most 200 samples
+per shard, producing 3,360 independently resumable jobs. Submit it once with:
+
+```bash
+source /gpfs/scratch/$USER/pdeobs/env.sh
+cd /gpfs/scratch/$USER/pdeobs/PartialObs--PDEBench-numerics
+bash hpc/seawulf/submit_full_t15.sh
+```
+
+The launcher bundles 40 independent shard rows into one Slurm array element and
+uses a 40-process pool. The default `0-83%6` array can therefore use up to six
+40-core nodes (240 CPU cores) while remaining inside the current shared-long
+QOS limits of 100 submitted jobs, 240 CPUs, and 322 GiB. Slurm decides which
+nodes are actually available; the launcher never hard-codes or monopolizes node
+names. All workers write different atomic shard paths. No training is submitted.
+
+Monitor without changing the campaign:
+
+```bash
+bash hpc/seawulf/monitor_full_t15.sh \
+  "$PDEOBS_DATA/numerics-full-t15-COMMIT.campaign.txt"
+squeue --user="$USER"
+```
+
+The strict aggregate is submitted with an `afterok` dependency and reports all
+seven PDE losses only after every planned shard succeeds. The campaign record
+contains the exact commit, plan, resolved config, output, resource choices, and
+both Slurm job IDs.
+
+Before measured full-tier throughput exists, use a broad **1-8 day** planning
+range after the first array elements start, plus queue wait. The lower end
+assumes the 240-core allocation stays busy and per-sample cost resembles the
+completed 20-sample gate; the upper end scales the 30-minute validation walltime
+limit conservatively. After the first six array elements finish, use their
+actual `Elapsed`, completed samples, and I/O rate from the monitor to replace
+this range. This is an estimate, not a scheduler promise.
 
 After every array window succeeds, strictly validate the exact plan:
 

@@ -21,6 +21,8 @@ SHELL_FILES = (
     "common.sh",
     "evaluate_gpu.sbatch",
     "generate_array.sbatch",
+    "monitor_full_t15.sh",
+    "submit_full_t15.sh",
     "submit_generation.sh",
     "train_gpu.sbatch",
 )
@@ -144,7 +146,27 @@ def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:
     assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in guide
     assert '--dependency="afterok:${generation_job}"' in guide
     assert "does **not** submit model training" in guide
-    assert "short-96core-shared" in guide
-    assert "4.4 TB raw" in guide
+    assert "short-40core-shared" in guide
+    assert "about 215 GiB" in guide
     assert '"$PDEOBS_DATA/plans/tiny.resolved.yaml"' in guide
     assert "conservative safety cap" in guide
+    assert "numerics_full_t15.yaml" in guide
+    assert "0-83%6" in guide
+    assert "240 CPU cores" in guide
+
+
+def test_full_t15_launcher_is_dataset_only_bounded_and_quality_gated() -> None:
+    launcher = (SEAWULF / "submit_full_t15.sh").read_text(encoding="utf-8")
+    array = (SEAWULF / "generate_array.sbatch").read_text(encoding="utf-8")
+
+    assert 'task_count" != 3360' in launcher
+    assert 'sample_count" != 560000' in launcher
+    assert "bad_stored_steps" in launcher
+    assert "PDEOBS_FULL_CPUS_PER_TASK:-40" in launcher
+    assert "PDEOBS_FULL_CONCURRENCY:-6" in launcher
+    assert "array_count + 1 > 100" in launcher
+    assert "--quality-strict --max-pde-loss 0.05 --require-all-pdes" in launcher
+    assert "train_gpu.sbatch" not in launcher
+    assert "--array-bundle-size" in array
+    assert '"${SLURM_CPUS_PER_TASK:-1}"' in array
+    assert "export OMP_NUM_THREADS=1" in array
