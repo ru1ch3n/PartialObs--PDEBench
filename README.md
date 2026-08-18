@@ -144,6 +144,12 @@ complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md). A
 validated solver plugin is also required and must provide a registered
 case-specific residual/solver-evidence contract.
 
+The completed 5,600-sample SeaWulf factor gate and all seven normalized PDE
+losses are recorded in the
+[validation20 report](release/NUMERICS_VALIDATION20.md). Ground truth is always
+solved and checksummed before any observation mask is applied; case-specific
+solver routing never depends on the observation protocol.
+
 For the primary IID observation comparison, normal trainable operator
 baselines use a separate checkpoint for every PDE family and every one of the
 nine observation masks; the training and evaluation masks match. The same

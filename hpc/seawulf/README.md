@@ -97,6 +97,14 @@ campaign ledger supplies the next start index and refuses to continue after a
 failure. The final invocation submits the strict aggregate job. It writes
 `$PDEOBS_DATA/$PDEOBS_VALIDATION_CAMPAIGN.campaign.txt`. No training job is
 submitted.
+
+The reference campaign at commit `c70c726e13b` completed all 840 generation
+tasks and the strict aggregate successfully. It produced 5,600 valid quality
+records, zero missing/invalid records, zero non-empty failure logs, and a
+27-GiB dataset; all seven per-PDE maxima were below `0.05`. The exact results
+and report hashes are in
+[`release/NUMERICS_VALIDATION20.md`](../../release/NUMERICS_VALIDATION20.md).
+
 Use `PDEOBS_GENERATION_CONCURRENCY=8` for the first filesystem pilot if the
 current queue or GPFS load is high; increase only after `seff`/throughput data.
 Each generation task is intentionally single-core: one plan row is serial, so
