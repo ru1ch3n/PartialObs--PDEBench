@@ -26,6 +26,8 @@ def test_contract_freezes_cardinality_tasks_and_claim_limits() -> None:
     assert contract["dataset"]["macro_cases"] == 280
     assert contract["dataset"]["regime_nodes"] == 840
     assert contract["dataset"]["full_samples"] == 560_000
+    assert contract["dataset"]["temporal_T"] == 30
+    assert contract["dataset"]["navier_stokes_T"] == 30
     assert contract["dataset"]["tiers"]["tiny"]["total_samples"] == 1_400
     assert contract["dataset"]["tiers"]["medium"]["total_samples"] == 140_000
     assert len(TASKS) == 7
@@ -107,6 +109,17 @@ def test_protocol_validator_reports_factor_and_tier_drift() -> None:
 
     assert any(issue.startswith("families must equal") for issue in issues)
     assert any(issue.startswith("tiers must equal") for issue in issues)
+
+
+def test_protocol_validator_rejects_stored_time_axis_drift() -> None:
+    config = deepcopy(default_generation_config("full"))
+    config["trajectory_steps"] = 9
+    config["stored_trajectory_steps"] = 9
+
+    issues = validate_dataset_config(config)
+
+    assert "trajectory_steps must be 30" in issues
+    assert "stored_trajectory_steps must be 30" in issues
 
 
 def test_protocol_validator_rejects_mask_and_regime_allocation_drift() -> None:

@@ -23,6 +23,14 @@ zero missing or invalid records, and zero non-empty
 `*.quality-failures.jsonl` files. The generated campaign occupied 27 GiB on
 SeaWulf scratch.
 
+That 27 GiB campaign preserved every dense audit frame (`T=33` through
+`T=513`) and is retained as historical validation evidence. The subsequent
+storage protocol separates quality cadence from release cadence: PDE loss is
+still measured on a dense in-memory trajectory, while each temporal HDF5 row
+stores 30 uniformly spaced exact frames plus the dense `quality_T` and selected
+frame indices. A new 30-frame SeaWulf pass is required before replacing the
+historical hashes below.
+
 ## Normalized PDE losses
 
 | PDE | Samples | Mean | Maximum | Worst sample |

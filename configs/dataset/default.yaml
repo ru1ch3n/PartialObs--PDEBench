@@ -3,7 +3,11 @@ name: pdeobs-v0.1-reference
 seed: 20260804
 tier: tiny
 resolution: 128
-trajectory_steps: 9
+# Canonical released temporal arrays store 30 ordered snapshots. Numerical
+# validation configs may generate denser in-memory trajectories for PDE-loss
+# measurement, then persist an exact uniform 30-frame subset.
+trajectory_steps: 30
+stored_trajectory_steps: 30
 samples_per_case: 2000
 dtype: float32
 compression: gzip

@@ -2,6 +2,7 @@ include: default.yaml
 
 name: pdeobs-numerics-demo
 tier: tiny
+stored_trajectory_steps: 30
 families:
   - darcy
   - poisson
@@ -14,10 +15,10 @@ boundaries: [periodic]
 settings: [smooth_grf]
 
 trajectory_steps_by_family:
-  heat: 129
-  reaction_diffusion: 257
-  burgers: 257
-  navier_stokes: 33
+  heat: 146
+  reaction_diffusion: 262
+  burgers: 262
+  navier_stokes: 59
 
 solver_options_by_case:
   navier_stokes/periodic: {solver: fno_spectral_vorticity}

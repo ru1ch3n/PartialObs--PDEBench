@@ -20,8 +20,8 @@ never change the stored physical field or trajectory.
 The current validated route map uses spectral FNO-style periodic flow,
 DST vorticity--streamfunction solvers for rectangular no-slip/free-slip flow,
 and a masked sparse streamfunction/Thom-wall solver for obstacle flow. The
-resolved plan also records denser saved frames for the difficult Burgers
-threshold and Navier--Stokes multi-frequency cases.
+resolved plan records a dense in-memory PDE-loss cadence for difficult cases,
+but every temporal HDF5 sample stores only 30 uniformly spaced exact frames.
 
 For a scratch-only working layout (checkout, environment, caches, data, runs,
 and logs), use:
@@ -275,11 +275,13 @@ plan index; `%${PDEOBS_GENERATION_CONCURRENCY:-4}` in the array request limits
 simultaneously running tasks. Confirm current site policy before changing either
 limit.
 
-With the current per-case saved-frame protocol, the 560,000-sample full tier is
-approximately **4.4 TB raw** before HDF5 compression, not the old 296 GiB
-estimate based on nine frames everywhere. Compression depends strongly on the
-fields. Budget substantial headroom for partial shards, logs, metadata, and a
-curated copy. The eventual full config should use shards of at most 200 samples
+The earlier 5,600-sample validation stored all dense audit frames and occupied
+27 GiB. The new format stores 30 frames and keeps the dense audit trajectory
+only in task memory. Extrapolating the measured family compression gives about
+4.3 GiB for a repeated 5,600-sample pass and about 425 GiB for 560,000 samples;
+these are planning estimates until the new SeaWulf demo is measured. Budget
+headroom for partial shards, logs, metadata, and a curated copy. The eventual
+full config should use shards of at most 200 samples
 so the slowest bounded Burgers tasks remain under the four-hour CPU-queue
 limit; this implies about 3,360 independent generation tasks. Measure the
 5,600-sample validation campaign before freezing those resources.

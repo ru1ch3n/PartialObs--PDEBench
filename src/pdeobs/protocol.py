@@ -390,8 +390,8 @@ def benchmark_contract() -> dict[str, Any]:
                     "geometry": "[N,H,W,1]",
                 },
                 "static_T": 1,
-                "temporal_T": 9,
-                "navier_stokes_T": 9,
+                "temporal_T": 30,
+                "navier_stokes_T": 30,
                 "tiers": {
                     name: {
                         "samples_per_macro_case": size,
@@ -478,11 +478,17 @@ def validate_dataset_config(config: Mapping[str, Any]) -> list[str]:
     if resolution != 128 and resolution != (128, 128) and resolution != [128, 128]:
         issues.append("resolution must be 128 or [128, 128]")
     try:
-        trajectory_steps = int(config.get("trajectory_steps", config.get("time_steps", 9)))
+        trajectory_steps = int(config.get("trajectory_steps", config.get("time_steps", 30)))
     except (TypeError, ValueError):
         trajectory_steps = -1
-    if trajectory_steps != 9:
-        issues.append("trajectory_steps must be 9")
+    if trajectory_steps != 30:
+        issues.append("trajectory_steps must be 30")
+    try:
+        stored_trajectory_steps = int(config.get("stored_trajectory_steps", 30))
+    except (TypeError, ValueError):
+        stored_trajectory_steps = -1
+    if stored_trajectory_steps != 30:
+        issues.append("stored_trajectory_steps must be 30")
 
     splits = config.get("splits", {})
     if not isinstance(splits, Mapping):

@@ -34,16 +34,23 @@ differences for Poisson/Helmholtz. Our four-boundary, ten-setting matrix and
 bounded-flow routes are explicit extensions and must therefore pass their own
 convergence study; an upstream name is not validation by itself.
 
-Solver choice and saved-frame density are explicit per-case protocol fields.
-They may vary by PDE, boundary, setting, and regime. Observation masks are not
-solver inputs: every complete ground-truth field/trajectory is generated and
-checksummed first, and masks are deterministic dataset views applied later.
-For example, only the low/medium periodic and free-slip Navier--Stokes
-multi-frequency strata use `T=257`/`T=129` after `T=65` missed the frozen
-saved-frame residual gate. Same-seed seven-sample SeaWulf refinements reduced
-the periodic maxima to `0.0380`/`0.0299`; the free-slip maxima are
-`0.0463`/`0.0280`. The high regimes and other topology-matched solvers remain
-unchanged.
+Solver choice and quality-audit cadence are explicit per-case protocol fields.
+They may vary by PDE, boundary, setting, and regime, while every temporal HDF5
+sample stores the same 30 uniformly spaced exact solver frames. Observation
+masks are not solver inputs: every complete ground-truth field/trajectory is
+generated and checksummed first, and masks are deterministic dataset views
+applied later.
+For example, the low/medium periodic and free-slip Navier--Stokes
+multi-frequency strata use denser transient audit grids after the original
+grid missed the frozen saved-frame residual gate. Same-seed seven-sample
+SeaWulf refinements reduced the periodic maxima to `0.0380`/`0.0299`; the
+free-slip maxima are `0.0463`/`0.0280`. The high regimes and other
+topology-matched solvers remain unchanged.
+
+The audit grids use `T = 1 + 29k` so each stored frame is an exact solver state
+at a constant integer stride: no temporal interpolation is used. PDE loss is
+computed before down-selection and retains the dense `quality_T` calibration
+identity; only the 30 selected frames are persisted.
 
 Primary references:
 

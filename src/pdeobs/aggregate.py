@@ -403,6 +403,15 @@ def validate_hdf5_shard(
                             raise ShardValidationError(
                                 f"{shard}:metadata[{index}].T differs from trajectory"
                             )
+                        planned_stored_steps = spec.get("stored_time_steps")
+                        if (
+                            family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}
+                            and planned_stored_steps is not None
+                            and int(handle["trajectory"].shape[1]) != int(planned_stored_steps)
+                        ):
+                            raise ShardValidationError(
+                                f"{shard}: stored trajectory T differs from shard spec"
+                            )
                         representation = row.get("state_representation")
                         if (
                             expected_representation is not None
@@ -473,18 +482,124 @@ def validate_hdf5_shard(
                                     f"{shard}:metadata[{index}].parameters must be a mapping"
                                 )
                             time_steps = int(handle["trajectory"].shape[1])
+                            quality_source = str(row.get("quality_source", "stored_trajectory"))
+                            if quality_source not in {
+                                "stored_trajectory",
+                                "dense_pre_storage_trajectory",
+                            }:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].quality_source is unknown"
+                                )
+                            try:
+                                quality_time_steps = int(row.get("quality_T", time_steps))
+                            except (TypeError, ValueError) as exc:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].quality_T is invalid"
+                                ) from exc
+                            frame_indices = row.get("stored_frame_indices", list(range(time_steps)))
+                            if not isinstance(frame_indices, list):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].stored_frame_indices must be a list"
+                                )
+                            try:
+                                normalized_indices = [int(value) for value in frame_indices]
+                            except (TypeError, ValueError) as exc:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].stored_frame_indices "
+                                    "must contain integers"
+                                ) from exc
+                            if len(normalized_indices) != time_steps:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].stored_frame_indices "
+                                    "length differs from stored trajectory T"
+                                )
+                            if quality_time_steps < time_steps:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].quality_T is smaller than T"
+                                )
+                            planned_quality_steps = spec.get("time_steps")
+                            if (
+                                family in {"heat", "reaction_diffusion", "burgers", "navier_stokes"}
+                                and planned_quality_steps is not None
+                                and quality_time_steps != int(planned_quality_steps)
+                            ):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].quality_T differs from shard spec"
+                                )
+                            if time_steps > 1:
+                                quality_intervals = quality_time_steps - 1
+                                stored_intervals = time_steps - 1
+                                if quality_intervals % stored_intervals:
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}] quality/stored cadence "
+                                        "is not an integer stride"
+                                    )
+                                stride = quality_intervals // stored_intervals
+                                expected_indices = [
+                                    stored_index * stride for stored_index in range(time_steps)
+                                ]
+                            else:
+                                expected_indices = [0]
+                            if normalized_indices != expected_indices:
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}].stored_frame_indices "
+                                    "does not describe a uniform exact-frame subset"
+                                )
+                            if (
+                                quality_source == "stored_trajectory"
+                                and quality_time_steps != time_steps
+                            ):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}] stored-trajectory quality "
+                                    "must use the stored T"
+                                )
+                            if (
+                                quality_source == "dense_pre_storage_trajectory"
+                                and quality_time_steps <= time_steps
+                            ):
+                                raise ShardValidationError(
+                                    f"{shard}:metadata[{index}] dense quality source "
+                                    "must use more frames than storage"
+                                )
                             final_time = parameters.get("final_time")
-                            if time_steps > 1 and final_time is not None:
+                            if quality_time_steps > 1 and final_time is not None:
                                 try:
-                                    expected_saved_dt = float(final_time) / (time_steps - 1)
+                                    expected_saved_dt = float(final_time) / (quality_time_steps - 1)
                                 except (TypeError, ValueError):
                                     expected_saved_dt = None
                             else:
                                 expected_saved_dt = None
+                            if quality_source == "dense_pre_storage_trajectory":
+                                stored_time_values = row.get("stored_time_values")
+                                if not isinstance(stored_time_values, list):
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}].stored_time_values "
+                                        "must be a list for dense quality trajectories"
+                                    )
+                                try:
+                                    actual_times = np.asarray(stored_time_values, dtype=np.float64)
+                                    expected_times = (
+                                        np.asarray(normalized_indices, dtype=np.float64)
+                                        * float(final_time)
+                                        / (quality_time_steps - 1)
+                                    )
+                                except (TypeError, ValueError) as exc:
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}].stored_time_values is invalid"
+                                    ) from exc
+                                if (
+                                    actual_times.shape != (time_steps,)
+                                    or not np.all(np.isfinite(actual_times))
+                                    or not np.allclose(actual_times, expected_times)
+                                ):
+                                    raise ShardValidationError(
+                                        f"{shard}:metadata[{index}].stored_time_values "
+                                        "differs from the exact selected frames"
+                                    )
                             expected_context = {
                                 "resolution": spatial_list,
                                 "dtype": str(handle["trajectory"].dtype),
-                                "T": time_steps,
+                                "T": quality_time_steps,
                                 "saved_dt": expected_saved_dt,
                                 "operator_id": quality.get("operator_id"),
                                 "solver_id": parameters.get("solver_id"),

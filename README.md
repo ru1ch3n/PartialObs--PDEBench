@@ -130,6 +130,11 @@ pdeobs plan \
 The exact scratch-only SeaWulf commands, CPU policy, dependency windows, and
 quality-report paths are in the [SeaWulf guide](hpc/seawulf/README.md).
 
+Temporal release rows now store exactly 30 ordered snapshots. Difficult cases
+may use a denser in-memory time grid for PDE-loss measurement, but those audit
+frames are discarded after quality evaluation; metadata preserves the dense
+`quality_T`, exact selected frame indices, and physical times.
+
 For a tailored PDE/boundary/setting slice, use the
 [interactive Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/).
 It generates local, Linux-server, and SeaWulf commands together with report and

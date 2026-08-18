@@ -587,6 +587,49 @@ def test_small_generation_job_is_deterministic_and_resumable(tmp_path):
         assert quality["status"] == "warning"
 
 
+def test_dense_quality_trajectory_stores_exact_uniform_30_frame_subset(tmp_path):
+    pytest.importorskip("h5py")
+    job = build_job_grid(
+        tmp_path,
+        tier="tiny",
+        resolution=8,
+        shard_size=2,
+        families=("heat",),
+        boundaries=("periodic",),
+        settings=("smooth_grf",),
+        regimes=("low",),
+        seed=23,
+        time_steps=59,
+        stored_time_steps=30,
+    )[0]
+    generate_job(job)
+    with LazyHDF5Dataset(job.output_path) as dataset:
+        sample = dataset[0]
+        metadata = sample.metadata
+        assert sample.trajectory.shape == (30, 8, 8, 1)
+        assert metadata["T"] == 30
+        assert metadata["quality_T"] == 59
+        assert metadata["quality_source"] == "dense_pre_storage_trajectory"
+        assert metadata["stored_frame_indices"] == list(range(0, 59, 2))
+        assert metadata["quality"]["calibration_context"]["T"] == 59
+        assert len(metadata["stored_time_values"]) == 30
+    validate_hdf5_shard(job.output_path, verify_checksum=True, strict=True)
+
+
+def test_stored_time_axis_rejects_interpolation_or_upsampling(tmp_path):
+    with pytest.raises(ValueError, match="divisible"):
+        build_job_grid(
+            tmp_path,
+            tier="tiny",
+            families=("heat",),
+            boundaries=("periodic",),
+            settings=("smooth_grf",),
+            regimes=("low",),
+            time_steps=58,
+            stored_time_steps=30,
+        )
+
+
 def test_quality_describes_exact_float64_storage_and_rejected_sample_is_audited(tmp_path):
     pytest.importorskip("h5py")
     job = build_job_grid(

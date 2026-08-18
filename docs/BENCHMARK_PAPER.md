@@ -51,7 +51,7 @@ trajectory  [N, T, H, W, V_state]
 geometry    [N, H, W, 1]
 ```
 
-Static PDEs use `T=1`. Temporal PDEs use `T=9`; Navier–Stokes is never reduced
+Static PDEs use `T=1`. Temporal PDEs store `T=30`; Navier–Stokes is never reduced
 to an initial/final pair. Generated metadata explicitly records `T`. Evaluation
 metadata records `mask_id`, deterministic `mask_seed`, observation count, and
 observation ratio.

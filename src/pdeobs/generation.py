@@ -128,6 +128,7 @@ class GenerationJob:
     resolution: int | tuple[int, int] = 128
     seed: int = 0
     time_steps: int | None = None
+    stored_time_steps: int | None = None
     dtype: str = "float32"
     compression: str | None = "gzip"
     compression_level: int | None = 4
@@ -147,11 +148,32 @@ class GenerationJob:
         if self.sample_start < 0 or self.sample_count < 1 or self.shard_index < 0:
             raise ValueError("sample_start/shard_index must be non-negative and count positive")
         object.__setattr__(self, "resolution", normalize_resolution(self.resolution))
+        if self.time_steps is not None and int(self.time_steps) < 1:
+            raise ValueError("time_steps must be positive")
         storage_dtype = np.dtype(self.dtype)
         if not np.issubdtype(storage_dtype, np.floating):
             raise TypeError("generation dtype must be floating-point")
         if self.compression_level is not None and int(self.compression_level) < 0:
             raise ValueError("compression_level must be non-negative")
+        if self.stored_time_steps is not None:
+            stored_time_steps = int(self.stored_time_steps)
+            if stored_time_steps < 2:
+                raise ValueError("stored_time_steps must be at least 2 for temporal data")
+            object.__setattr__(self, "stored_time_steps", stored_time_steps)
+            if self.pde in TEMPORAL_FAMILIES and self.time_steps is None:
+                raise ValueError(
+                    "built-in temporal jobs with stored_time_steps require explicit time_steps"
+                )
+            if self.time_steps is not None:
+                dense_intervals = int(self.time_steps) - 1
+                stored_intervals = stored_time_steps - 1
+                if dense_intervals < stored_intervals:
+                    raise ValueError("stored_time_steps cannot exceed time_steps")
+                if dense_intervals % stored_intervals:
+                    raise ValueError(
+                        "time_steps - 1 must be divisible by stored_time_steps - 1 "
+                        "so stored snapshots have a uniform physical cadence"
+                    )
         regime_limit = regime_counts(self.macro_size)[self.regime]
         if self.sample_start + self.sample_count > regime_limit:
             raise ValueError("job sample range exceeds its full regime allocation")
@@ -202,6 +224,7 @@ class GenerationJob:
             "resolution": list(normalize_resolution(self.resolution)),
             "seed": self.seed,
             "time_steps": self.time_steps,
+            "stored_time_steps": self.stored_time_steps,
             "dtype": self.dtype,
             "compression": self.compression,
             "compression_level": self.compression_level,
@@ -241,6 +264,7 @@ def build_job_grid(
     shard_size: int = 100,
     seed: int = 0,
     time_steps: int | None = None,
+    stored_time_steps: int | None = None,
     time_steps_by_family: Mapping[str, int] | None = None,
     time_steps_by_case: Mapping[str, int] | None = None,
     dtype: str = "float32",
@@ -341,6 +365,9 @@ def build_job_grid(
                                     if case_steps is not None
                                     else canonical_time_steps.get(family, time_steps)
                                 ),
+                                stored_time_steps=(
+                                    stored_time_steps if family in TEMPORAL_FAMILIES else None
+                                ),
                                 dtype=dtype,
                                 compression=compression,
                                 compression_level=compression_level,
@@ -416,6 +443,33 @@ def _sample_from_output(output: Any, metadata: Mapping[str, Any]) -> Sample:
     if diagnostics:
         combined["diagnostics"] = diagnostics
     return Sample(condition, trajectory, geometry, combined)
+
+
+def _stored_frame_indices(dense_steps: int, stored_steps: int | None) -> np.ndarray:
+    """Select uniformly spaced exact solver frames for persistent storage.
+
+    The dense trajectory remains in memory long enough to evaluate the PDE
+    quality contract.  Only this deterministic subset is written to HDF5.
+    Requiring an integer stride avoids interpolating or fabricating states.
+    """
+
+    dense_steps = int(dense_steps)
+    if dense_steps < 1:
+        raise ValueError("a trajectory must contain at least one frame")
+    if stored_steps is None or dense_steps == 1:
+        return np.arange(dense_steps, dtype=np.int64)
+    stored_steps = int(stored_steps)
+    if stored_steps < 2 or stored_steps > dense_steps:
+        raise ValueError("stored_time_steps must be between 2 and the dense trajectory T")
+    dense_intervals = dense_steps - 1
+    stored_intervals = stored_steps - 1
+    if dense_intervals % stored_intervals:
+        raise ValueError(
+            "dense trajectory intervals must be divisible by stored intervals; "
+            "increase trajectory_steps so no temporal interpolation is required"
+        )
+    stride = dense_intervals // stored_intervals
+    return np.arange(stored_steps, dtype=np.int64) * stride
 
 
 def generate_job(
@@ -564,13 +618,15 @@ def generate_job(
                 "git_commit": git.get("commit") if isinstance(git, Mapping) else None,
                 **ood_labels,
             }
-            # Quality is computed after the requested storage dtype conversion,
-            # so the embedded loss describes the bytes written to HDF5.
+            # Quality is computed after conversion to the requested field dtype.
+            # A dense temporal trajectory may be retained only in memory for the
+            # saved-field PDE residual; publication HDF5 stores a uniform exact
+            # subset selected below.
             raw_sample = _sample_from_output(output, metadata)
             geometry = raw_sample.geometry
             if geometry.dtype != np.bool_:
                 geometry = geometry.astype(job.dtype, copy=False)
-            sample = Sample(
+            quality_sample = Sample(
                 raw_sample.condition.astype(job.dtype, copy=False),
                 raw_sample.trajectory.astype(job.dtype, copy=False),
                 geometry,
@@ -582,14 +638,14 @@ def generate_job(
                 generation_quality_rejected,
             )
 
-            quality = evaluate_sample_quality(sample, config=job.quality)
+            quality = evaluate_sample_quality(quality_sample, config=job.quality)
             if generation_quality_rejected(quality):
                 failure_path = Path(job.output_path).with_suffix(".quality-failures.jsonl")
                 write_jsonl_manifest(
                     [
                         {
-                            "sample_id": sample.metadata.get("sample_id"),
-                            "seed": sample.metadata.get("seed"),
+                            "sample_id": quality_sample.metadata.get("sample_id"),
+                            "seed": quality_sample.metadata.get("seed"),
                             "job_id": job.job_id,
                             "accepted": False,
                             "quality": quality,
@@ -598,7 +654,30 @@ def generate_job(
                     failure_path,
                 )
             enforce_generation_quality(quality)
-            sample.metadata["quality"] = quality
+            dense_steps = int(quality_sample.trajectory.shape[0])
+            frame_indices = _stored_frame_indices(dense_steps, job.stored_time_steps)
+            stored_metadata = dict(quality_sample.metadata)
+            stored_metadata["T"] = int(frame_indices.size)
+            stored_metadata["quality_T"] = dense_steps
+            stored_metadata["quality_source"] = (
+                "dense_pre_storage_trajectory"
+                if frame_indices.size != dense_steps
+                else "stored_trajectory"
+            )
+            stored_metadata["stored_frame_indices"] = frame_indices.tolist()
+            parameters = stored_metadata.get("parameters", {})
+            final_time = parameters.get("final_time") if isinstance(parameters, Mapping) else None
+            if dense_steps > 1 and final_time is not None:
+                stored_metadata["stored_time_values"] = (
+                    frame_indices.astype(np.float64) * float(final_time) / (dense_steps - 1)
+                ).tolist()
+            stored_metadata["quality"] = quality
+            sample = Sample(
+                quality_sample.condition,
+                quality_sample.trajectory[frame_indices],
+                quality_sample.geometry,
+                stored_metadata,
+            )
             writer.append(sample)
         manifest = writer.finalize()
     except BaseException:
@@ -732,6 +811,7 @@ def jobs_from_config(
         shard_size=int(config.get("shard_size", 100)),
         seed=int(config.get("seed", 0)),
         time_steps=config.get("trajectory_steps", config.get("time_steps")),
+        stored_time_steps=config.get("stored_trajectory_steps"),
         time_steps_by_family=config.get("trajectory_steps_by_family", {}),
         time_steps_by_case=config.get("trajectory_steps_by_case", {}),
         dtype=str(config.get("dtype", "float32")),

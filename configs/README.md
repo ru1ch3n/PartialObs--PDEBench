@@ -18,8 +18,9 @@ The checked-in configurations are executable reference protocols:
   PDE/boundary pair using the registered topology-matched solver route.
 - `dataset/numerics_validation20.yaml`: complete 280-factor coverage at 20
   samples per macro case (5,600 samples); this is not the paper full tier. Its
-  `trajectory_steps_by_case` and `solver_options_by_case` mappings are part of
-  the physical ground-truth protocol and are independent of observation masks.
+  dense `trajectory_steps_by_case` values are used only for in-memory PDE-loss
+  measurement; `stored_trajectory_steps: 30` fixes the temporal HDF5 size.
+  Solver mappings remain independent of observation masks.
 - `dataset/smoke.yaml`: a tiny local or SeaWulf preflight run.
 - `dataset/recovery_signal.yaml` and `dataset/rollout_signal.yaml`: focused
   34-sample cases with strict train/validation/test coverage for the default

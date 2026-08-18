@@ -35,10 +35,11 @@ def test_validation20_uses_dense_frames_only_for_failed_burgers_strata() -> None
     jobs = jobs_from_config(config, output_root="validation20-test", include_tier_dir=False)
     selected = {(job.pde, job.boundary, job.setting, job.regime): job.time_steps for job in jobs}
 
-    assert selected[("burgers", "neumann", "front_ring_shock", "high")] == 513
-    assert selected[("burgers", "periodic", "dipole_vortex_pair", "high")] == 513
-    assert selected[("burgers", "neumann", "front_ring_shock", "medium")] == 257
-    assert selected[("burgers", "periodic", "dipole_vortex_pair", "medium")] == 257
+    assert selected[("burgers", "neumann", "front_ring_shock", "high")] == 523
+    assert selected[("burgers", "periodic", "dipole_vortex_pair", "high")] == 523
+    assert selected[("burgers", "neumann", "front_ring_shock", "medium")] == 262
+    assert selected[("burgers", "periodic", "dipole_vortex_pair", "medium")] == 262
+    assert {job.stored_time_steps for job in jobs if job.pde in {"burgers"}} == {30}
 
 
 def test_validation20_densifies_only_failed_ns_regimes() -> None:
@@ -47,12 +48,13 @@ def test_validation20_densifies_only_failed_ns_regimes() -> None:
     jobs = jobs_from_config(config, output_root="validation20-test", include_tier_dir=False)
     selected = {(job.pde, job.boundary, job.setting, job.regime): job.time_steps for job in jobs}
 
-    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "low")] == 257
-    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "medium")] == 129
-    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "high")] == 65
-    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "low")] == 257
-    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "medium")] == 129
-    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "high")] == 65
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "low")] == 262
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "medium")] == 146
+    assert selected[("navier_stokes", "neumann", "multi_frequency_fourier", "high")] == 88
+    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "low")] == 262
+    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "medium")] == 146
+    assert selected[("navier_stokes", "periodic", "multi_frequency_fourier", "high")] == 88
+    assert {job.stored_time_steps for job in jobs if job.pde == "navier_stokes"} == {30}
 
 
 def test_experiment_preset_is_strict_and_uses_paper_aliases(tmp_path: Path) -> None:

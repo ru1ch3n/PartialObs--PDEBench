@@ -58,10 +58,12 @@ trajectory  [N, T, H, W, V_state]
 geometry    [N, H, W, 1]
 ```
 
-Static PDEs use `T=1`. The reference temporal generators retain trajectories
-for heat, reaction-diffusion, Burgers, and Navier-Stokes. The compact starter
-protocol uses nine states, while the numerical-validation/release plan records
-case-specific saved-frame counts required by the audited residual. All current
+Static PDEs use `T=1`. Temporal release arrays store exactly `T=30` ordered,
+uniformly spaced, exact solver states spanning the configured physical time.
+Numerical-validation jobs may retain a denser trajectory only in memory while
+computing the saved-field PDE residual. Metadata records `quality_T`,
+`stored_frame_indices`, and exact `stored_time_values`; the dense audit frames
+are not written to HDF5. All current
 Navier-Stokes validation routes store one vorticity channel; periodic,
 rectangular bounded, and obstacle cases record different registered velocity-
 reconstruction operators. The geometry array stores walls/obstacles.
