@@ -211,9 +211,9 @@ flowchart TD
 
   click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
 
-  %% Theme tweaks (dark)
-  classDef cat fill:#121826,stroke:#223047,color:#e7edf5;
-  classDef node fill:#0f1522,stroke:#223047,color:#e7edf5;
+  %% Theme tweaks
+  classDef cat fill:#dff2ef,stroke:#0d6b68,color:#0b1730;
+  classDef node fill:#ffffff,stroke:#c7d0da,color:#0b1730;
   class Root,PI,OL,DiffGen,GraphSim,Bench cat;
   class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;
 """.strip("\n")
@@ -895,8 +895,9 @@ def page(
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
+  <meta name=\"theme-color\" content=\"#f4f6f9\" />
   <title>{html_escape(title)}</title>
-  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-16\" />
+  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-18-design-v3\" />
   {extra_head}
 </head>
 
@@ -1209,10 +1210,10 @@ def render_paper_page(p: Dict[str, Any]) -> str:
         hero_meta_html=hero_meta + badges(p.get("badges", [])),
         hero_card_html=hero_card,
         extra_head=(
-            "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
+            "<script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}};</script>"
             '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
             '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
-            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});}});</script>"
+            "<script>document.addEventListener('DOMContentLoaded',function(){if(window.mermaid){mermaid.initialize({startOnLoad:true,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#dff2ef',primaryTextColor:'#0b1730',primaryBorderColor:'#0d6b68',lineColor:'#6f7d8d',secondaryColor:'#fff1df',tertiaryColor:'#ffffff'}});}});</script>"
         ),
         body_html=body,
     )
@@ -1303,13 +1304,13 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         ),
         hero_card_html=hero_card,
         extra_head=(
-            "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
+            "<script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}};</script>"
             '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
             '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
             "<script>document.addEventListener('DOMContentLoaded',()=>{"
             "  if(!window.mermaid) return;"
             "  /* Enable clickable Mermaid nodes on GitHub Pages. */"
-            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});"
+            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#dff2ef',primaryTextColor:'#0b1730',primaryBorderColor:'#0d6b68',lineColor:'#6f7d8d',secondaryColor:'#fff1df',tertiaryColor:'#ffffff'}});"
             "  mermaid.run({querySelector:'.mermaid'});"
             "});</script>"
         ),
@@ -1620,7 +1621,7 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
         hero_subtitle_html="Tables of method classes and commonly compared baselines.",
         hero_card_html=hero_card,
         extra_head=(
-            "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
+            "<script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)'],['$','$']]}};</script>"
             '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
         ),
         body_html=body,

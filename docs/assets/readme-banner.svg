@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">PDE-OBS — Partial Observation PDE Benchmark</title>
+  <desc id="desc">A restrained navy, teal, and amber project banner with a partial field visualization.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfcfd"/>
+      <stop offset="1" stop-color="#eef4f4"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d6b68"/>
+      <stop offset=".64" stop-color="#3d918c"/>
+      <stop offset="1" stop-color="#d9852f"/>
+    </linearGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M28 0H0V28" fill="none" stroke="#0b1730" stroke-opacity=".055"/>
+    </pattern>
+    <clipPath id="panel">
+      <rect x="772" y="54" width="362" height="252" rx="24"/>
+    </clipPath>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0b1730" flood-opacity=".12"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="28" fill="url(#grid)"/>
+  <path d="M0 0H1200V8H0z" fill="url(#field)"/>
+
+  <g transform="translate(74 66)">
+    <rect width="42" height="42" rx="12" fill="#0b1730"/>
+    <circle cx="13" cy="13" r="4" fill="#d9852f"/>
+    <path d="M12 29c5-10 11-16 20-18M16 34c4-7 9-11 16-14" fill="none" stroke="#8fd0c9" stroke-linecap="round" stroke-width="2.5"/>
+    <text x="58" y="28" fill="#0d6b68" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" letter-spacing="3">PDE · OBS</text>
+  </g>
+
+  <text x="74" y="177" fill="#0b1730" font-family="Georgia, 'Times New Roman', serif" font-size="58" letter-spacing="-2">Partial Observation</text>
+  <text x="74" y="235" fill="#0b1730" font-family="Georgia, 'Times New Roman', serif" font-size="58" letter-spacing="-2">PDE Benchmark</text>
+  <text x="78" y="282" fill="#5e6b7c" font-family="Arial, Helvetica, sans-serif" font-size="17" letter-spacing=".4">Controlled data · reproducible protocols · research map</text>
+
+  <g filter="url(#shadow)">
+    <rect x="772" y="54" width="362" height="252" rx="24" fill="#ffffff" stroke="#d9e0e7"/>
+  </g>
+  <g clip-path="url(#panel)">
+    <rect x="772" y="54" width="362" height="252" fill="url(#grid)"/>
+    <path d="M748 268C817 253 835 167 892 176c54 9 59 72 112 53 49-18 57-104 151-124" fill="none" stroke="#0d6b68" stroke-opacity=".18" stroke-width="38"/>
+    <path d="M748 268C817 253 835 167 892 176c54 9 59 72 112 53 49-18 57-104 151-124" fill="none" stroke="url(#field)" stroke-linecap="round" stroke-width="4"/>
+    <path d="M757 148c59 5 89-58 146-41 56 17 66 79 122 67 43-9 67-55 126-59" fill="none" stroke="#0b1730" stroke-dasharray="2 10" stroke-linecap="round" stroke-opacity=".36" stroke-width="3"/>
+    <g fill="#ffffff" stroke="#0d6b68" stroke-width="3">
+      <circle cx="811" cy="234" r="7"/>
+      <circle cx="853" cy="190" r="7"/>
+      <circle cx="898" cy="177" r="7"/>
+      <circle cx="963" cy="216" r="7"/>
+      <circle cx="1024" cy="215" r="7"/>
+      <circle cx="1086" cy="145" r="7"/>
+    </g>
+    <g fill="#d9852f">
+      <rect x="827" y="100" width="13" height="13" rx="3"/>
+      <rect x="934" y="128" width="13" height="13" rx="3"/>
+      <rect x="1042" y="92" width="13" height="13" rx="3"/>
+    </g>
+    <g fill="#eef2f5" stroke="#c7d0da">
+      <rect x="880" y="86" width="19" height="19" rx="4"/>
+      <rect x="988" y="116" width="19" height="19" rx="4"/>
+      <rect x="1069" y="245" width="19" height="19" rx="4"/>
+    </g>
+  </g>
+  <text x="796" y="286" fill="#5e6b7c" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">OBSERVED  ·  MASKED  ·  RECOVERED</text>
+</svg>

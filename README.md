@@ -1,7 +1,11 @@
-# PDE-OBS / PartialObs-PDEBench
+<p align="center">
+  <img src="docs/assets/readme-banner.svg" alt="PDE-OBS — Partial Observation PDE Benchmark" width="100%" />
+</p>
 
-**A controlled benchmark, reference implementation, and research map for PDE
-learning under partial observation.**
+<h1 align="center">PDE-OBS / PartialObs-PDEBench</h1>
+
+<p align="center"><strong>A controlled benchmark, reference implementation, and research map for PDE
+learning under partial observation.</strong></p>
 
 [Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) |
 [Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/) |
