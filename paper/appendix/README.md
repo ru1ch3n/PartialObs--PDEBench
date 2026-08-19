@@ -18,10 +18,11 @@ PDEBench text.
 ## Reproduce the figures
 
 The publication figures currently included in this appendix were rendered on
-SeaWulf from accepted full-T15 HDF5 shards. Their exact sources and snapshot
-counts are recorded in `figure_data/figure_snapshot.json`. The corresponding
-read-only plotting source and Slurm wrapper live in
-`../iclr2027/scripts/`.
+SeaWulf from accepted full-T15 HDF5 shards. Each PDE is represented by its own
+data card placed beside the corresponding numerical description. Their exact
+sources, case metadata, and snapshot counts are recorded in
+`figure_data/figure_snapshot.json`. The corresponding read-only plotting
+source and one-CPU Slurm wrapper live in `../iclr2027/scripts/`.
 
 For the older deterministic reduced-resolution explanatory figures, run:
 

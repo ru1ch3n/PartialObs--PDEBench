@@ -450,7 +450,10 @@ The low/medium/high regimes change a physically meaningful coefficient, not a
 generic post-hoc noise level.  Parameter values are summarized in
 \cref{tab:pde-parameters}.  The ten setting generators change spatial
 regularity and topology of coefficients, sources, or initial states while
-seeds remain local and deterministic.
+seeds remain local and deterministic.  Each PDE subsection below includes a
+dedicated, consistently designed data card rendered directly from one
+accepted full-tier SeaWulf shard.  The cards expose PDE-specific structure
+rather than reducing all seven problems to a single generic gallery.
 
 \begin{table}[t]
 \centering
@@ -490,6 +493,17 @@ solved by a Krylov method with relative tolerance $10^{-9}$.  Periodic and
 Neumann systems apply the appropriate compatibility and gauge treatment.  The
 condition channel stores $a$; the target stores $u$.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_darcy.pdf}
+  \caption{Darcy data card for an accepted periodic, piecewise-block,
+  medium-contrast sample.  The panels connect the discontinuous permeability
+  coefficient to the pressure solution, its gradient magnitude, and a common
+  standardized centerline.  Values are read directly from a $128\times128$
+  full-tier HDF5 shard; the exact path is recorded in the figure snapshot.}
+  \label{fig:pde-darcy}
+\end{figure}
+
 \subsection{Poisson equation}
 
 The Poisson family solves
@@ -505,6 +519,16 @@ discrete compatibility condition.  The source is preserved in the condition
 channel so an independent evaluator can reconstruct the stated right-hand
 side.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_poisson.pdf}
+  \caption{Poisson data card for an accepted periodic Gaussian-blob source at
+  medium amplitude.  Source, potential, solution-gradient magnitude, and
+  standardized centerlines make the elliptic smoothing relation visible in
+  one traceable $128\times128$ sample.}
+  \label{fig:pde-poisson}
+\end{figure}
+
 \subsection{Helmholtz equation}
 
 The real, undamped boundary-value problem is
@@ -517,6 +541,16 @@ second-order operator and solved as a real sparse system to relative tolerance
 $10^{-9}$.  In particular, the periodic route does not take the real part of
 a damped complex transfer function: that would solve a different equation.
 The condition stores $f$, and the target stores $u$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_helmholtz.pdf}
+  \caption{Helmholtz data card for an accepted periodic, multi-frequency
+  Fourier source in the high-wavenumber regime.  The source--solution pair,
+  spatial gradient, and centerline comparison retain the oscillatory
+  structure of the real undamped solve.}
+  \label{fig:pde-helmholtz}
+\end{figure}
 
 \subsection{Heat equation}
 
@@ -531,6 +565,16 @@ finite-difference Laplacian and Crank--Nicolson time integration with the
 registered boundary equations included in the implicit solve.  Thus the wall
 values are not overwritten after a periodic update.  The condition and first
 trajectory frame both encode $u_0$; full T15 records contain 15 ordered frames.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_heat.pdf}
+  \caption{Heat-equation data card for an accepted periodic Gaussian-blob
+  initial condition at medium diffusivity.  Three common-scale snapshots show
+  diffusion across the released trajectory, while normalized spatial RMS and
+  peak magnitude summarize decay over all 15 stored solver states.}
+  \label{fig:pde-heat}
+\end{figure}
 
 \subsection{Reaction--diffusion equation}
 
@@ -547,6 +591,16 @@ semigroup for periodic domains and a boundary-aware Crank--Nicolson solve for
 bounded domains.  Adaptive internal substeps control the reaction update while
 the stored frames remain uniformly spaced over $t\in[0,0.8]$.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_reaction_diffusion.pdf}
+  \caption{Reaction--diffusion data card for an accepted periodic
+  threshold-level-set initial condition at medium reaction rate.  Initial,
+  middle, and final states share one color scale; the lower diagnostic follows
+  the normalized RMS and peak magnitude through all 15 released states.}
+  \label{fig:pde-reaction-diffusion}
+\end{figure}
+
 \subsection{Two-dimensional scalar Burgers equation}
 
 The benchmark uses the scalar two-dimensional conservation law
@@ -561,6 +615,16 @@ choose internal steps from a two-dimensional CFL bound; diffusion is advanced
 implicitly by the Fourier or boundary finite-difference route.  This
 case-dependent selection prevents Gibbs-dominated spectral evolution of the
 piecewise, threshold, and front/ring/shock settings.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_burgers.pdf}
+  \caption{Scalar Burgers data card for an accepted periodic front/ring/shock
+  sample at medium viscosity.  The common-scale snapshots retain the moving
+  steep structures, and the trajectory diagnostic reports normalized RMS and
+  peak magnitude without substituting synthetic illustration.}
+  \label{fig:pde-burgers}
+\end{figure}
 
 \subsection{Incompressible Navier--Stokes equation}
 
@@ -590,7 +654,17 @@ overwriting.  This is essential because such overwriting can make images look
 bounded while leaving the interior dynamics inconsistent with the stated
 boundary-value problem.
 
-\begin{table}[p]
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_pde_navier_stokes.pdf}
+  \caption{Navier--Stokes data card for an accepted periodic dipole-vortex-pair
+  sample at medium viscosity.  Initial, middle, and final vorticity fields use
+  a shared diverging scale, while the lower panel summarizes the full 15-state
+  evolution.  The figure contains numerical data, not generated artwork.}
+  \label{fig:pde-navier-stokes}
+\end{figure}
+
+\begin{table}[H]
 \centering
 \caption{Boundary-aware numerical route map.  ``FD2'' denotes a second-order
 finite-difference/flux discretization; ``CN'' denotes Crank--Nicolson.}
@@ -615,17 +689,6 @@ Navier--Stokes & obstacle & Masked sparse streamfunction, Thom wall vorticity, S
 \bottomrule
 \end{tabularx}
 \end{table}
-
-\begin{figure}[p]
-  \centering
-  \includegraphics[width=0.96\linewidth]{figures/fig_pde_gallery.pdf}
-  \caption{Representative condition/initial and solution/final fields from
-  the seven built-in PDE generators.  Every panel is rendered directly from an
-  accepted $128\times128$ full-tier HDF5 shard on SeaWulf.  The exact source
-  paths and rendering time are recorded in the accompanying machine-readable
-  figure snapshot.}
-  \label{fig:pde-gallery}
-\end{figure}
 
 \subsection{Temporal grids and quality-aware refinement}
 

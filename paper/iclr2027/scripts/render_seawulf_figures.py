@@ -45,6 +45,45 @@ PDE_LABELS = {
     "navier_stokes": "Navier--Stokes",
 }
 
+PDE_FIGURE_LABELS = {
+    pde: label.replace("--", "-") for pde, label in PDE_LABELS.items()
+}
+
+STATIC_PDES = {"darcy", "poisson", "helmholtz"}
+
+PREFERRED_CASES = {
+    "darcy": ("periodic", "piecewise_blocks", "medium"),
+    "poisson": ("periodic", "gaussian_blobs", "medium"),
+    "helmholtz": ("periodic", "multi_frequency_fourier", "high"),
+    "heat": ("periodic", "gaussian_blobs", "medium"),
+    "reaction_diffusion": ("periodic", "threshold_level_set", "medium"),
+    "burgers": ("periodic", "front_ring_shock", "medium"),
+    "navier_stokes": ("periodic", "dipole_vortex_pair", "medium"),
+}
+
+PDE_ACCENTS = {
+    "darcy": "#20639B",
+    "poisson": "#3CAEA3",
+    "helmholtz": "#6C5CE7",
+    "heat": "#F39C12",
+    "reaction_diffusion": "#D3548C",
+    "burgers": "#E76F51",
+    "navier_stokes": "#264653",
+}
+
+STATIC_FIELD_LABELS = {
+    "darcy": ("Permeability coefficient a(x)", "Pressure / head u(x)"),
+    "poisson": ("Source field f(x)", "Potential u(x)"),
+    "helmholtz": ("Source field f(x)", "Real solution u(x)"),
+}
+
+TEMPORAL_FIELD_LABELS = {
+    "heat": "Temperature u(x,t)",
+    "reaction_diffusion": "Order parameter u(x,t)",
+    "burgers": "Scalar state u(x,t)",
+    "navier_stokes": "Vorticity omega(x,t)",
+}
+
 MASKS = (
     ("random_1pct", "Random 1%"),
     ("random_3pct", "Random 3%"),
@@ -70,7 +109,8 @@ def completed_shards(data_root: Path, pde: str) -> list[Path]:
 
 
 def representative_shard(data_root: Path, pde: str) -> Path:
-    preferred = data_root / pde / "periodic" / "smooth_grf" / "medium" / "shard_00000.h5"
+    boundary, setting, regime = PREFERRED_CASES[pde]
+    preferred = data_root / pde / boundary / setting / regime / "shard_00000.h5"
     if preferred.exists():
         return preferred
     shards = completed_shards(data_root, pde)
@@ -79,17 +119,19 @@ def representative_shard(data_root: Path, pde: str) -> Path:
     return shards[0]
 
 
-def load_pair(shard: Path) -> tuple[np.ndarray, np.ndarray]:
+def load_sample(shard: Path) -> tuple[np.ndarray, np.ndarray, dict[str, object]]:
     with h5py.File(shard, "r") as handle:
         condition = np.asarray(handle["condition"][0, ..., 0], dtype=np.float64)
         trajectory = np.asarray(handle["trajectory"][0, ..., 0], dtype=np.float64)
-    if trajectory.ndim == 3:
-        target = trajectory[-1]
-    elif trajectory.ndim == 2:
-        target = trajectory
-    else:
+        raw_spec = handle.attrs.get("spec_json", "{}")
+    if isinstance(raw_spec, bytes):
+        raw_spec = raw_spec.decode("utf-8")
+    spec = json.loads(str(raw_spec))
+    if trajectory.ndim == 2:
+        trajectory = trajectory[np.newaxis, ...]
+    elif trajectory.ndim != 3:
         raise ValueError(f"unexpected trajectory shape {trajectory.shape} in {shard}")
-    return condition, target
+    return condition, trajectory, spec
 
 
 def robust_limits(field: np.ndarray, *, symmetric: bool = False) -> tuple[float, float]:
@@ -106,7 +148,8 @@ def robust_limits(field: np.ndarray, *, symmetric: bool = False) -> tuple[float,
 
 def render_observation_protocols(data_root: Path, output_dir: Path) -> dict[str, object]:
     shard = representative_shard(data_root, "heat")
-    _, field = load_pair(shard)
+    _, trajectory, _ = load_sample(shard)
+    field = trajectory[-1]
     vmin, vmax = robust_limits(field)
     fig, axes = plt.subplots(3, 3, figsize=(9.4, 8.7), constrained_layout=True)
     counts: dict[str, int] = {}
@@ -139,7 +182,8 @@ def render_pde_gallery(data_root: Path, output_dir: Path) -> dict[str, object]:
     for column, pde in enumerate(PDE_ORDER):
         shard = representative_shard(data_root, pde)
         sources[pde] = str(shard)
-        condition, target = load_pair(shard)
+        condition, trajectory, _ = load_sample(shard)
+        target = trajectory[-1]
         for row, (field, row_label) in enumerate(((condition, "Condition / initial"), (target, "Solution / final"))):
             axis = axes[row, column]
             symmetric = bool(np.nanmin(field) < 0.0 < np.nanmax(field))
@@ -160,6 +204,243 @@ def render_pde_gallery(data_root: Path, output_dir: Path) -> dict[str, object]:
         fig.savefig(output_dir / f"fig_pde_gallery.{suffix}", dpi=240, bbox_inches="tight")
     plt.close(fig)
     return {"source_shards": sources}
+
+
+def _case_metadata(data_root: Path, shard: Path, trajectory: np.ndarray) -> dict[str, object]:
+    relative = shard.relative_to(data_root)
+    pde, boundary, setting, regime = relative.parts[:4]
+    return {
+        "pde": pde,
+        "boundary": boundary,
+        "setting": setting,
+        "regime": regime,
+        "sample_index": 0,
+        "saved_frames": int(trajectory.shape[0]),
+        "spatial_shape": [int(trajectory.shape[-2]), int(trajectory.shape[-1])],
+        "source_shard": str(shard),
+    }
+
+
+def _field_style(field: np.ndarray, *, shared_limits: tuple[float, float] | None = None):
+    symmetric = bool(np.nanmin(field) < 0.0 < np.nanmax(field))
+    limits = shared_limits if shared_limits is not None else robust_limits(field, symmetric=symmetric)
+    cmap = "RdBu_r" if symmetric or (limits[0] < 0.0 < limits[1]) else "viridis"
+    return cmap, limits
+
+
+def _style_field_axis(axis, accent: str) -> None:
+    axis.set_xticks([])
+    axis.set_yticks([])
+    axis.set_facecolor("#F4F6F8")
+    for spine in axis.spines.values():
+        spine.set_linewidth(0.8)
+        spine.set_color(accent)
+
+
+def _save_figure(fig, output_dir: Path, stem: str) -> None:
+    fig.savefig(output_dir / f"{stem}.pdf", bbox_inches="tight", facecolor="white")
+    fig.savefig(output_dir / f"{stem}.png", dpi=260, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
+def _add_card_header(fig, pde: str, metadata: dict[str, object]) -> None:
+    accent = PDE_ACCENTS[pde]
+    fig.suptitle(
+        f"{PDE_FIGURE_LABELS[pde]} | accepted SeaWulf sample",
+        x=0.055,
+        y=0.985,
+        ha="left",
+        va="top",
+        fontsize=14.0,
+        fontweight="bold",
+        color="#17212B",
+    )
+    badge = (
+        f"{str(metadata['boundary']).upper()}  |  "
+        f"{str(metadata['setting']).replace('_', ' ').upper()}  |  "
+        f"{str(metadata['regime']).upper()}  |  128 x 128  |  ACCEPTED"
+    )
+    fig.text(
+        0.055,
+        0.925,
+        badge,
+        ha="left",
+        va="top",
+        fontsize=7.8,
+        color="white",
+        bbox={"boxstyle": "round,pad=0.35", "facecolor": accent, "edgecolor": "none"},
+    )
+
+
+def render_static_pde_card(
+    data_root: Path,
+    output_dir: Path,
+    pde: str,
+    shard: Path,
+    condition: np.ndarray,
+    trajectory: np.ndarray,
+) -> dict[str, object]:
+    target = trajectory[-1]
+    metadata = _case_metadata(data_root, shard, trajectory)
+    accent = PDE_ACCENTS[pde]
+    fig, axes = plt.subplots(2, 2, figsize=(7.6, 5.9), constrained_layout=False)
+    fig.subplots_adjust(left=0.055, right=0.965, bottom=0.12, top=0.84, wspace=0.34, hspace=0.30)
+    _add_card_header(fig, pde, metadata)
+
+    condition_label, target_label = STATIC_FIELD_LABELS[pde]
+    image_axes = (
+        (axes[0, 0], condition, condition_label),
+        (axes[0, 1], target, target_label),
+    )
+    for axis, field, label in image_axes:
+        cmap, (vmin, vmax) = _field_style(field)
+        image = axis.imshow(field, cmap=cmap, vmin=vmin, vmax=vmax, origin="lower")
+        axis.set_title(label, fontsize=9.2, fontweight="semibold", color="#25313C", pad=6)
+        _style_field_axis(axis, accent)
+        colorbar = fig.colorbar(image, ax=axis, fraction=0.046, pad=0.025)
+        colorbar.ax.tick_params(labelsize=6.5, length=2)
+        colorbar.outline.set_linewidth(0.4)
+
+    gy, gx = np.gradient(target)
+    gradient = np.hypot(gx, gy)
+    _, (vmin, vmax) = _field_style(gradient)
+    gradient_image = axes[1, 0].imshow(
+        gradient, cmap="magma", vmin=vmin, vmax=vmax, origin="lower"
+    )
+    axes[1, 0].set_title("Solution gradient magnitude", fontsize=9.2, fontweight="semibold")
+    _style_field_axis(axes[1, 0], accent)
+    colorbar = fig.colorbar(gradient_image, ax=axes[1, 0], fraction=0.046, pad=0.025)
+    colorbar.ax.tick_params(labelsize=6.5, length=2)
+    colorbar.outline.set_linewidth(0.4)
+
+    center = condition.shape[0] // 2
+    x = np.linspace(0.0, 1.0, condition.shape[1])
+    condition_line = condition[center]
+    target_line = target[center]
+
+    def normalize(line: np.ndarray) -> np.ndarray:
+        return (line - np.nanmean(line)) / (np.nanstd(line) + np.finfo(float).eps)
+
+    axes[1, 1].plot(x, normalize(condition_line), color="#7F8C8D", linewidth=1.35, label="condition")
+    axes[1, 1].plot(x, normalize(target_line), color=accent, linewidth=1.8, label="solution")
+    axes[1, 1].axhline(0.0, color="#CBD2D9", linewidth=0.7)
+    axes[1, 1].set_title("Normalized horizontal centerline", fontsize=9.2, fontweight="semibold")
+    axes[1, 1].tick_params(labelsize=7, width=0.6)
+    axes[1, 1].grid(alpha=0.18, linewidth=0.6)
+    axes[1, 1].legend(frameon=False, fontsize=7.3, loc="best")
+    for spine in axes[1, 1].spines.values():
+        spine.set_linewidth(0.7)
+        spine.set_color("#AAB3BB")
+
+    fig.text(
+        0.965,
+        0.012,
+        "Rendered read-only from sample 0 of an accepted full-tier HDF5 shard",
+        ha="right",
+        va="bottom",
+        fontsize=6.8,
+        color="#66727D",
+    )
+    _save_figure(fig, output_dir, f"fig_pde_{pde}")
+    return metadata
+
+
+def render_temporal_pde_card(
+    data_root: Path,
+    output_dir: Path,
+    pde: str,
+    shard: Path,
+    condition: np.ndarray,
+    trajectory: np.ndarray,
+) -> dict[str, object]:
+    del condition  # The first stored frame is the released initial state for temporal PDEs.
+    metadata = _case_metadata(data_root, shard, trajectory)
+    accent = PDE_ACCENTS[pde]
+    frame_indices = (0, len(trajectory) // 2, len(trajectory) - 1)
+    combined = trajectory[np.asarray(frame_indices)]
+    shared_limits = robust_limits(
+        combined,
+        symmetric=bool(np.nanmin(combined) < 0.0 < np.nanmax(combined)),
+    )
+    cmap, _ = _field_style(combined, shared_limits=shared_limits)
+
+    fig = plt.figure(figsize=(7.8, 5.15), constrained_layout=False)
+    grid = fig.add_gridspec(
+        2,
+        3,
+        left=0.055,
+        right=0.94,
+        bottom=0.16,
+        top=0.80,
+        hspace=0.40,
+        wspace=0.12,
+        height_ratios=(1.0, 0.72),
+    )
+    _add_card_header(fig, pde, metadata)
+    field_axes = [fig.add_subplot(grid[0, index]) for index in range(3)]
+    titles = ("Initial saved state", "Middle saved state", "Final saved state")
+    image = None
+    for axis, frame_index, title in zip(field_axes, frame_indices, titles, strict=True):
+        image = axis.imshow(
+            trajectory[frame_index],
+            cmap=cmap,
+            vmin=shared_limits[0],
+            vmax=shared_limits[1],
+            origin="lower",
+        )
+        axis.set_title(f"{title}\nframe {frame_index + 1}/{len(trajectory)}", fontsize=8.8, fontweight="semibold")
+        _style_field_axis(axis, accent)
+    assert image is not None
+    colorbar = fig.colorbar(image, ax=field_axes, fraction=0.025, pad=0.018)
+    colorbar.set_label(TEMPORAL_FIELD_LABELS[pde], fontsize=7.4)
+    colorbar.ax.tick_params(labelsize=6.5, length=2)
+    colorbar.outline.set_linewidth(0.4)
+
+    diagnostic_axis = fig.add_subplot(grid[1, :])
+    time = np.linspace(0.0, 1.0, len(trajectory))
+    rms = np.sqrt(np.nanmean(np.square(trajectory), axis=(1, 2)))
+    peak = np.nanmax(np.abs(trajectory), axis=(1, 2))
+    rms /= max(float(rms[0]), np.finfo(float).eps)
+    peak /= max(float(peak[0]), np.finfo(float).eps)
+    diagnostic_axis.plot(time, rms, color=accent, linewidth=2.1, marker="o", markersize=3.0, label="spatial RMS")
+    diagnostic_axis.plot(time, peak, color="#7F8C8D", linewidth=1.45, linestyle="--", marker="s", markersize=2.7, label="peak magnitude")
+    for frame_index in frame_indices:
+        diagnostic_axis.axvline(time[frame_index], color="#D6DCE1", linewidth=0.7, zorder=0)
+    diagnostic_axis.set_title("Evolution over the 15 released solver states", fontsize=9.3, fontweight="semibold")
+    diagnostic_axis.set_xlabel("normalized physical time", fontsize=8)
+    diagnostic_axis.set_ylabel("value / initial value", fontsize=8)
+    diagnostic_axis.tick_params(labelsize=7, width=0.6)
+    diagnostic_axis.grid(axis="y", alpha=0.18, linewidth=0.6)
+    diagnostic_axis.legend(frameon=False, fontsize=7.4, ncol=2, loc="best")
+    for spine in diagnostic_axis.spines.values():
+        spine.set_linewidth(0.7)
+        spine.set_color("#AAB3BB")
+
+    fig.text(
+        0.94,
+        0.012,
+        "Rendered read-only from sample 0 of an accepted full-tier HDF5 shard",
+        ha="right",
+        va="bottom",
+        fontsize=6.8,
+        color="#66727D",
+    )
+    _save_figure(fig, output_dir, f"fig_pde_{pde}")
+    return metadata
+
+
+def render_pde_cards(data_root: Path, output_dir: Path) -> dict[str, object]:
+    records: dict[str, object] = {}
+    for pde in PDE_ORDER:
+        shard = representative_shard(data_root, pde)
+        condition, trajectory, spec = load_sample(shard)
+        if pde in STATIC_PDES:
+            metadata = render_static_pde_card(data_root, output_dir, pde, shard, condition, trajectory)
+        else:
+            metadata = render_temporal_pde_card(data_root, output_dir, pde, shard, condition, trajectory)
+        metadata["spec"] = spec
+        records[pde] = metadata
+    return records
 
 
 def collect_quality_snapshot(data_root: Path) -> tuple[dict[str, dict[str, float]], int, int]:
@@ -235,7 +516,7 @@ def main() -> None:
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "data_root": str(data_root),
         "observation_protocols": render_observation_protocols(data_root, output_dir),
-        "pde_gallery": render_pde_gallery(data_root, output_dir),
+        "pde_figures": render_pde_cards(data_root, output_dir),
         "quality_snapshot": render_quality_snapshot(data_root, output_dir),
         "interpretation": (
             "Read-only snapshot of completed, accepted shards. This is not the final strict "

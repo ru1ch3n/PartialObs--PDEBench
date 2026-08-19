@@ -17,9 +17,13 @@ The appendix source is shared with `../appendix/pdeobs_appendix_A_D.tex`.
 ## SeaWulf figures
 
 The figures in `figures/` were rendered from completed, accepted full-T15 HDF5
-shards on SeaWulf. `figures/figure_snapshot.json` records the exact source
-paths, rendering timestamp, mask counts, and accepted-shard quality summary.
-The quality chart is a read-only snapshot, not the final strict aggregate.
+shards on SeaWulf. Every PDE has a dedicated, consistently styled data card;
+static problems show condition, solution, gradient magnitude, and a centerline,
+whereas temporal problems show three saved states and a full-trajectory
+diagnostic. `figures/figure_snapshot.json` records the exact source paths,
+case metadata, rendering timestamp, mask counts, and accepted-shard quality
+summary. The quality chart is a read-only snapshot, not the final strict
+aggregate.
 
 `scripts/render_seawulf_figures.py` performs the read-only rendering, and
 `scripts/render_seawulf_figures.sbatch` provides the one-CPU Slurm wrapper.

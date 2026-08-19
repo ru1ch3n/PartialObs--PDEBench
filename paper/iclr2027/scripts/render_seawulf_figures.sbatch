@@ -23,6 +23,8 @@ export MPLCONFIGDIR="$PDEOBS_RUN/mpl-cache"
   --output-dir "$PDEOBS_RUN/output"
 
 test -s "$PDEOBS_RUN/output/fig_observation_protocols.pdf"
-test -s "$PDEOBS_RUN/output/fig_pde_gallery.pdf"
+for pde in darcy poisson helmholtz heat reaction_diffusion burgers navier_stokes; do
+  test -s "$PDEOBS_RUN/output/fig_pde_${pde}.pdf"
+done
 test -s "$PDEOBS_RUN/output/fig_full_quality_snapshot.pdf"
 test -s "$PDEOBS_RUN/output/figure_snapshot.json"

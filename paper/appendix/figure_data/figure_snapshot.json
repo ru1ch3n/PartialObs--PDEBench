@@ -1,5 +1,5 @@
 {
-  "created_at_utc": "2026-08-18T22:38:44.684756+00:00",
+  "created_at_utc": "2026-08-19T01:06:58.508335+00:00",
   "data_root": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31",
   "interpretation": "Read-only snapshot of completed, accepted shards. This is not the final strict aggregate and excludes absent or rejected shards.",
   "observation_protocols": {
@@ -14,26 +14,607 @@
       "random_5pct": 819,
       "regular_grid": 441
     },
-    "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/smooth_grf/medium/shard_00000.h5"
+    "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/gaussian_blobs/medium/shard_00000.h5"
   },
-  "pde_gallery": {
-    "source_shards": {
-      "burgers": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/burgers/periodic/smooth_grf/medium/shard_00000.h5",
-      "darcy": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/darcy/periodic/smooth_grf/medium/shard_00000.h5",
-      "heat": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/smooth_grf/medium/shard_00000.h5",
-      "helmholtz": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/helmholtz/periodic/smooth_grf/medium/shard_00000.h5",
-      "navier_stokes": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/navier_stokes/periodic/smooth_grf/medium/shard_00000.h5",
-      "poisson": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/poisson/periodic/smooth_grf/medium/shard_00000.h5",
-      "reaction_diffusion": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/reaction_diffusion/periodic/smooth_grf/medium/shard_00000.h5"
+  "pde_figures": {
+    "burgers": {
+      "boundary": "periodic",
+      "pde": "burgers",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 15,
+      "setting": "front_ring_shock",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/burgers/periodic/front_ring_shock/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "burgers/periodic/front_ring_shock/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/burgers/periodic/front_ring_shock/medium/shard_00000.h5",
+        "pde": "burgers",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "front_ring_shock",
+        "shard_index": 0,
+        "stored_time_steps": 15,
+        "tier": "full",
+        "time_steps": 267
+      }
+    },
+    "darcy": {
+      "boundary": "periodic",
+      "pde": "darcy",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 1,
+      "setting": "piecewise_blocks",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/darcy/periodic/piecewise_blocks/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "darcy/periodic/piecewise_blocks/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/darcy/periodic/piecewise_blocks/medium/shard_00000.h5",
+        "pde": "darcy",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "piecewise_blocks",
+        "shard_index": 0,
+        "stored_time_steps": null,
+        "tier": "full",
+        "time_steps": 30
+      }
+    },
+    "heat": {
+      "boundary": "periodic",
+      "pde": "heat",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 15,
+      "setting": "gaussian_blobs",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/gaussian_blobs/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "heat/periodic/gaussian_blobs/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/heat/periodic/gaussian_blobs/medium/shard_00000.h5",
+        "pde": "heat",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "gaussian_blobs",
+        "shard_index": 0,
+        "stored_time_steps": 15,
+        "tier": "full",
+        "time_steps": 155
+      }
+    },
+    "helmholtz": {
+      "boundary": "periodic",
+      "pde": "helmholtz",
+      "regime": "high",
+      "sample_index": 0,
+      "saved_frames": 1,
+      "setting": "multi_frequency_fourier",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/helmholtz/periodic/multi_frequency_fourier/high/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "helmholtz/periodic/multi_frequency_fourier/high/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/helmholtz/periodic/multi_frequency_fourier/high/shard_00000.h5",
+        "pde": "helmholtz",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "high",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "multi_frequency_fourier",
+        "shard_index": 0,
+        "stored_time_steps": null,
+        "tier": "full",
+        "time_steps": 30
+      }
+    },
+    "navier_stokes": {
+      "boundary": "periodic",
+      "pde": "navier_stokes",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 15,
+      "setting": "dipole_vortex_pair",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/navier_stokes/periodic/dipole_vortex_pair/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "navier_stokes/periodic/dipole_vortex_pair/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {
+          "solver": "fno_spectral_vorticity"
+        },
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/navier_stokes/periodic/dipole_vortex_pair/medium/shard_00000.h5",
+        "pde": "navier_stokes",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "dipole_vortex_pair",
+        "shard_index": 0,
+        "stored_time_steps": 15,
+        "tier": "full",
+        "time_steps": 71
+      }
+    },
+    "poisson": {
+      "boundary": "periodic",
+      "pde": "poisson",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 1,
+      "setting": "gaussian_blobs",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/poisson/periodic/gaussian_blobs/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "poisson/periodic/gaussian_blobs/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/poisson/periodic/gaussian_blobs/medium/shard_00000.h5",
+        "pde": "poisson",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "gaussian_blobs",
+        "shard_index": 0,
+        "stored_time_steps": null,
+        "tier": "full",
+        "time_steps": 30
+      }
+    },
+    "reaction_diffusion": {
+      "boundary": "periodic",
+      "pde": "reaction_diffusion",
+      "regime": "medium",
+      "sample_index": 0,
+      "saved_frames": 15,
+      "setting": "threshold_level_set",
+      "source_shard": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/reaction_diffusion/periodic/threshold_level_set/medium/shard_00000.h5",
+      "spatial_shape": [
+        128,
+        128
+      ],
+      "spec": {
+        "boundary": "periodic",
+        "compression": "gzip",
+        "compression_level": 4,
+        "dtype": "float32",
+        "job_id": "reaction_diffusion/periodic/threshold_level_set/medium/shard-00000",
+        "macro_size": 2000,
+        "options": {},
+        "output_path": "/gpfs/scratch/ruicxu/pdeobs/data/numerics-full-t15-6c7c7e31/reaction_diffusion/periodic/threshold_level_set/medium/shard_00000.h5",
+        "pde": "reaction_diffusion",
+        "provenance": {
+          "captured_at_utc": "2026-08-18T08:31:19.923895+00:00",
+          "config_hash": "a20c5738977745c0",
+          "git": {
+            "commit": "6c7c7e3158d7a6f3ee41e8093d5ed171c8001531",
+            "dirty": false,
+            "status": ""
+          },
+          "packages": {
+            "PyYAML": "6.0.3",
+            "h5py": "3.16.0",
+            "numpy": "2.4.6",
+            "pdeobs": "0.1.0",
+            "scipy": "1.17.1",
+            "torch": null
+          },
+          "runtime": {
+            "executable": "/gpfs/scratch/ruicxu/pdeobs/envs/pdeobs-6c7c7e3158d7-generation-recovery-20260818T0741Z/bin/python",
+            "hostname": "dn005",
+            "machine": "x86_64",
+            "platform": "Linux-4.18.0-477.27.1.el8_8.x86_64-x86_64-with-glibc2.28",
+            "python": "3.11.15 | packaged by conda-forge | (main, Aug 11 2026, 10:26:29) [GCC 14.4.0]"
+          },
+          "schema_version": 1,
+          "slurm": {
+            "SLURM_CPUS_PER_TASK": "1",
+            "SLURM_JOB_ID": "2129020",
+            "SLURM_JOB_NAME": "pdeobs-submit-all-long-r2",
+            "SLURM_JOB_PARTITION": "long-40core-shared"
+          },
+          "source_hash": "bc9e14820dc4d730697ad8c93638d016c19e5629f734653f8a9d75eb29c01991"
+        },
+        "quality": {
+          "calibration_evidence": null,
+          "profile": "strict",
+          "require_pde_loss": true,
+          "schema_version": "1.3",
+          "thresholds": {
+            "boundary_condition_loss_normalized_max": 0.0001,
+            "divergence_loss_normalized_max": 1e-06,
+            "finite_fraction_min": 1.0,
+            "geometry_binary_max_error_max": 1e-06,
+            "initial_condition_loss_normalized_max": 1e-06,
+            "initial_transition_replay_loss_normalized_max": 5e-06,
+            "pde_loss_normalized_max": 0.05
+          }
+        },
+        "regime": "medium",
+        "resolution": [
+          128,
+          128
+        ],
+        "sample_count": 200,
+        "sample_start": 0,
+        "seed": 20260804,
+        "setting": "threshold_level_set",
+        "shard_index": 0,
+        "stored_time_steps": 15,
+        "tier": "full",
+        "time_steps": 267
+      }
     }
   },
   "quality_snapshot": {
-    "accepted_samples": 557733,
+    "accepted_samples": 558533,
     "by_pde": {
       "burgers": {
-        "count": 78400,
+        "count": 79200,
         "max": 0.04950670001521073,
-        "mean": 0.012286164811943022
+        "mean": 0.012262049085010393
       },
       "darcy": {
         "count": 80000,
@@ -66,6 +647,6 @@
         "mean": 0.002354175723315586
       }
     },
-    "quality_sidecars": 3348
+    "quality_sidecars": 3352
   }
 }
