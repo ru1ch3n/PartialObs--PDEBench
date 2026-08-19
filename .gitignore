@@ -7,11 +7,20 @@ dist/
 *.whl
 .pytest_cache/
 .pytest-agent/
+.tmp-pytest*/
 .ruff_cache/
 .coverage
 htmlcov/
 .venv/
 venv/
+/output/
+/tmp/
+/paper/appendix/*.aux
+/paper/appendix/*.bbl
+/paper/appendix/*.blg
+/paper/appendix/*.log
+/paper/appendix/*.out
+/paper/appendix/*.pdf
 
 # IDE / OS
 .idea/

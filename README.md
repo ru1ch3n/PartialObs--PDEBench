@@ -1,9 +1,10 @@
 # PDE-OBS / PartialObs-PDEBench
 
-**A controlled benchmark, reference implementation, and research map for PDE
-learning under partial observation.**
+**A Benchmark Builder and controlled reference protocol for PDE learning under
+partial observation.**
 
 [Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) |
+[Full dataset status](https://ru1ch3n.github.io/PartialObs--PDEBench/progress/) |
 [Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/) |
 [benchmark-paper contract](docs/BENCHMARK_PAPER.md) |
 [observation-training protocol](docs/OBSERVATION_TRAINING_PROTOCOL.md) |
@@ -13,16 +14,25 @@ learning under partial observation.**
 [Linux server guide](docs/SERVER.md) |
 [SeaWulf guide](hpc/seawulf/README.md)
 
-PDE-OBS provides executable tools for factorized data generation, observation
-masks, IID/OOD splits, recovery/forward/inverse and rollout baselines, metrics, and
-cluster-scale experiments. The existing `docs/` research map remains part of
-this repository.
+The main public contribution is the interactive Benchmark Builder: select PDE
+families, boundaries, settings, regimes, observation masks, scale, and quality
+gates, then copy reproducible dataset and SeaWulf code. The AI4PDE paper library
+is a supporting resource and can be browsed separately by PDE or by method.
+
+The full T=15 generation campaign has produced all **3,360 shards / 560,000
+samples** across seven PDE families. Artifact completeness and the strict
+`pde_loss <= 0.05` gate are tracked on the
+[public progress page](https://ru1ch3n.github.io/PartialObs--PDEBench/progress/)
+and in its machine-readable `progress.json` snapshot. The final aggregate
+validation is reported separately from generation completeness so a running or
+failed validator is never presented as a completed scientific release.
 
 > **Paper scope:** this repository treats
 > **“PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics”**
-> as the only manuscript in scope. Its contribution is the dataset design,
-> task/split/metric protocol, anchor leaderboard, difficulty analysis, and
-> one-line tooling. Semantic-ID, large world-model, and foundation-model method
+> as the only manuscript in scope. Its primary interface is the Benchmark
+> Builder, supported by the frozen dataset, task/split/metric protocol, anchor
+> leaderboard, quality analysis, and one-line tooling. Semantic-ID, large
+> world-model, and foundation-model method
 > claims are explicitly separate projects. Run `pdeobs protocol --check` to
 > detect drift between the frozen paper contract and the default data config.
 
@@ -468,9 +478,12 @@ message. A private validated release can be used with `--manifest URL_OR_PATH`.
 This interface will become live without a CLI change once checksummed tier
 artifacts and the validation report are published.
 
-## Research website
+## Benchmark website
 
-The static research map is served from `docs/`. To rebuild it:
+The static GitHub Pages site is served from `docs/`. Its home page and primary
+navigation lead to the Benchmark Builder; the AI4PDE paper library appears
+after the benchmark workflow and supports both PDE and method classification.
+To rebuild it:
 
 ```bash
 python -m pip install -e ".[site]"

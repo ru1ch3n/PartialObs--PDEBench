@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PartialObs–PDEBench</title>
-  <link rel="stylesheet" href="assets/style.css?v=2026-08-16" />
-  <script>window.MathJax={tex:{inlineMath:[['\(','\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  /* Enable clickable Mermaid nodes on GitHub Pages. */  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});  mermaid.run({querySelector:'.mermaid'});});</script>
+  <title>PDE-OBS Benchmark Builder — PartialObs–PDEBench</title>
+  <link rel="stylesheet" href="assets/style.css?v=2026-08-18-builder-first" />
+
 </head>
 
 <body>
@@ -13,250 +13,71 @@
     <div class="container">
       <div class="hero-top">
         <div>
-          <h1>PartialObs–PDEBench</h1>
-          <p class="subtitle">The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> plus a supporting partial-observation research map.</p>
-          <div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div></div>
+          <h1>PDE-OBS Benchmark Builder</h1>
+          <p class="subtitle">Design reproducible <b>partial-observation PDE benchmarks</b>, generate the exact run code, and report data quality for every selected equation.</p>
+          <div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Source:</b> private GitHub repository; this public site is a static release mirror.</div></div>
         </div>
 
-        <div class="hero-card">  <div class="smallcaps">Benchmark status</div>  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>  <p class="muted" style="margin-top:8px;">    Deterministic generation, verified shards, strict splits, baselines,     OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in.  </p>  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>  <p><a href="benchmark/">Benchmark-paper contract</a> ·   <a href="builder/">Build a dataset</a> ·   <a href="server/">Run on a server</a></p></div>
+        <div class="hero-card home-builder-card">  <div class="smallcaps">Main contribution</div>  <h2>Build your partial-observation benchmark</h2>  <p class="muted">Choose PDEs, boundaries, physical regimes, observation masks, and quality gates. The Builder returns reproducible dataset YAML and run code.  </p>  <a class="btn primary home-cta" href="builder/">Open Benchmark Builder</a>  <p class="home-secondary-link"><a href="benchmark/">Read the benchmark contract</a></p></div>
       </div>
 
-      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="builder/">Builder</a><a href="server/">Run</a><a href="contribute/">Contribute</a></nav>
+      <nav class="nav"><a href="index.html" aria-current="page">Overview</a><a href="progress/">Progress</a><a href="builder/" class="nav-primary">Benchmark Builder</a><a href="benchmark/">Benchmark</a><a href="server/">Run</a><a href="research/">Paper Library</a><a href="pde-problems/">By PDE</a><a href="baselines/">By Method</a><a href="contribute/">Contribute</a></nav>
     </div>
   </header>
 
   <main class="container">
 
-<section id="intro" class="section">
-  <h2>What is this website?</h2>
-  <p>
-    PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
-    (missing sensors, masked pixels, partial trajectories).
-  </p>
-  <div class="note"><b>Manuscript scope:</b> the repository supports one data/benchmark paper—dataset design, task/split/metric protocols, anchor baselines, difficulty analysis, and one-line tools. New semantic-ID, large world-model, and foundation-model claims are separate projects.</div>
-  <ul>
-    <li><b>Research:</b> browse/search <b>301</b> AI4PDE/AI4SDE papers (<b>12</b> curated pages + index placeholders).</li>
-    <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
-    <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication-candidate quality gates.</li>
-    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
-    <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
-  </ul>
-</section>
-
-<section id="tree" class="section">
-  <h2>Paper tree</h2>
-  <p class="muted">A compact, conceptual lineage map (selected famous works).</p>
-
-  <p class="muted" style="margin-top:12px;">ASCII (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="code ascii-tree">AI4PDE / SciML (selected milestones)
-├─ <a href="research/?q=physics">Physics-informed optimization</a>
-│  ├─ <a href="research/paper/?slug=deep-ritz">Deep Ritz (2018)</a>
-│  ├─ <a href="research/paper/?slug=dgm">DGM / Deep Galerkin (2018)</a>
-│  ├─ <a href="research/paper/?slug=deepbsde">DeepBSDE (2018)</a>
-│  └─ <a href="research/paper/?slug=pinn">PINNs (2019)</a>
-│     ├─ <a href="research/paper/?slug=cpinn">cPINNs (2020)</a>
-│     ├─ <a href="research/paper/?slug=sa-pinn">SA-PINNs (2020)</a>
-│     ├─ <a href="research/paper/?slug=xpinn">XPINNs (2021)</a>
-│     ├─ <a href="research/paper/?slug=gpinn">gPINNs (2021)</a>
-│     └─ <a href="research/paper/?slug=fbpinns">FBPINNs (2021)</a>
-├─ <a href="research/?method=Operator%20learning">Operator learning</a>
-│  ├─ <a href="research/paper/?slug=fno">FNO (2020)</a>
-│  ├─ <a href="research/paper/?slug=gkn">GKN (2020)</a>
-│  ├─ <a href="research/paper/?slug=mgno">MGNO (2020)</a>
-│  ├─ <a href="research/paper/?slug=deeponet">DeepONet (2021)</a>
-│  ├─ <a href="research/paper/?slug=pino">PINO (2021)</a>
-│  ├─ <a href="research/paper/?slug=galerkin-transformer">Galerkin Transformer (2021)</a>
-│  ├─ <a href="research/paper/?slug=u-no">U-NO (2022)</a>
-│  ├─ <a href="research/paper/?slug=wno">WNO (2022)</a>
-│  ├─ <a href="research/paper/?slug=cno">CNO (2023)</a>
-│  └─ <a href="research/paper/?slug=u-wno">U-WNO (2024)</a>
-├─ <a href="research/?method=Diffusion">Diffusion / generative PDE inference</a>
-│  ├─ <a href="research/paper/?slug=conditional-diffusion-pde">Conditional diffusion protocols (2024)</a>
-│  ├─ <a href="research/paper/?slug=diffusionpde">DiffusionPDE (2024)</a>
-│  ├─ <a href="research/paper/?slug=fundps">FunDPS (2025)</a>
-│  ├─ <a href="research/paper/?slug=prisma">PRISMA (2025)</a>
-│  └─ <a href="research/paper/?slug=videopde">VideoPDE (2025)</a>
-├─ <a href="research/?method=Graph%20%2F%20mesh">Graph / mesh simulators</a>
-│  ├─ <a href="research/paper/?slug=gns">GNS (ICML 2020)</a>
-│  └─ <a href="research/paper/?slug=meshgraphnets">MeshGraphNets (ICLR 2021)</a>
-└─ <a href="research/?method=Benchmark">Benchmarks and datasets</a>
-   ├─ <a href="research/paper/?slug=pdebench">PDEBench (2022)</a>
-   ├─ <a href="research/paper/?slug=pdearena">PDEArena (2022)</a>
-   ├─ <a href="research/paper/?slug=fourcastnet">FourCastNet (2022)</a>
-   └─ <a href="research/paper/?slug=graphcast">GraphCast (2023)</a></pre>
-  </div>
-
-  <p class="muted" style="margin-top:12px;">Mermaid (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="mermaid">flowchart TD
-  Root["AI4PDE / SciML (selected milestones)"]
-
-  %% Physics-informed optimization (PINN family)
-  Root --> PI["Physics-informed optimization"]
-  PI --> DeepRitz["Deep Ritz (2018)"]
-  PI --> DGM["DGM / Deep Galerkin (2018)"]
-  PI --> DeepBSDE["DeepBSDE (2018)"]
-  PI --> PINN["PINNs (2019)"]
-  PINN --> cPINN["cPINNs (2020)"]
-  PINN --> SAPINN["SA-PINNs (2020)"]
-  PINN --> XPINN["XPINNs (2021)"]
-  PINN --> gPINN["gPINNs (2021)"]
-  PINN --> FBPINN["FBPINNs (2021)"]
-
-  %% Operator learning (neural operators)
-  Root --> OL["Operator learning"]
-  OL --> DeepONet["DeepONet (2021)"]
-  OL --> FNO["FNO (2020)"]
-  FNO --> PINO["PINO (2021)"]
-  FNO --> GalerkinT["Galerkin Transformer (2021)"]
-  FNO --> UNO["U-NO (2022)"]
-  FNO --> WNO["WNO (2022)"]
-  WNO --> UWNO["U-WNO (2024)"]
-  FNO --> CNO["CNO (2023)"]
-  OL --> GKN["GKN (2020)"]
-  OL --> MGNO["MGNO (2020)"]
-
-  %% Diffusion / generative inference
-  Root --> DiffGen["Diffusion / generative PDE inference"]
-  DiffGen --> CondDiff["Conditional diffusion protocols (2024)"]
-  CondDiff --> DiffPDE["DiffusionPDE (2024)"]
-  DiffPDE --> FunDPS["FunDPS (2025)"]
-  FunDPS --> PRISMA["PRISMA (2025)"]
-  DiffPDE --> VideoPDE["VideoPDE (2025)"]
-
-  %% Graph simulators
-  Root --> GraphSim["Graph / mesh simulators"]
-  GraphSim --> GNS["GNS (ICML 2020)"]
-  GraphSim --> MGN["MeshGraphNets (ICLR 2021)"]
-
-  %% Benchmarks / datasets
-  Root --> Bench["Benchmarks and datasets"]
-  Bench --> PDEBench["PDEBench (2022)"]
-  Bench --> PDEArena["PDEArena (2022)"]
-  Bench --> FourCastNet["FourCastNet (2022)"]
-  FourCastNet --> GraphCast["GraphCast (2023)"]
-
-  %% Clickable links (homepage)
-  %% - Paper nodes go to curated pages.
-  %% - Category nodes go to the Research tab with an initial filter.
-  click Root "research/" "Open the research index" _self
-
-  click PI "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click DeepRitz "research/paper/?slug=deep-ritz" "Deep Ritz (2018)" _self
-  click DGM "research/paper/?slug=dgm" "Deep Galerkin Method (2018)" _self
-  click DeepBSDE "research/paper/?slug=deepbsde" "DeepBSDE (2018)" _self
-  click PINN "research/paper/?slug=pinn" "PINNs (2019)" _self
-  click cPINN "research/paper/?slug=cpinn" "cPINNs (2020)" _self
-  click SAPINN "research/paper/?slug=sa-pinn" "SA-PINNs (2020)" _self
-  click XPINN "research/paper/?slug=xpinn" "XPINNs (2021)" _self
-  click gPINN "research/paper/?slug=gpinn" "gPINNs (2021)" _self
-  click FBPINN "research/paper/?slug=fbpinns" "FBPINNs (2021)" _self
-
-  click OL "research/?method=Operator%20learning" "Filter: Operator learning" _self
-  click DeepONet "research/paper/?slug=deeponet" "DeepONet (2021)" _self
-  click FNO "research/paper/?slug=fno" "Fourier Neural Operator (2020)" _self
-  click PINO "research/paper/?slug=pino" "Physics-Informed Neural Operator (2021)" _self
-  click GalerkinT "research/paper/?slug=galerkin-transformer" "Galerkin Transformer (2021)" _self
-  click UNO "research/paper/?slug=u-no" "U-NO (2022)" _self
-  click WNO "research/paper/?slug=wno" "WNO (2022)" _self
-  click UWNO "research/paper/?slug=u-wno" "U-WNO (2024)" _self
-  click CNO "research/paper/?slug=cno" "CNO (2023)" _self
-  click GKN "research/paper/?slug=gkn" "Graph Kernel Network (2020)" _self
-  click MGNO "research/paper/?slug=mgno" "MGNO (2020)" _self
-
-  click DiffGen "research/?method=Diffusion" "Filter: Diffusion" _self
-  click DiffPDE "research/paper/?slug=diffusionpde" "DiffusionPDE (2024)" _self
-  click FunDPS "research/paper/?slug=fundps" "FunDPS (2025)" _self
-  click PRISMA "research/paper/?slug=prisma" "PRISMA (2025)" _self
-  click VideoPDE "research/paper/?slug=videopde" "VideoPDE (2025)" _self
-
-  click GraphSim "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
-  click GNS "research/paper/?slug=gns" "GNS (ICML 2020)" _self
-  click MGN "research/paper/?slug=meshgraphnets" "MeshGraphNets (ICLR 2021)" _self
-
-  click Bench "benchmark/" "Benchmark tab" _self
-  click PDEBench "research/paper/?slug=pdebench" "PDEBench (2022)" _self
-  click PDEArena "research/paper/?slug=pdearena" "PDEArena (2022)" _self
-  click FourCastNet "research/paper/?slug=fourcastnet" "FourCastNet (2022)" _self
-  click GraphCast "research/paper/?slug=graphcast" "GraphCast (2023)" _self
-
-  click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
-
-  %% Theme tweaks (dark)
-  classDef cat fill:#121826,stroke:#223047,color:#e7edf5;
-  classDef node fill:#0f1522,stroke:#223047,color:#e7edf5;
-  class Root,PI,OL,DiffGen,GraphSim,Bench cat;
-  class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;</pre>
+<section id="benchmark-first" class="section home-lead">
+  <div class="smallcaps">Partial observations, controlled</div>
+  <h2>One benchmark workflow from ground truth to quality report</h2>
+  <p>Generate the physical trajectory first, then derive sparse observations as reproducible views. Observation masks never change the underlying ground truth.</p>
+  <div class="benchmark-path" aria-label="Benchmark workflow">
+    <div><span>1</span><b>Choose</b><small>PDE, boundary, setting, regime, scale</small></div>
+    <div><span>2</span><b>Generate</b><small>Deterministic ground-truth trajectories</small></div>
+    <div><span>3</span><b>Observe</b><small>Nine sparse or structured mask views</small></div>
+    <div><span>4</span><b>Validate</b><small>Checksums, provenance, and PDE-specific losses</small></div>
   </div>
 </section>
 
-
-<section id="taxonomy" class="section">
-  <h2>AI4PDE + AI4SDE map</h2>
-  <p class="muted">A high-level taxonomy you can extend as new method families emerge.</p>
-  <div class="card" style="margin-top:12px;">
-    <pre class="mermaid">flowchart TD
-  R["AI4PDE + AI4SDE: a taxonomy (high-level)"]
-
-  R --> Phys["Physics-constrained learning"]
-  Phys --> PINNfam["PINN-style residual minimization"]
-  Phys --> Hybrid["Hybrid: data + physics losses"]
-
-  R --> Op["Operator learning"]
-  Op --> NO["Neural operators (FNO/DeepONet/...)"]
-  Op --> ROM["Learned ROM / reduced models"]
-
-  R --> Graph["Graph / mesh simulators"]
-  Graph --> MP["Message passing / GNN solvers"]
-  Graph --> Mesh["Mesh-based neural fields"]
-
-  R --> Gen["Generative / probabilistic modeling"]
-  Gen --> Score["Score-based / diffusion models"]
-  Gen --> Bridge["Diffusion/SDE bridges (conditioning)"]
-  Gen --> UQ["Uncertainty quantification"]
-
-  R --> Theory["Theory &amp; guarantees"]
-  Theory --> Approx["Approximation / expressivity"]
-  Theory --> Stability["Stability / generalization"]
-
-  R --> Bench["Benchmarks"]
-
-  %% Clickable links (homepage)
-  click R "research/" "Open the research index" _self
-  click Phys "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click PINNfam "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click Hybrid "research/?q=hybrid" "Search: hybrid" _self
-
-  click Op "research/?method=Operator%20learning" "Filter: Operator learning" _self
-  click NO "research/?q=neural%20operator" "Search: neural operator" _self
-  click ROM "research/?q=reduced%20order" "Search: reduced order" _self
-
-  click Graph "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
-  click MP "research/?q=message%20passing" "Search: message passing" _self
-  click Mesh "research/?q=mesh" "Search: mesh" _self
-
-  click Gen "research/?method=Diffusion" "Filter: Diffusion" _self
-  click Score "research/?method=Diffusion" "Filter: Diffusion" _self
-  click Bridge "research/?q=bridge" "Search: bridge" _self
-  click UQ "research/?q=uncertainty" "Search: uncertainty" _self
-
-  click Theory "research/?q=theory" "Search: theory" _self
-  click Approx "research/?q=approximation" "Search: approximation" _self
-  click Stability "research/?q=stability" "Search: stability" _self
-
-  click Bench "benchmark/" "Benchmark tab" _self</pre>
+<section id="dataset-progress" class="section progress-teaser">
+  <div class="section-heading-row">
+    <div><div class="smallcaps">Full dataset campaign</div><h2>560,000 / 560,000 samples generated</h2></div>
+    <a class="btn" href="progress/">Open full progress report</a>
   </div>
-  <details style="margin-top:12px;">
-    <summary class="muted">Show ASCII fallback</summary>
-    <pre class="code"><code>AI4PDE + AI4SDE (taxonomy)
-├─ Physics-informed optimization (PINN family)
-├─ Operator learning (neural operators)
-├─ Graph / mesh simulators
-├─ Generative inference (diffusion / SDE bridges)
-└─ Benchmarks and datasets</code></pre>
-  </details>
+  <div class="home-metrics">
+    <div class="card"><strong>3,360</strong><span>complete shards</span></div>
+    <div class="card"><strong>100%</strong><span>generation complete</span></div>
+    <div class="card"><strong>7</strong><span>PDE families</span></div>
+    <div class="card"><strong>0</strong><span>partials or locks</span></div>
+  </div>
+  <div class="note"><b>Validation status:</b> every shard passes the unchanged <code>pde_loss &le; 0.05</code> gate; the final strict aggregate validator is running separately.</div>
+</section>
+
+<section id="benchmark-scope" class="section">
+  <div class="section-heading-row">
+    <div><div class="smallcaps">Frozen design space</div><h2>A benchmark you can inspect before running</h2></div>
+    <a class="btn" href="benchmark/">Full contract</a>
+  </div>
+  <div class="home-metrics">
+    <div class="card"><strong>7</strong><span>PDE families</span></div>
+    <div class="card"><strong>4</strong><span>boundary protocols</span></div>
+    <div class="card"><strong>10</strong><span>condition settings</span></div>
+    <div class="card"><strong>3</strong><span>physical regimes</span></div>
+    <div class="card"><strong>9</strong><span>observation masks</span></div>
+    <div class="card"><strong>7</strong><span>PDE loss reports</span></div>
+  </div>
+  <div class="note"><b>Scientific status:</b> the code and quality-reporting workflow are available. Paper-grade ground truth still requires the documented numerical-validation gate.</div>
+</section>
+
+<section id="library" class="section library-teaser">
+  <div class="smallcaps">Supporting resource</div>
+  <h2>AI4PDE paper library</h2>
+  <p class="muted">The benchmark comes first. The literature library is a supporting index of <b>301</b> AI4PDE/AI4SDE papers, with <b>12</b> detailed pages. Find work by the physical equation or by the learning method.</p>
+  <div class="library-links">
+    <a class="card" href="pde-problems/"><b>Browse by PDE</b><span>Fluids, diffusion, elliptic systems, waves, and more</span></a>
+    <a class="card" href="baselines/"><b>Browse by method</b><span>Neural operators, PINNs, diffusion, graphs, and baselines</span></a>
+    <a class="card" href="research/"><b>Search all papers</b><span>Combine PDE, method, venue, year, and keyword filters</span></a>
+  </div>
 </section>
 
 

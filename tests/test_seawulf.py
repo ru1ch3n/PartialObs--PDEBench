@@ -151,8 +151,14 @@ def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:
     assert '"$PDEOBS_DATA/plans/tiny.resolved.yaml"' in guide
     assert "conservative safety cap" in guide
     assert "numerics_full_t15.yaml" in guide
-    assert "0-83%6" in guide
-    assert "240 CPU cores" in guide
+    for partition in (
+        "long-40core",
+        "long-40core-shared",
+        "long-96core",
+        "long-96core-shared",
+    ):
+        assert partition in guide
+    assert "1,224 CPU processes" in guide
 
 
 def test_full_t15_launcher_is_dataset_only_bounded_and_quality_gated() -> None:
@@ -162,9 +168,19 @@ def test_full_t15_launcher_is_dataset_only_bounded_and_quality_gated() -> None:
     assert 'task_count" != 3360' in launcher
     assert 'sample_count" != 560000' in launcher
     assert "bad_stored_steps" in launcher
-    assert "PDEOBS_FULL_CPUS_PER_TASK:-40" in launcher
-    assert "PDEOBS_FULL_CONCURRENCY:-6" in launcher
-    assert "array_count + 1 > 100" in launcher
+    assert (
+        'names = ("long40-exclusive", "long40-shared", '
+        '"long96-exclusive", "long96-shared")'
+    ) in launcher
+    assert "rows[index::4]" in launcher
+    assert "long-40core 40 40 3" in launcher
+    assert "long-40core-shared 40 40 6" in launcher
+    assert "long-96core 96 96 3" in launcher
+    assert "long-96core-shared 96 96 6" in launcher
+    assert '--dependency="afterok:$dependency_jobs"' in launcher
+    assert 'scancel "${submitted_jobs[@]}"' in launcher
+    assert 'mv "$campaign_temporary" "$campaign"' in launcher
+    assert "model_training_submitted=false" in launcher
     assert "--quality-strict --max-pde-loss 0.05 --require-all-pdes" in launcher
     assert "train_gpu.sbatch" not in launcher
     assert "--array-bundle-size" in array

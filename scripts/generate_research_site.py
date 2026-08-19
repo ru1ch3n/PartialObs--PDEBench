@@ -14,6 +14,8 @@ It writes:
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
   - docs/builder/index.html             (interactive benchmark command builder)
+  - docs/progress/index.html            (full-dataset generation/QC status)
+  - docs/assets/progress.json           (machine-readable status snapshot)
   - docs/server/index.html              (Linux + SeaWulf run guide)
   - docs/contribute/index.html          (how to add/curate papers)
 
@@ -36,6 +38,76 @@ DOCS = REPO_ROOT / "docs"
 
 # JSON paper database (preferred)
 CURATIONS_JSON_DIR = REPO_ROOT / "data" / "curations"
+
+
+FULL_DATASET_PROGRESS: Dict[str, Any] = {
+    "schema_version": "pdeobs-progress-v1",
+    "updated_at": "2026-08-19T03:36:45-04:00",
+    "campaign": "numerics-full-t15-6c7c7e31",
+    "status": "final_strict_qc_running",
+    "status_label": "Final strict QC running",
+    "generation": {
+        "complete": True,
+        "shards_complete": 3360,
+        "shards_expected": 3360,
+        "samples_complete": 560000,
+        "samples_expected": 560000,
+        "percentage": 100.0,
+        "pde_families": 7,
+        "samples_per_pde": 80000,
+        "stored_time_steps": 15,
+        "storage_gib_approx": 235,
+    },
+    "artifacts": {
+        "hdf5_complete": 3360,
+        "manifest_complete": 3360,
+        "sha256_complete": 3360,
+        "metadata_complete": 3360,
+        "quality_complete": 3360,
+        "partials": 0,
+        "locks": 0,
+        "missing_or_mismatched": 0,
+        "live_generation_jobs": 0,
+        "duplicate_or_overlapping_outputs": 0,
+    },
+    "quality": {
+        "gate": 0.05,
+        "max_pde_loss": 0.049914687843795082,
+        "all_shard_checks_pass": True,
+        "require_all_pdes": True,
+        "r4_max_pde_loss": 0.048199753441713344,
+    },
+    "plans": {
+        "original_combined": {
+            "name": "numerics-full-t15-6c7c7e31.quality-recovered-combined.jsonl",
+            "sha256": "f97bf441c211cc5d8bdf9602837e826bbd360d9656b53d4e1942092f4e4d2e19",
+            "unchanged": True,
+        },
+        "final_qc": {
+            "name": "numerics-full-t15-6c7c7e31.quality-recovered-final-qc.jsonl",
+            "sha256": "1173212693fe72d098c5077c73bc2314df8012c886a8e4fb78cb99d8010cfd81",
+            "rows": 3360,
+            "samples": 560000,
+            "content_spec_mismatches": 0,
+        },
+    },
+    "final_qc": {
+        "job_id": 2130280,
+        "state": "RUNNING",
+        "partition": "long-40core-shared",
+        "resources": "1 CPU / 8 GiB",
+        "strict": True,
+        "max_pde_loss": 0.05,
+        "require_all_pdes": True,
+        "summary_created": False,
+        "previous_job": {
+            "job_id": 2130270,
+            "state": "FAILED",
+            "exit_code": "2:0",
+            "cause": "Two stale expected-plan time_steps values; artifact quality passed.",
+        },
+    },
+}
 
 
 PAPER_TREE_ASCII = r"""
@@ -858,20 +930,22 @@ def badges(items: List[str]) -> str:
 
 
 def nav(root: str, current: str) -> str:
-    # current: one of home, research, pde, baselines, benchmark, builder, run, contribute
-    def a(href: str, label: str, key: str) -> str:
+    # current: one of home, progress, research, pde, baselines, benchmark, builder, run, contribute
+    def a(href: str, label: str, key: str, *, primary: bool = False) -> str:
         aria = ' aria-current="page"' if key == current else ""
-        return f'<a href="{href}"{aria}>{label}</a>'
+        css_class = ' class="nav-primary"' if primary else ""
+        return f'<a href="{href}"{css_class}{aria}>{label}</a>'
 
     return (
         '<nav class="nav">'
-        + a(f"{root}index.html", "Home", "home")
-        + a(f"{root}research/", "Research", "research")
-        + a(f"{root}pde-problems/", "PDE problems", "pde")
-        + a(f"{root}baselines/", "Baselines", "baselines")
+        + a(f"{root}index.html", "Overview", "home")
+        + a(f"{root}progress/", "Progress", "progress")
+        + a(f"{root}builder/", "Benchmark Builder", "builder", primary=True)
         + a(f"{root}benchmark/", "Benchmark", "benchmark")
-        + a(f"{root}builder/", "Builder", "builder")
         + a(f"{root}server/", "Run", "run")
+        + a(f"{root}research/", "Paper Library", "research")
+        + a(f"{root}pde-problems/", "By PDE", "pde")
+        + a(f"{root}baselines/", "By Method", "baselines")
         + a(f"{root}contribute/", "Contribute", "contribute")
         + "</nav>"
     )
@@ -896,7 +970,7 @@ def page(
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
   <title>{html_escape(title)}</title>
-  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-16\" />
+  <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-18-builder-first\" />
   {extra_head}
 </head>
 
@@ -1223,95 +1297,175 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     n_total = len(papers)
     n_curated = sum(1 for p in papers if str(p.get("status") or "index") == "curated")
 
-    # Keep the homepage status concise; full commands live on the Run page.
     hero_card = (
-        '<div class="hero-card">'
-        '  <div class="smallcaps">Benchmark status</div>'
-        '  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>'
-        '  <p class="muted" style="margin-top:8px;">'
-        "    Deterministic generation, verified shards, strict splits, baselines, "
-        "    OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in."
+        '<div class="hero-card home-builder-card">'
+        '  <div class="smallcaps">Main contribution</div>'
+        '  <h2>Build your partial-observation benchmark</h2>'
+        '  <p class="muted">Choose PDEs, boundaries, physical regimes, observation masks, '
+        "and quality gates. The Builder returns reproducible dataset YAML and run code."
         "  </p>"
-        '  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>'
-        '  <p><a href="benchmark/">Benchmark-paper contract</a> · '
-        '  <a href="builder/">Build a dataset</a> · '
-        '  <a href="server/">Run on a server</a></p>'
+        '  <a class="btn primary home-cta" href="builder/">Open Benchmark Builder</a>'
+        '  <p class="home-secondary-link"><a href="benchmark/">Read the benchmark contract</a></p>'
         "</div>"
     )
 
     body = f"""
-<section id="intro" class="section">
-  <h2>What is this website?</h2>
-  <p>
-    PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
-    (missing sensors, masked pixels, partial trajectories).
-  </p>
-  <div class="note"><b>Manuscript scope:</b> the repository supports one data/benchmark paper—dataset design, task/split/metric protocols, anchor baselines, difficulty analysis, and one-line tools. New semantic-ID, large world-model, and foundation-model claims are separate projects.</div>
-  <ul>
-    <li><b>Research:</b> browse/search <b>{n_total}</b> AI4PDE/AI4SDE papers (<b>{n_curated}</b> curated pages + index placeholders).</li>
-    <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
-    <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication-candidate quality gates.</li>
-    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
-    <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
-  </ul>
-</section>
-
-<section id="tree" class="section">
-  <h2>Paper tree</h2>
-  <p class="muted">A compact, conceptual lineage map (selected famous works).</p>
-
-  <p class="muted" style="margin-top:12px;">ASCII (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="code ascii-tree">{PAPER_TREE_ASCII_LINKED}</pre>
-  </div>
-
-  <p class="muted" style="margin-top:12px;">Mermaid (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="mermaid">{html_escape_pre(PAPER_TREE_MERMAID)}</pre>
+<section id="benchmark-first" class="section home-lead">
+  <div class="smallcaps">Partial observations, controlled</div>
+  <h2>One benchmark workflow from ground truth to quality report</h2>
+  <p>Generate the physical trajectory first, then derive sparse observations as reproducible views. Observation masks never change the underlying ground truth.</p>
+  <div class="benchmark-path" aria-label="Benchmark workflow">
+    <div><span>1</span><b>Choose</b><small>PDE, boundary, setting, regime, scale</small></div>
+    <div><span>2</span><b>Generate</b><small>Deterministic ground-truth trajectories</small></div>
+    <div><span>3</span><b>Observe</b><small>Nine sparse or structured mask views</small></div>
+    <div><span>4</span><b>Validate</b><small>Checksums, provenance, and PDE-specific losses</small></div>
   </div>
 </section>
 
-
-<section id="taxonomy" class="section">
-  <h2>AI4PDE + AI4SDE map</h2>
-  <p class="muted">A high-level taxonomy you can extend as new method families emerge.</p>
-  <div class="card" style="margin-top:12px;">
-    <pre class="mermaid">{html_escape_pre(AI4PDE_SDE_TREE_MERMAID)}</pre>
+<section id="dataset-progress" class="section progress-teaser">
+  <div class="section-heading-row">
+    <div><div class="smallcaps">Full dataset campaign</div><h2>560,000 / 560,000 samples generated</h2></div>
+    <a class="btn" href="progress/">Open full progress report</a>
   </div>
-  <details style="margin-top:12px;">
-    <summary class="muted">Show ASCII fallback</summary>
-    <pre class="code"><code>{html_escape(AI4PDE_SDE_TREE_ASCII)}</code></pre>
-  </details>
+  <div class="home-metrics">
+    <div class="card"><strong>3,360</strong><span>complete shards</span></div>
+    <div class="card"><strong>100%</strong><span>generation complete</span></div>
+    <div class="card"><strong>7</strong><span>PDE families</span></div>
+    <div class="card"><strong>0</strong><span>partials or locks</span></div>
+  </div>
+  <div class="note"><b>Validation status:</b> every shard passes the unchanged <code>pde_loss &le; 0.05</code> gate; the final strict aggregate validator is running separately.</div>
+</section>
+
+<section id="benchmark-scope" class="section">
+  <div class="section-heading-row">
+    <div><div class="smallcaps">Frozen design space</div><h2>A benchmark you can inspect before running</h2></div>
+    <a class="btn" href="benchmark/">Full contract</a>
+  </div>
+  <div class="home-metrics">
+    <div class="card"><strong>7</strong><span>PDE families</span></div>
+    <div class="card"><strong>4</strong><span>boundary protocols</span></div>
+    <div class="card"><strong>10</strong><span>condition settings</span></div>
+    <div class="card"><strong>3</strong><span>physical regimes</span></div>
+    <div class="card"><strong>9</strong><span>observation masks</span></div>
+    <div class="card"><strong>7</strong><span>PDE loss reports</span></div>
+  </div>
+  <div class="note"><b>Scientific status:</b> the code and quality-reporting workflow are available. Paper-grade ground truth still requires the documented numerical-validation gate.</div>
+</section>
+
+<section id="library" class="section library-teaser">
+  <div class="smallcaps">Supporting resource</div>
+  <h2>AI4PDE paper library</h2>
+  <p class="muted">The benchmark comes first. The literature library is a supporting index of <b>{n_total}</b> AI4PDE/AI4SDE papers, with <b>{n_curated}</b> detailed pages. Find work by the physical equation or by the learning method.</p>
+  <div class="library-links">
+    <a class="card" href="pde-problems/"><b>Browse by PDE</b><span>Fluids, diffusion, elliptic systems, waves, and more</span></a>
+    <a class="card" href="baselines/"><b>Browse by method</b><span>Neural operators, PINNs, diffusion, graphs, and baselines</span></a>
+    <a class="card" href="research/"><b>Search all papers</b><span>Combine PDE, method, venue, year, and keyword filters</span></a>
+  </div>
 </section>
 """
 
     return page(
-        title="PartialObs–PDEBench",
+        title="PDE-OBS Benchmark Builder — PartialObs–PDEBench",
         root=root,
         current="home",
-        hero_h1="PartialObs–PDEBench",
+        hero_h1="PDE-OBS Benchmark Builder",
         hero_subtitle_html=(
-            "The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> "
-            "plus a supporting partial-observation research map."
+            "Design reproducible <b>partial-observation PDE benchmarks</b>, generate "
+            "the exact run code, and report data quality for every selected equation."
         ),
         hero_meta_html=(
             '<div class="meta">'
             '  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>'
-            '  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div>'
+            '  <div><b>Source:</b> private GitHub repository; this public site is a static release mirror.</div>'
             "</div>"
         ),
         hero_card_html=hero_card,
-        extra_head=(
-            "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
-            '<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>'
-            '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>'
-            "<script>document.addEventListener('DOMContentLoaded',()=>{"
-            "  if(!window.mermaid) return;"
-            "  /* Enable clickable Mermaid nodes on GitHub Pages. */"
-            "  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#121826',primaryTextColor:'#e7edf5',primaryBorderColor:'#223047',lineColor:'#3b4a66',secondaryColor:'#0f1522',tertiaryColor:'#0b0f14'}});"
-            "  mermaid.run({querySelector:'.mermaid'});"
-            "});</script>"
+        body_html=body,
+    )
+
+
+def render_progress() -> str:
+    progress = FULL_DATASET_PROGRESS
+    generation = progress["generation"]
+    artifacts = progress["artifacts"]
+    quality = progress["quality"]
+    final_qc = progress["final_qc"]
+    plans = progress["plans"]
+
+    body = f"""
+<section class="section progress-hero-panel">
+  <div class="status-line"><span class="status-dot running" aria-hidden="true"></span><b>{html_escape(progress['status_label'])}</b></div>
+  <p class="muted">Snapshot updated {html_escape(progress['updated_at'])}. Generation and artifact integrity are complete; release acceptance remains pending until the separate strict aggregate job writes and validates its summary.</p>
+  <div class="progress-meter" aria-label="Generation completion"><span style="width: {generation['percentage']:.0f}%"></span></div>
+  <div class="progress-kpis">
+    <div class="card"><strong>{generation['shards_complete']:,}</strong><span>of {generation['shards_expected']:,} shards</span></div>
+    <div class="card"><strong>{generation['samples_complete']:,}</strong><span>of {generation['samples_expected']:,} samples</span></div>
+    <div class="card"><strong>{generation['pde_families']}</strong><span>PDE families</span></div>
+    <div class="card"><strong>{generation['percentage']:.0f}%</strong><span>generation complete</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Artifact integrity</div>
+  <h2>Every expected shard and sidecar is present</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>Verified result</th></tr></thead>
+    <tbody>
+      <tr><td>HDF5 / manifest / SHA256 / metadata / quality</td><td>{artifacts['hdf5_complete']:,} complete sets</td></tr>
+      <tr><td>Missing or mismatched expected rows</td><td>{artifacts['missing_or_mismatched']}</td></tr>
+      <tr><td>Partials / live locks</td><td>{artifacts['partials']} / {artifacts['locks']}</td></tr>
+      <tr><td>Live generation / duplicate outputs</td><td>{artifacts['live_generation_jobs']} / {artifacts['duplicate_or_overlapping_outputs']}</td></tr>
+      <tr><td>Approximate storage</td><td>{generation['storage_gib_approx']} GiB</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Strict scientific gate</div>
+  <h2>All shard-level PDE checks pass without relaxing the threshold</h2>
+  <div class="quality-callout">
+    <div><span>Maximum accepted <code>pde_loss</code></span><strong>{quality['max_pde_loss']:.17f}</strong></div>
+    <div><span>Required ceiling</span><strong>{quality['gate']:.2f}</strong></div>
+    <div><span>R4 recovery maximum</span><strong>{quality['r4_max_pde_loss']:.17f}</strong></div>
+  </div>
+  <p>No model training was run. Recovery preserved logical sample identities and stored T=15, used exact-seed diagnostics, and produced non-overlapping replacements only for absent or rejected rows.</p>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Final aggregate validation</div>
+  <h2>One strict QC job is reading all 3,360 shards</h2>
+  <div class="timeline">
+    <div class="done"><b>Generation complete</b><span>Jobs 2130068 and 2130070 completed all six R4 rows with verified sidecars and checksums.</span></div>
+    <div class="done"><b>Read-only full audit complete</b><span>560,000 samples, seven PDEs &times; 80,000, zero missing rows, partials, locks, or overlaps.</span></div>
+    <div class="done"><b>Expected-plan reconciliation complete</b><span>Job 2130270 found exactly two stale Burgers <code>time_steps</code> values in the expected plan, not a data-quality failure. The original plan remains unchanged and the reconciled QC plan has zero content-spec mismatches.</span></div>
+    <div class="running"><b>Strict QC job {final_qc['job_id']} running</b><span>{html_escape(final_qc['partition'])}; {html_escape(final_qc['resources'])}; validates shards, requires all PDEs, and enforces <code>pde_loss &le; {final_qc['max_pde_loss']:.2f}</code>.</span></div>
+    <div><b>Release acceptance pending</b><span>Accepted only after <code>summary.json</code> proves 3,360 shards / 560,000 samples and strict quality success.</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Reproducibility anchors</div>
+  <h2>Frozen and reconciled plan identities</h2>
+  <div class="cards">
+    <div class="card"><h3>Original combined plan</h3><p><code>{html_escape(plans['original_combined']['name'])}</code></p><p class="hash">SHA256 {html_escape(plans['original_combined']['sha256'])}</p><p class="muted">Preserved unchanged.</p></div>
+    <div class="card"><h3>Final-QC expected plan</h3><p><code>{html_escape(plans['final_qc']['name'])}</code></p><p class="hash">SHA256 {html_escape(plans['final_qc']['sha256'])}</p><p class="muted">Changes only two documented R2 Burgers internal time-grid values; 3,360 unique rows / 560,000 samples.</p></div>
+  </div>
+  <p><a href="../assets/progress.json">Download the machine-readable progress snapshot</a>.</p>
+</section>
+"""
+
+    return page(
+        title="Full Dataset Progress — PDE-OBS",
+        root="../",
+        current="progress",
+        hero_h1="PDE-OBS Full Dataset Progress",
+        hero_subtitle_html=(
+            "A public, auditable view of generation completeness, artifact integrity, "
+            "strict quality, recovery provenance, and final aggregate validation."
+        ),
+        hero_meta_html=(
+            '<div class="meta"><div><b>Campaign:</b> numerics-full-t15-6c7c7e31</div>'
+            '<div><b>Stored trajectory:</b> T=15</div></div>'
         ),
         body_html=body,
     )
@@ -1329,25 +1483,31 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
 
     body = f"""
 <section class="section">
-  <h2>Research index</h2>
+  <div class="smallcaps">Supporting resource</div>
+  <h2>Find AI4PDE papers</h2>
   <p class="muted">
-    Browse/search <b>{n_total}</b> papers. Curated pages include structured experiment + baseline notes;
-    index pages are bibliographic placeholders.
+    Search <b>{n_total}</b> papers, starting with the physical PDE or the method family.
+    Curated pages add experiment and baseline notes; index pages are bibliographic placeholders.
   </p>
+
+  <div class="library-index-links">
+    <a class="card" href="../pde-problems/"><b>Browse the PDE index</b><span>Group papers by equation family</span></a>
+    <a class="card" href="../baselines/"><b>Browse the method index</b><span>Group papers by learning approach</span></a>
+  </div>
 
   <div class="card" style="margin-top:16px;">
     <div class="grid">
       <div>
         <div class="smallcaps">Search</div>
-        <input id="q" class="input" placeholder="Search title / authors / venue..." />
+        <input id="q" class="input" placeholder="Search title, author, PDE, or method..." />
       </div>
 
       <div>
         <div class="smallcaps">Filters</div>
         <div class="row">
+          <select id="f_pde" class="select"><option value="">All PDEs</option></select>
           <select id="f_method" class="select"><option value="">All methods</option></select>
           <select id="f_venue" class="select"><option value="">All venues</option></select>
-          <select id="f_pde" class="select"><option value="">All PDEs</option></select>
           <select id="f_status" class="select">
             <option value="">All statuses</option>
             <option value="curated">curated</option>
@@ -1400,11 +1560,11 @@ def render_research_index(papers: List[Dict[str, Any]]) -> str:
 """
 
     return page(
-        title="Research index",
+        title="AI4PDE Paper Library — PartialObs–PDEBench",
         root=root,
         current="research",
-        hero_h1="Research index",
-        hero_subtitle_html="Browse and search AI4PDE/AI4SDE papers.",
+        hero_h1="AI4PDE Paper Library",
+        hero_subtitle_html="Find papers by PDE, method, venue, or keyword. The library supports the benchmark and lives after the Builder workflow.",
         hero_meta_html="",
         hero_card_html="",
         extra_head=(
@@ -1530,11 +1690,11 @@ def render_pde_problems(papers: List[Dict[str, Any]]) -> str:
     )
 
     return page(
-        title="PDE problems — PartialObs–PDEBench",
+        title="Browse AI4PDE Papers by PDE — PartialObs–PDEBench",
         root=root,
         current="pde",
-        hero_h1="PDE problems",
-        hero_subtitle_html="Group PDEs by family and see which methods/baselines appear across papers.",
+        hero_h1="Browse papers by PDE",
+        hero_subtitle_html="Start from the physical equation, then see the methods and baselines used in the literature.",
         hero_card_html=hero_card,
         body_html=body,
     )
@@ -1613,11 +1773,11 @@ def render_baselines(papers: List[Dict[str, Any]]) -> str:
     )
 
     return page(
-        title="Baselines — PartialObs–PDEBench",
+        title="Browse AI4PDE Papers by Method — PartialObs–PDEBench",
         root=root,
         current="baselines",
-        hero_h1="Baselines & method taxonomy",
-        hero_subtitle_html="Tables of method classes and commonly compared baselines.",
+        hero_h1="Browse papers by method",
+        hero_subtitle_html="Start from a learning approach, then find the PDEs and comparison baselines used across papers.",
         hero_card_html=hero_card,
         extra_head=(
             "<script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script>"
@@ -2087,17 +2247,17 @@ def render_builder() -> str:
 
     body = """
 <section class="section builder-intro">
-  <div class="note"><b>Scientific status / 科学状态：</b> bundled compact solvers are for development and CI. They can produce complete quality reports, but their outputs are not paper-ready ground truth until numerical validation and the publication-candidate quality gate pass. Even then, <code>publication_ready</code> remains false until the canonical full-factor expected plan/checksums and independent release evidence pass. 内置紧凑求解器可以生成完整质量报告，但通过数值验证、完整因子计划、校验和及独立发布证据前，不应作为论文级真值数据。</div>
-  <p>Choose a factor slice or the complete 7 x 4 x 10 benchmark. The page creates a reproducible YAML configuration and copy-ready commands; it never sends your selections or paths to a server. 选择需要的 PDE、边界、数据规模和运行环境后，页面会自动生成配置与命令；所有选择均只在浏览器本地处理。</p>
+  <p class="builder-lead">Choose a benchmark slice, inspect its size, and copy the exact dataset-generation code. Ground truth is generated once; observation masks are deterministic views applied afterward.</p>
+  <div class="note"><b>Scientific gate:</b> every run produces PDE-specific quality diagnostics. Bundled reference solvers are not paper-grade ground truth until the documented numerical-validation and release gates pass.</div>
 </section>
 
 <section class="builder-layout" aria-labelledby="builder-form-title">
   <form id="benchmark-builder" class="card builder-controls">
-    <h2 id="builder-form-title">1. Choose the benchmark / 选择基准</h2>
+    <h2 id="builder-form-title">1. Choose the benchmark</h2>
     <div class="builder-fields">
-      <label>Environment / 运行环境<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
-      <label>Release tier / 数据规模<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
-      <label>PDE family / PDE 类别<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
+      <label>Environment<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
+      <label>Release tier<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
+      <label>PDE family<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
       <label>Boundary<select id="builder-boundary" class="select" data-option="boundaries" data-all-label="All 4 boundaries" data-default="all"></select></label>
       <label>Condition setting<select id="builder-setting" class="select" data-option="settings" data-all-label="All 10 settings" data-default="all"></select></label>
       <label>Physical regime<select id="builder-regime" class="select" data-option="regimes" data-all-label="All 3 regimes" data-default="all"></select></label>
@@ -2105,8 +2265,8 @@ def render_builder() -> str:
       <label>Observation mask<select id="builder-mask" class="select" data-option="masks" data-default="random_3pct"></select></label>
       <label>Evaluation split<select id="builder-split" class="select" data-option="splits" data-default="iid"></select></label>
       <label>Anchor model<select id="builder-model" class="select" data-option="models" data-default="fno"></select></label>
-      <label>Quality profile / 质量档位<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
-      <label>Calibrated max normalized PDE loss / 校准后的 PDE loss 上限
+      <label>Quality profile<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
+      <label>Calibrated max normalized PDE loss
         <input id="builder-threshold" class="input" inputmode="decimal" type="number" min="0" step="any" placeholder="Optional; required for publication candidate" />
       </label>
     </div>
@@ -2128,7 +2288,7 @@ def render_builder() -> str:
   </form>
 
   <aside class="card builder-summary" aria-labelledby="builder-summary-title">
-    <h2 id="builder-summary-title">Plan preview / 计划预览</h2>
+    <h2 id="builder-summary-title">Plan preview</h2>
     <dl class="builder-stats">
       <div><dt>Macro cases</dt><dd id="builder-macro-cases">-</dd></div>
       <div><dt>Samples</dt><dd id="builder-samples">-</dd></div>
@@ -2137,22 +2297,23 @@ def render_builder() -> str:
     </dl>
     <p id="builder-profile-note" class="muted"></p>
     <div id="builder-warning-box" class="builder-warning" role="status" aria-live="polite">
-      <b>Checks before running / 运行前检查</b>
+      <b>Checks before running</b>
       <ul id="builder-warnings"></ul>
     </div>
   </aside>
 </section>
 
-<section id="observation-training" class="section" aria-labelledby="campaign-title">
-  <h2 id="campaign-title">2. Training per observation type / 按观测类型分别训练</h2>
+<details id="observation-training" class="section optional-campaign">
+  <summary>Optional: future model campaign planning</summary>
+  <div class="optional-campaign-body">
+  <h2 id="campaign-title">Future model campaign planning</h2>
   <p><b>Primary matched-mask comparison:</b> every normal learned baseline gets an independent checkpoint for each PDE and each of the nine observation masks. The model trained on random 3% is reused only for the separate mask-transfer/OOD table; it never replaces matched-mask training in the primary IID table.</p>
-  <p><b>主要 matched-mask 对比：</b>每个普通学习基线都按 PDE 与观测掩码分别训练。random 3% 检查点只用于单独的 mask-transfer/OOD 表，不能替代主要 IID 表中的同掩码训练。</p>
-  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol / 查看完整观测训练协议</a></p>
+  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol</a></p>
   <div class="note"><b>Execution boundary:</b> this planner counts the complete paper matrix, including methods that are not integrated in PDE-OBS. Its campaign manifest is planning-only. It never invents commands for Gappy POD, DeepONet, PINN/PINO, Transolver/GNOT, DiffusionPDE, or FunDPS.</div>
 
   <div class="campaign-layout">
     <div class="card campaign-controls">
-      <h3>Campaign preset / 计划预设</h3>
+      <h3>Campaign preset</h3>
       <div class="builder-fields">
         <label>Comparison matrix<select id="campaign-preset" class="select" data-option="campaign_presets" data-default="medium_recommended"></select></label>
         <label>Dedicated GPUs<input id="campaign-gpus" class="input" type="number" min="1" max="512" step="1" value="12" /></label>
@@ -2189,11 +2350,12 @@ def render_builder() -> str:
       <tbody id="campaign-method-body"></tbody>
     </table>
   </div>
-</section>
+</div>
+</details>
 
 <section class="section" aria-labelledby="builder-code-title">
   <div class="builder-code-heading">
-    <div><h2 id="builder-code-title">3. Copy the generated code / 复制生成代码</h2><p class="muted">The dataset YAML is the executable source of truth. The campaign tab is a non-executable planning record and lists every missing adapter explicitly.</p></div>
+    <div><h2 id="builder-code-title">2. Copy the generated code</h2><p class="muted">The dataset YAML is the executable source of truth. Use the environment tab that matches your machine.</p></div>
     <div class="builder-actions">
       <button id="builder-copy" class="btn primary" type="button">Copy current tab</button>
       <button id="builder-download" class="btn" type="button">Download YAML</button>
@@ -2214,8 +2376,8 @@ def render_builder() -> str:
 </section>
 
 <section class="section" aria-labelledby="quality-coverage-title">
-  <h2 id="quality-coverage-title">4. Quality management for every PDE / 全 PDE 数据质量管理</h2>
-  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together. 每个样本都保存数值、几何、初边值和对应 PDE 物理残差；完整基准会在同一份报告中分别汇总七类 PDE loss。</p>
+  <h2 id="quality-coverage-title">3. Quality report for every PDE</h2>
+  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together.</p>
   <div class="tablewrap">
     <table class="builder-quality-table">
       <thead><tr><th>PDE</th><th>Reported normalized loss</th><th>Interpretation</th></tr></thead>
@@ -2233,10 +2395,10 @@ def render_builder() -> str:
         title="Benchmark Builder - PDE-OBS",
         root="../",
         current="builder",
-        hero_h1="Benchmark Builder / 基准构建器",
+        hero_h1="Build a partial-observation benchmark",
         hero_subtitle_html=(
-            "Choose a benchmark slice, generate the dataset code, and attach a "
-            "quality report covering every selected PDE family. 选择配置后自动生成数据与质量检查代码。"
+            "Choose the physical system and observation view, then generate reproducible "
+            "dataset and quality-control code."
         ),
         hero_meta_html=badges(
             ["7 PDE losses", "Local + Linux", "SeaWulf Slurm", "Deep-linkable choices"]
@@ -2472,9 +2634,14 @@ def main() -> None:
         DOCS / "assets" / "benchmark-builder-options.json",
         json.dumps(builder_options, ensure_ascii=False, indent=2),
     )
+    write(
+        DOCS / "assets" / "progress.json",
+        json.dumps(FULL_DATASET_PROGRESS, ensure_ascii=False, indent=2),
+    )
 
     # Core pages
     write(DOCS / "index.html", render_home(papers))
+    write(DOCS / "progress" / "index.html", render_progress())
     write(DOCS / "research" / "index.html", render_research_index(papers))
     write(DOCS / "builder" / "index.html", render_builder())
     write(DOCS / "server" / "index.html", render_server())

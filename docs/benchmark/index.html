@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PDE-OBS benchmark · PartialObs-PDEBench</title>
-  <link rel="stylesheet" href="../assets/style.css?v=2026-08-16" />
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-builder-first" />
 </head>
 <body>
   <header class="hero">
@@ -22,13 +22,14 @@
         <span class="badge">SeaWulf ready</span>
       </div>
       <nav class="nav">
-        <a href="../index.html">Home</a>
-        <a href="../research/">Research</a>
-        <a href="../pde-problems/">PDE problems</a>
-        <a href="../baselines/">Baselines</a>
+        <a href="../index.html">Overview</a>
+        <a href="../progress/">Progress</a>
+        <a class="nav-primary" href="../builder/">Benchmark Builder</a>
         <a href="./" aria-current="page">Benchmark</a>
-        <a href="../builder/">Builder</a>
         <a href="../server/">Run</a>
+        <a href="../research/">Paper Library</a>
+        <a href="../pde-problems/">By PDE</a>
+        <a href="../baselines/">By Method</a>
         <a href="../contribute/">Contribute</a>
       </nav>
     </div>
@@ -40,9 +41,10 @@
       <p>
         This repository now treats <b>PDE-OBS: A Controlled Partial-Observation
         Benchmark for PDE Dynamics</b> as the only manuscript in scope. Its
-        contribution is the dataset design, task/split/metric protocol, anchor
-        leaderboard, difficulty analysis, and one-line tooling. Semantic-ID,
-        large world-model, and foundation-model method claims are separate work.
+        main public contribution is the <a href="../builder/"><b>Benchmark
+        Builder</b></a>: a controlled way to select the dataset factors,
+        generate exact run code, and attach PDE-specific quality reports. The
+        frozen dataset, split, task, and metric contract supports that Builder.
       </p>
       <div class="note">
         <b>Implementation status:</b> machine-verifiable protocol, one-line

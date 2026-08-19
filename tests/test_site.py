@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from pdeobs.methods import available_methods
@@ -8,17 +9,62 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
 
-def test_generated_pages_include_run_and_builder_navigation() -> None:
+def test_generated_pages_use_benchmark_first_navigation() -> None:
     pages = sorted(DOCS.rglob("index.html"))
     assert pages
 
     missing = []
     for page in pages:
         html = page.read_text(encoding="utf-8")
-        if '<nav class="nav">' not in html or ">Builder</a>" not in html or ">Run</a>" not in html:
+        required = (
+            '<nav class="nav">',
+            ">Progress</a>",
+            ">Benchmark Builder</a>",
+            ">Benchmark</a>",
+            ">Run</a>",
+            ">Paper Library</a>",
+            ">By PDE</a>",
+            ">By Method</a>",
+        )
+        if not all(fragment in html for fragment in required):
             missing.append(str(page.relative_to(ROOT)))
 
-    assert not missing, f"Builder/Run navigation missing from: {missing}"
+    assert not missing, f"Benchmark-first navigation missing from: {missing}"
+
+
+def test_homepage_leads_with_builder_and_moves_literature_last() -> None:
+    html = (DOCS / "index.html").read_text(encoding="utf-8")
+
+    assert "PDE-OBS Benchmark Builder" in html
+    assert "Open Benchmark Builder" in html
+    assert "One benchmark workflow from ground truth to quality report" in html
+    assert "Observation masks never change the underlying ground truth" in html
+    assert "AI4PDE paper library" in html
+    assert html.index("Open Benchmark Builder") < html.index("AI4PDE paper library")
+    assert "Paper tree" not in html
+    assert 'class="mermaid"' not in html
+    assert "560,000 / 560,000 samples generated" in html
+    assert 'href="progress/">Open full progress report</a>' in html
+
+
+def test_progress_page_and_machine_readable_snapshot_agree() -> None:
+    html = (DOCS / "progress" / "index.html").read_text(encoding="utf-8")
+    payload = json.loads((DOCS / "assets" / "progress.json").read_text(encoding="utf-8"))
+
+    assert payload["status"] == "final_strict_qc_running"
+    assert payload["generation"]["shards_complete"] == 3360
+    assert payload["generation"]["samples_complete"] == 560000
+    assert payload["generation"]["percentage"] == 100.0
+    assert payload["generation"]["pde_families"] == 7
+    assert payload["artifacts"]["partials"] == 0
+    assert payload["artifacts"]["locks"] == 0
+    assert payload["quality"]["max_pde_loss"] <= payload["quality"]["gate"]
+    assert payload["final_qc"]["job_id"] == 2130280
+    assert payload["final_qc"]["summary_created"] is False
+    assert "Final strict QC running" in html
+    assert "560,000" in html
+    assert "2130280" in html
+    assert "progress.json" in html
 
 
 def test_server_page_contains_both_supported_workflows() -> None:
@@ -35,17 +81,17 @@ def test_server_page_contains_both_supported_workflows() -> None:
     assert 'aria-current="page">Run</a>' in html
 
 
-def test_builder_page_is_bilingual_accessible_and_quality_explicit() -> None:
+def test_builder_page_is_accessible_and_quality_explicit() -> None:
     html = (DOCS / "builder" / "index.html").read_text(encoding="utf-8")
 
-    assert "Benchmark Builder / 基准构建器" in html
-    assert "全 PDE 数据质量管理" in html
+    assert "Build a partial-observation benchmark" in html
+    assert "Quality report for every PDE" in html
     assert 'id="benchmark-builder"' in html
     assert 'role="tablist"' in html
     assert 'aria-live="polite"' in html
     assert "benchmark-builder.js?v=" in html
     assert "benchmark-builder.js?v=2026-08-16-observation-v3" in html
-    assert "Training per observation type" in html
+    assert "Optional: future model campaign planning" in html
     assert "Primary matched-mask comparison" in html
     assert "random 3%" in html
     assert "mask-transfer/OOD" in html
@@ -56,7 +102,27 @@ def test_builder_page_is_bilingual_accessible_and_quality_explicit() -> None:
     assert "all seven losses together" in html
     assert "*.quality-failures.jsonl" in html
     assert "publication_ready" in html
-    assert 'aria-current="page">Builder</a>' in html
+    assert 'aria-current="page">Benchmark Builder</a>' in html
+
+
+def test_public_website_contains_no_chinese_text() -> None:
+    han = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
+    offenders = []
+    for path in (*DOCS.rglob("*.html"), *DOCS.rglob("*.js"), *DOCS.rglob("*.json")):
+        if han.search(path.read_text(encoding="utf-8")):
+            offenders.append(str(path.relative_to(ROOT)))
+
+    assert not offenders, f"Chinese text found in public website: {offenders}"
+
+
+def test_paper_library_prioritizes_pde_and_method_discovery() -> None:
+    html = (DOCS / "research" / "index.html").read_text(encoding="utf-8")
+
+    assert "AI4PDE Paper Library" in html
+    assert "Browse the PDE index" in html
+    assert "Browse the method index" in html
+    assert html.index('id="f_pde"') < html.index('id="f_method"')
+    assert "Search title, author, PDE, or method" in html
 
 
 def test_builder_options_are_generated_from_the_frozen_contract() -> None:
@@ -238,10 +304,3 @@ def test_generated_pages_cache_bust_the_shared_stylesheet() -> None:
     ]
 
     assert not missing, f"Stylesheet cache buster missing from: {missing}"
-
-
-def test_homepage_inline_mermaid_script_is_not_truncated_by_a_line_comment() -> None:
-    html = (DOCS / "index.html").read_text(encoding="utf-8")
-
-    assert "/* Enable clickable Mermaid nodes on GitHub Pages. */" in html
-    assert "// Enable clickable nodes" not in html

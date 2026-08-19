@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Benchmark Builder - PDE-OBS</title>
-  <link rel="stylesheet" href="../assets/style.css?v=2026-08-16" />
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-builder-first" />
   <script defer src="../assets/benchmark-builder.js?v=2026-08-16-observation-v3"></script>
 </head>
 
@@ -13,8 +13,8 @@
     <div class="container">
       <div class="hero-top">
         <div>
-          <h1>Benchmark Builder / 基准构建器</h1>
-          <p class="subtitle">Choose a benchmark slice, generate the dataset code, and attach a quality report covering every selected PDE family. 选择配置后自动生成数据与质量检查代码。</p>
+          <h1>Build a partial-observation benchmark</h1>
+          <p class="subtitle">Choose the physical system and observation view, then generate reproducible dataset and quality-control code.</p>
           <div class="badges">
 <span class="badge">7 PDE losses</span>
 <span class="badge">Local + Linux</span>
@@ -26,24 +26,24 @@
 
       </div>
 
-      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../builder/" aria-current="page">Builder</a><a href="../server/">Run</a><a href="../contribute/">Contribute</a></nav>
+      <nav class="nav"><a href="../index.html">Overview</a><a href="../progress/">Progress</a><a href="../builder/" class="nav-primary" aria-current="page">Benchmark Builder</a><a href="../benchmark/">Benchmark</a><a href="../server/">Run</a><a href="../research/">Paper Library</a><a href="../pde-problems/">By PDE</a><a href="../baselines/">By Method</a><a href="../contribute/">Contribute</a></nav>
     </div>
   </header>
 
   <main class="container">
 
 <section class="section builder-intro">
-  <div class="note"><b>Scientific status / 科学状态：</b> bundled compact solvers are for development and CI. They can produce complete quality reports, but their outputs are not paper-ready ground truth until numerical validation and the publication-candidate quality gate pass. Even then, <code>publication_ready</code> remains false until the canonical full-factor expected plan/checksums and independent release evidence pass. 内置紧凑求解器可以生成完整质量报告，但通过数值验证、完整因子计划、校验和及独立发布证据前，不应作为论文级真值数据。</div>
-  <p>Choose a factor slice or the complete 7 x 4 x 10 benchmark. The page creates a reproducible YAML configuration and copy-ready commands; it never sends your selections or paths to a server. 选择需要的 PDE、边界、数据规模和运行环境后，页面会自动生成配置与命令；所有选择均只在浏览器本地处理。</p>
+  <p class="builder-lead">Choose a benchmark slice, inspect its size, and copy the exact dataset-generation code. Ground truth is generated once; observation masks are deterministic views applied afterward.</p>
+  <div class="note"><b>Scientific gate:</b> every run produces PDE-specific quality diagnostics. Bundled reference solvers are not paper-grade ground truth until the documented numerical-validation and release gates pass.</div>
 </section>
 
 <section class="builder-layout" aria-labelledby="builder-form-title">
   <form id="benchmark-builder" class="card builder-controls">
-    <h2 id="builder-form-title">1. Choose the benchmark / 选择基准</h2>
+    <h2 id="builder-form-title">1. Choose the benchmark</h2>
     <div class="builder-fields">
-      <label>Environment / 运行环境<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
-      <label>Release tier / 数据规模<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
-      <label>PDE family / PDE 类别<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
+      <label>Environment<select id="builder-environment" class="select" data-option="environments" data-default="local"></select></label>
+      <label>Release tier<select id="builder-tier" class="select" data-option="tiers" data-default="signal"></select></label>
+      <label>PDE family<select id="builder-pde" class="select" data-option="pdes" data-all-label="All 7 PDE families" data-default="all"></select></label>
       <label>Boundary<select id="builder-boundary" class="select" data-option="boundaries" data-all-label="All 4 boundaries" data-default="all"></select></label>
       <label>Condition setting<select id="builder-setting" class="select" data-option="settings" data-all-label="All 10 settings" data-default="all"></select></label>
       <label>Physical regime<select id="builder-regime" class="select" data-option="regimes" data-all-label="All 3 regimes" data-default="all"></select></label>
@@ -51,8 +51,8 @@
       <label>Observation mask<select id="builder-mask" class="select" data-option="masks" data-default="random_3pct"></select></label>
       <label>Evaluation split<select id="builder-split" class="select" data-option="splits" data-default="iid"></select></label>
       <label>Anchor model<select id="builder-model" class="select" data-option="models" data-default="fno"></select></label>
-      <label>Quality profile / 质量档位<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
-      <label>Calibrated max normalized PDE loss / 校准后的 PDE loss 上限
+      <label>Quality profile<select id="builder-quality" class="select" data-option="quality_profiles" data-default="report"></select></label>
+      <label>Calibrated max normalized PDE loss
         <input id="builder-threshold" class="input" inputmode="decimal" type="number" min="0" step="any" placeholder="Optional; required for publication candidate" />
       </label>
     </div>
@@ -74,7 +74,7 @@
   </form>
 
   <aside class="card builder-summary" aria-labelledby="builder-summary-title">
-    <h2 id="builder-summary-title">Plan preview / 计划预览</h2>
+    <h2 id="builder-summary-title">Plan preview</h2>
     <dl class="builder-stats">
       <div><dt>Macro cases</dt><dd id="builder-macro-cases">-</dd></div>
       <div><dt>Samples</dt><dd id="builder-samples">-</dd></div>
@@ -83,22 +83,23 @@
     </dl>
     <p id="builder-profile-note" class="muted"></p>
     <div id="builder-warning-box" class="builder-warning" role="status" aria-live="polite">
-      <b>Checks before running / 运行前检查</b>
+      <b>Checks before running</b>
       <ul id="builder-warnings"></ul>
     </div>
   </aside>
 </section>
 
-<section id="observation-training" class="section" aria-labelledby="campaign-title">
-  <h2 id="campaign-title">2. Training per observation type / 按观测类型分别训练</h2>
+<details id="observation-training" class="section optional-campaign">
+  <summary>Optional: future model campaign planning</summary>
+  <div class="optional-campaign-body">
+  <h2 id="campaign-title">Future model campaign planning</h2>
   <p><b>Primary matched-mask comparison:</b> every normal learned baseline gets an independent checkpoint for each PDE and each of the nine observation masks. The model trained on random 3% is reused only for the separate mask-transfer/OOD table; it never replaces matched-mask training in the primary IID table.</p>
-  <p><b>主要 matched-mask 对比：</b>每个普通学习基线都按 PDE 与观测掩码分别训练。random 3% 检查点只用于单独的 mask-transfer/OOD 表，不能替代主要 IID 表中的同掩码训练。</p>
-  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol / 查看完整观测训练协议</a></p>
+  <p><a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/OBSERVATION_TRAINING_PROTOCOL.md">Open the complete observation-training protocol</a></p>
   <div class="note"><b>Execution boundary:</b> this planner counts the complete paper matrix, including methods that are not integrated in PDE-OBS. Its campaign manifest is planning-only. It never invents commands for Gappy POD, DeepONet, PINN/PINO, Transolver/GNOT, DiffusionPDE, or FunDPS.</div>
 
   <div class="campaign-layout">
     <div class="card campaign-controls">
-      <h3>Campaign preset / 计划预设</h3>
+      <h3>Campaign preset</h3>
       <div class="builder-fields">
         <label>Comparison matrix<select id="campaign-preset" class="select" data-option="campaign_presets" data-default="medium_recommended"></select></label>
         <label>Dedicated GPUs<input id="campaign-gpus" class="input" type="number" min="1" max="512" step="1" value="12" /></label>
@@ -135,11 +136,12 @@
       <tbody id="campaign-method-body"></tbody>
     </table>
   </div>
-</section>
+</div>
+</details>
 
 <section class="section" aria-labelledby="builder-code-title">
   <div class="builder-code-heading">
-    <div><h2 id="builder-code-title">3. Copy the generated code / 复制生成代码</h2><p class="muted">The dataset YAML is the executable source of truth. The campaign tab is a non-executable planning record and lists every missing adapter explicitly.</p></div>
+    <div><h2 id="builder-code-title">2. Copy the generated code</h2><p class="muted">The dataset YAML is the executable source of truth. Use the environment tab that matches your machine.</p></div>
     <div class="builder-actions">
       <button id="builder-copy" class="btn primary" type="button">Copy current tab</button>
       <button id="builder-download" class="btn" type="button">Download YAML</button>
@@ -160,8 +162,8 @@
 </section>
 
 <section class="section" aria-labelledby="quality-coverage-title">
-  <h2 id="quality-coverage-title">4. Quality management for every PDE / 全 PDE 数据质量管理</h2>
-  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together. 每个样本都保存数值、几何、初边值和对应 PDE 物理残差；完整基准会在同一份报告中分别汇总七类 PDE loss。</p>
+  <h2 id="quality-coverage-title">3. Quality report for every PDE</h2>
+  <p>Every generated sample receives finite-value, geometry, initial/boundary, and family-specific physics diagnostics. Dataset aggregation reports each selected PDE separately; the complete benchmark reports all seven losses together.</p>
   <div class="tablewrap">
     <table class="builder-quality-table">
       <thead><tr><th>PDE</th><th>Reported normalized loss</th><th>Interpretation</th></tr></thead>

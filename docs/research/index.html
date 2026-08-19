@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Research index</title>
-  <link rel="stylesheet" href="../assets/style.css?v=2026-08-16" />
+  <title>AI4PDE Paper Library — PartialObs–PDEBench</title>
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-builder-first" />
   <script>window.PAPERS_DB_URL='../assets/papers_db.json';</script><script defer src="../assets/research.js"></script>
 </head>
 
@@ -13,40 +13,46 @@
     <div class="container">
       <div class="hero-top">
         <div>
-          <h1>Research index</h1>
-          <p class="subtitle">Browse and search AI4PDE/AI4SDE papers.</p>
+          <h1>AI4PDE Paper Library</h1>
+          <p class="subtitle">Find papers by PDE, method, venue, or keyword. The library supports the benchmark and lives after the Builder workflow.</p>
 
         </div>
 
 
       </div>
 
-      <nav class="nav"><a href="../index.html">Home</a><a href="../research/" aria-current="page">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../builder/">Builder</a><a href="../server/">Run</a><a href="../contribute/">Contribute</a></nav>
+      <nav class="nav"><a href="../index.html">Overview</a><a href="../progress/">Progress</a><a href="../builder/" class="nav-primary">Benchmark Builder</a><a href="../benchmark/">Benchmark</a><a href="../server/">Run</a><a href="../research/" aria-current="page">Paper Library</a><a href="../pde-problems/">By PDE</a><a href="../baselines/">By Method</a><a href="../contribute/">Contribute</a></nav>
     </div>
   </header>
 
   <main class="container">
 
 <section class="section">
-  <h2>Research index</h2>
+  <div class="smallcaps">Supporting resource</div>
+  <h2>Find AI4PDE papers</h2>
   <p class="muted">
-    Browse/search <b>301</b> papers. Curated pages include structured experiment + baseline notes;
-    index pages are bibliographic placeholders.
+    Search <b>301</b> papers, starting with the physical PDE or the method family.
+    Curated pages add experiment and baseline notes; index pages are bibliographic placeholders.
   </p>
+
+  <div class="library-index-links">
+    <a class="card" href="../pde-problems/"><b>Browse the PDE index</b><span>Group papers by equation family</span></a>
+    <a class="card" href="../baselines/"><b>Browse the method index</b><span>Group papers by learning approach</span></a>
+  </div>
 
   <div class="card" style="margin-top:16px;">
     <div class="grid">
       <div>
         <div class="smallcaps">Search</div>
-        <input id="q" class="input" placeholder="Search title / authors / venue..." />
+        <input id="q" class="input" placeholder="Search title, author, PDE, or method..." />
       </div>
 
       <div>
         <div class="smallcaps">Filters</div>
         <div class="row">
+          <select id="f_pde" class="select"><option value="">All PDEs</option></select>
           <select id="f_method" class="select"><option value="">All methods</option></select>
           <select id="f_venue" class="select"><option value="">All venues</option></select>
-          <select id="f_pde" class="select"><option value="">All PDEs</option></select>
           <select id="f_status" class="select">
             <option value="">All statuses</option>
             <option value="curated">curated</option>

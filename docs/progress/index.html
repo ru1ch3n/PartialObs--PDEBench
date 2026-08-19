@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Full Dataset Progress — PDE-OBS</title>
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-builder-first" />
+
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>PDE-OBS Full Dataset Progress</h1>
+          <p class="subtitle">A public, auditable view of generation completeness, artifact integrity, strict quality, recovery provenance, and final aggregate validation.</p>
+          <div class="meta"><div><b>Campaign:</b> numerics-full-t15-6c7c7e31</div><div><b>Stored trajectory:</b> T=15</div></div>
+        </div>
+
+
+      </div>
+
+      <nav class="nav"><a href="../index.html">Overview</a><a href="../progress/" aria-current="page">Progress</a><a href="../builder/" class="nav-primary">Benchmark Builder</a><a href="../benchmark/">Benchmark</a><a href="../server/">Run</a><a href="../research/">Paper Library</a><a href="../pde-problems/">By PDE</a><a href="../baselines/">By Method</a><a href="../contribute/">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+<section class="section progress-hero-panel">
+  <div class="status-line"><span class="status-dot running" aria-hidden="true"></span><b>Final strict QC running</b></div>
+  <p class="muted">Snapshot updated 2026-08-19T03:36:45-04:00. Generation and artifact integrity are complete; release acceptance remains pending until the separate strict aggregate job writes and validates its summary.</p>
+  <div class="progress-meter" aria-label="Generation completion"><span style="width: 100%"></span></div>
+  <div class="progress-kpis">
+    <div class="card"><strong>3,360</strong><span>of 3,360 shards</span></div>
+    <div class="card"><strong>560,000</strong><span>of 560,000 samples</span></div>
+    <div class="card"><strong>7</strong><span>PDE families</span></div>
+    <div class="card"><strong>100%</strong><span>generation complete</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Artifact integrity</div>
+  <h2>Every expected shard and sidecar is present</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>Verified result</th></tr></thead>
+    <tbody>
+      <tr><td>HDF5 / manifest / SHA256 / metadata / quality</td><td>3,360 complete sets</td></tr>
+      <tr><td>Missing or mismatched expected rows</td><td>0</td></tr>
+      <tr><td>Partials / live locks</td><td>0 / 0</td></tr>
+      <tr><td>Live generation / duplicate outputs</td><td>0 / 0</td></tr>
+      <tr><td>Approximate storage</td><td>235 GiB</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Strict scientific gate</div>
+  <h2>All shard-level PDE checks pass without relaxing the threshold</h2>
+  <div class="quality-callout">
+    <div><span>Maximum accepted <code>pde_loss</code></span><strong>0.04991468784379508</strong></div>
+    <div><span>Required ceiling</span><strong>0.05</strong></div>
+    <div><span>R4 recovery maximum</span><strong>0.04819975344171334</strong></div>
+  </div>
+  <p>No model training was run. Recovery preserved logical sample identities and stored T=15, used exact-seed diagnostics, and produced non-overlapping replacements only for absent or rejected rows.</p>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Final aggregate validation</div>
+  <h2>One strict QC job is reading all 3,360 shards</h2>
+  <div class="timeline">
+    <div class="done"><b>Generation complete</b><span>Jobs 2130068 and 2130070 completed all six R4 rows with verified sidecars and checksums.</span></div>
+    <div class="done"><b>Read-only full audit complete</b><span>560,000 samples, seven PDEs &times; 80,000, zero missing rows, partials, locks, or overlaps.</span></div>
+    <div class="done"><b>Expected-plan reconciliation complete</b><span>Job 2130270 found exactly two stale Burgers <code>time_steps</code> values in the expected plan, not a data-quality failure. The original plan remains unchanged and the reconciled QC plan has zero content-spec mismatches.</span></div>
+    <div class="running"><b>Strict QC job 2130280 running</b><span>long-40core-shared; 1 CPU / 8 GiB; validates shards, requires all PDEs, and enforces <code>pde_loss &le; 0.05</code>.</span></div>
+    <div><b>Release acceptance pending</b><span>Accepted only after <code>summary.json</code> proves 3,360 shards / 560,000 samples and strict quality success.</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="smallcaps">Reproducibility anchors</div>
+  <h2>Frozen and reconciled plan identities</h2>
+  <div class="cards">
+    <div class="card"><h3>Original combined plan</h3><p><code>numerics-full-t15-6c7c7e31.quality-recovered-combined.jsonl</code></p><p class="hash">SHA256 f97bf441c211cc5d8bdf9602837e826bbd360d9656b53d4e1942092f4e4d2e19</p><p class="muted">Preserved unchanged.</p></div>
+    <div class="card"><h3>Final-QC expected plan</h3><p><code>numerics-full-t15-6c7c7e31.quality-recovered-final-qc.jsonl</code></p><p class="hash">SHA256 1173212693fe72d098c5077c73bc2314df8012c886a8e4fb78cb99d8010cfd81</p><p class="muted">Changes only two documented R2 Burgers internal time-grid values; 3,360 unique rows / 560,000 samples.</p></div>
+  </div>
+  <p><a href="../assets/progress.json">Download the machine-readable progress snapshot</a>.</p>
+</section>
+
+
+    <footer class="footer">
+      <div class="muted">Generated deterministically from repository sources.</div>
+    </footer>
+  </main>
+</body>
+</html>

@@ -300,12 +300,24 @@ cd /gpfs/scratch/$USER/pdeobs/PartialObs--PDEBench-numerics
 bash hpc/seawulf/submit_full_t15.sh
 ```
 
-The launcher bundles 40 independent shard rows into one Slurm array element and
-uses a 40-process pool. The default `0-83%6` array can therefore use up to six
-40-core nodes (240 CPU cores) while remaining inside the current shared-long
-QOS limits of 100 submitted jobs, 240 CPUs, and 322 GiB. Slurm decides which
-nodes are actually available; the launcher never hard-codes or monopolizes node
-names. All workers write different atomic shard paths. No training is submitted.
+The launcher round-robins the 3,360 shard rows into four disjoint 840-row plans
+and submits them to all four standard CPU long queues:
+
+| queue | bundle / CPUs | array throttle | array elements |
+|---|---:|---:|---:|
+| `long-40core` | 40 | 3 | 21 |
+| `long-40core-shared` | 40 | 6 | 21 |
+| `long-96core` | 96 | 3 | 9 |
+| `long-96core-shared` | 96 | 6 | 9 |
+
+At most 1,224 CPU processes can run when every queue grants its full throttle.
+The exclusive and shared queues for a core count use the same physical node
+pool but have separate scheduling/QOS rules, so Slurm may start only a subset
+at any moment. The limits remain within the published per-QOS ceilings. A100
+GPU and HBM/1-TiB queues are intentionally excluded: this is ordinary CPU data
+generation and must not reserve scarce accelerator or high-memory nodes. Slurm
+chooses actual nodes; the launcher never hard-codes node names. Every worker
+writes a different atomic shard path, and no model training is submitted.
 
 Monitor without changing the campaign:
 
@@ -315,18 +327,18 @@ bash hpc/seawulf/monitor_full_t15.sh \
 squeue --user="$USER"
 ```
 
-The strict aggregate is submitted with an `afterok` dependency and reports all
-seven PDE losses only after every planned shard succeeds. The campaign record
-contains the exact commit, plan, resolved config, output, resource choices, and
-both Slurm job IDs.
+The strict aggregate is submitted with an `afterok` dependency on all four
+arrays and reports all seven PDE losses only after every planned shard
+succeeds. The campaign record contains the exact commit, full plan, four
+subplans, output, resource choices, all generation job IDs, and aggregate ID.
 
-Before measured full-tier throughput exists, use a broad **1-8 day** planning
-range after the first array elements start, plus queue wait. The lower end
-assumes the 240-core allocation stays busy and per-sample cost resembles the
-completed 20-sample gate; the upper end scales the 30-minute validation walltime
-limit conservatively. After the first six array elements finish, use their
-actual `Elapsed`, completed samples, and I/O rate from the monitor to replace
-this range. This is an estimate, not a scheduler promise.
+Before measured full-tier throughput exists, use a broad **12 hours-8 days**
+planning range after the first array elements start, plus queue wait. The lower
+end assumes several long queues grant capacity concurrently; the upper end
+allows for queueing, shared-filesystem saturation, and slower PDE families.
+After the first completed element from each queue, use actual `Elapsed`, sample
+counts, and I/O rates from the monitor to replace this range. Allocating more
+CPUs does not guarantee linear speedup, so this is not a scheduler promise.
 
 After every array window succeeds, strictly validate the exact plan:
 
@@ -387,6 +399,60 @@ validation. Do not use `--force` for normal recovery. If a task dies while
 holding a shard lock, use `squeue` and `sacct` to prove the owning job is gone
 before removing only that exact stale lock. Model-training instructions are
 intentionally deferred until the dataset campaign is accepted.
+
+## 9. Recover samples rejected by the strict PDE-loss gate
+
+A strict-quality rejection is deterministic. Re-running the same partial shard
+with the same seed, solver cadence, and threshold will reject the same sample
+again. Do not weaken the registered threshold merely to reach the planned
+count, and do not silently replace a failed initial condition with a different
+one.
+
+`prepare_quality_recovery.py` preserves each logical sample and seed. For
+temporal failures it refines only the internal solver time grid while retaining
+the campaign's stored trajectory length (T=15). Start with a one-sample pilot
+for the worst failure in each affected temporal PDE:
+
+```bash
+python hpc/seawulf/prepare_quality_recovery.py \
+  --mode pilot \
+  --plan "$PDEOBS_DATA/plans/CAMPAIGN.jsonl" \
+  --dataset-root "$PDEOBS_DATA/CAMPAIGN" \
+  --output-plan "$PDEOBS_DATA/plans/CAMPAIGN.quality-pilot.jsonl" \
+  --refinement-factor 2
+```
+
+Require every pilot sample to pass the unchanged strict threshold before a
+full recovery. After all original generation arrays have stopped, submit
+`submit_full_t15_quality_recovery.sh` with an `afterany` dependency on every
+original array parent. The launcher:
+
+1. keeps all complete shards unchanged;
+2. builds a recovery-only plan for missing shards and a combined exact expected
+   plan for all 3,360 shards / 560,000 samples;
+3. moves incomplete partial files, locks, and rejection records to a timestamped
+   reversible quarantine (nothing is deleted);
+4. regenerates incomplete temporal shards with the same seeds and a doubled
+   internal time grid across the four standard CPU long partitions; and
+5. starts strict aggregation only after every recovery array succeeds.
+
+```bash
+recovery_launcher="$(sbatch --parsable \
+  --job-name=pdeobs-submit-qrecovery \
+  --partition=short-40core-shared \
+  --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=2G --time=00:30:00 \
+  --dependency=afterany:ARRAY_1:ARRAY_2:ARRAY_3:ARRAY_4 \
+  --export=ALL,PDEOBS_ENV,PDEOBS_DATA,PDEOBS_RUNS,\
+PDEOBS_FULL_CAMPAIGN=CAMPAIGN,\
+PDEOBS_SUPERSEDED_AGGREGATE_JOB=OLD_QC_JOB \
+  hpc/seawulf/submit_full_t15_quality_recovery.sh)"
+recovery_launcher="${recovery_launcher%%;*}"
+```
+
+Audit the resulting `CAMPAIGN.quality-recovery.campaign.txt`, quarantine
+manifest, combined plan, per-shard quality records, and final `summary.json`.
+The recovery procedure remains a quality-candidate workflow; it does not turn
+compact reference solvers into independently validated publication solvers.
 
 Official references:
 

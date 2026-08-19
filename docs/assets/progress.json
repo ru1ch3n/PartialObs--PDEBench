@@ -1,0 +1,68 @@
+{
+  "schema_version": "pdeobs-progress-v1",
+  "updated_at": "2026-08-19T03:36:45-04:00",
+  "campaign": "numerics-full-t15-6c7c7e31",
+  "status": "final_strict_qc_running",
+  "status_label": "Final strict QC running",
+  "generation": {
+    "complete": true,
+    "shards_complete": 3360,
+    "shards_expected": 3360,
+    "samples_complete": 560000,
+    "samples_expected": 560000,
+    "percentage": 100.0,
+    "pde_families": 7,
+    "samples_per_pde": 80000,
+    "stored_time_steps": 15,
+    "storage_gib_approx": 235
+  },
+  "artifacts": {
+    "hdf5_complete": 3360,
+    "manifest_complete": 3360,
+    "sha256_complete": 3360,
+    "metadata_complete": 3360,
+    "quality_complete": 3360,
+    "partials": 0,
+    "locks": 0,
+    "missing_or_mismatched": 0,
+    "live_generation_jobs": 0,
+    "duplicate_or_overlapping_outputs": 0
+  },
+  "quality": {
+    "gate": 0.05,
+    "max_pde_loss": 0.04991468784379508,
+    "all_shard_checks_pass": true,
+    "require_all_pdes": true,
+    "r4_max_pde_loss": 0.048199753441713344
+  },
+  "plans": {
+    "original_combined": {
+      "name": "numerics-full-t15-6c7c7e31.quality-recovered-combined.jsonl",
+      "sha256": "f97bf441c211cc5d8bdf9602837e826bbd360d9656b53d4e1942092f4e4d2e19",
+      "unchanged": true
+    },
+    "final_qc": {
+      "name": "numerics-full-t15-6c7c7e31.quality-recovered-final-qc.jsonl",
+      "sha256": "1173212693fe72d098c5077c73bc2314df8012c886a8e4fb78cb99d8010cfd81",
+      "rows": 3360,
+      "samples": 560000,
+      "content_spec_mismatches": 0
+    }
+  },
+  "final_qc": {
+    "job_id": 2130280,
+    "state": "RUNNING",
+    "partition": "long-40core-shared",
+    "resources": "1 CPU / 8 GiB",
+    "strict": true,
+    "max_pde_loss": 0.05,
+    "require_all_pdes": true,
+    "summary_created": false,
+    "previous_job": {
+      "job_id": 2130270,
+      "state": "FAILED",
+      "exit_code": "2:0",
+      "cause": "Two stale expected-plan time_steps values; artifact quality passed."
+    }
+  }
+}
