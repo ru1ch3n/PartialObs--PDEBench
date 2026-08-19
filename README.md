@@ -3,9 +3,9 @@
 **A Benchmark Builder and controlled reference protocol for PDE learning under
 partial observation.**
 
-[Project website](https://ru1ch3n.github.io/PartialObs--PDEBench/) |
-[Full dataset status](https://ru1ch3n.github.io/PartialObs--PDEBench/progress/) |
-[Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/) |
+[Project website](https://ru1ch3n.github.io/pdeobs/) |
+[Full dataset status](https://ru1ch3n.github.io/pdeobs/progress/) |
+[Benchmark Builder](https://ru1ch3n.github.io/pdeobs/builder/) |
 [benchmark-paper contract](docs/BENCHMARK_PAPER.md) |
 [observation-training protocol](docs/OBSERVATION_TRAINING_PROTOCOL.md) |
 [reference protocol](docs/PROTOCOL.md) |
@@ -22,7 +22,7 @@ is a supporting resource and can be browsed separately by PDE or by method.
 The full T=15 generation campaign has produced all **3,360 shards / 560,000
 samples** across seven PDE families. Artifact completeness and the strict
 `pde_loss <= 0.05` gate are tracked on the
-[public progress page](https://ru1ch3n.github.io/PartialObs--PDEBench/progress/)
+[public progress page](https://ru1ch3n.github.io/pdeobs/progress/)
 and in its machine-readable `progress.json` snapshot. The final aggregate
 validation is reported separately from generation completeness so a running or
 failed validator is never presented as a completed scientific release.
@@ -150,7 +150,7 @@ frames are discarded after quality evaluation; metadata preserves the dense
 `quality_T`, exact selected frame indices, and physical times.
 
 For a tailored PDE/boundary/setting slice, use the
-[interactive Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/).
+[interactive Benchmark Builder](https://ru1ch3n.github.io/pdeobs/builder/).
 It generates local, Linux-server, and SeaWulf commands together with report and
 strict quality profiles plus per-PDE loss reporting. The publication-candidate
 choice is shown but intentionally blocked until a trusted external evidence

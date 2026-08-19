@@ -1375,7 +1375,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         ),
         hero_meta_html=(
             '<div class="meta">'
-            '  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>'
+            '  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/pdeobs/" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/pdeobs</a></div>'
             '  <div><b>Source:</b> private GitHub repository; this public site is a static release mirror.</div>'
             "</div>"
         ),
