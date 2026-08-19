@@ -658,9 +658,9 @@ pre.ascii-tree a:hover{color:#bfdbfe;text-decoration:underline;}
 
 /* Improve native <select> dropdown visibility in dark theme (cross-browser) */
 select{color-scheme:dark;}
-select option{background-color:var(--code);color:var(--fg);} 
-select option:disabled{color:var(--muted);} 
-select optgroup{background-color:var(--code);color:var(--fg);} 
+select option{background-color:var(--code);color:var(--fg);}
+select option:disabled{color:var(--muted);}
+select optgroup{background-color:var(--code);color:var(--fg);}
 
 /* --- Benchmark Builder --- */
 .builder-intro { margin-bottom: 18px; }
