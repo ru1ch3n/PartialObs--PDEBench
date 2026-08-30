@@ -29,12 +29,25 @@ import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DB_PATH = REPO_ROOT / "scripts" / "research_db.ndjson"
+
+
+def is_github_url(value: str) -> bool:
+    """Return whether *value* is an HTTPS URL on GitHub's canonical host."""
+    try:
+        parsed = urlparse(value)
+    except ValueError:
+        return False
+    return parsed.scheme.lower() == "https" and (parsed.hostname or "").lower().rstrip(".") in {
+        "github.com",
+        "www.github.com",
+    }
 
 
 def norm_title(s: str) -> str:
@@ -183,7 +196,7 @@ def parse_generic_list(html_path: Path, source: str) -> List[Dict[str, Any]]:
             if any(x in ah for x in ["arxiv.org", "doi.org", "sciencedirect", "springer", "openreview", "ieee", "acm.org", "proceedings.mlr.press", "nature.com", "iopscience"]):
                 if paper_link is None:
                     paper_link = href
-            if "github.com" in ah and code_link is None:
+            if is_github_url(href) and code_link is None:
                 code_link = href
             if any(x in ah for x in ["project", "pages", "website"]) and project_link is None:
                 project_link = href
