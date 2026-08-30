@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible PDE-OBS defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not disclose vulnerabilities here; use the private security-reporting form.
+  - type: input
+    id: commit
+    attributes:
+      label: PDE-OBS commit or version
+      placeholder: git rev-parse HEAD
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the observed and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Include a minimal command and redacted configuration. Do not attach data, credentials, or checkpoints.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python, dependency, OS, hardware, and scheduler versions if relevant.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: This report does not contain credentials, private data, or a suspected vulnerability.
+          required: true

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from pdeobs.download import DownloadError, download_release
+from pdeobs.download import DownloadError, download_release, load_release_manifest
 
 
 def test_local_manifest_download_is_verified_and_resumable(tmp_path: Path) -> None:
@@ -43,3 +43,30 @@ def test_release_manifest_schema_is_enforced(tmp_path: Path) -> None:
     manifest.write_text(json.dumps({"tiers": ["tiny"], "files": []}), encoding="utf-8")
     with pytest.raises(DownloadError, match="schema_version"):
         download_release(manifest, tmp_path / "output", "tiny")
+
+
+def test_remote_manifest_rejects_insecure_http_before_network_access() -> None:
+    with pytest.raises(DownloadError, match="must use HTTPS"):
+        load_release_manifest("http://example.test/manifest.json")
+
+
+def test_manifest_rejects_insecure_artifact_url(tmp_path: Path) -> None:
+    manifest = {
+        "schema_version": 1,
+        "name": "insecure-release",
+        "tiers": ["tiny"],
+        "files": [
+            {
+                "path": "fixture.bin",
+                "tier": "tiny",
+                "url": "http://example.test/fixture.bin",
+                "sha256": hashlib.sha256(b"fixture").hexdigest(),
+                "size": 7,
+            }
+        ],
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(DownloadError, match="must use HTTPS"):
+        download_release(manifest_path, tmp_path / "output", "tiny")

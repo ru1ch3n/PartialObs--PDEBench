@@ -1,0 +1,23 @@
+# Changelog
+
+This project follows [Semantic Versioning](https://semver.org/) for software
+releases. Human-readable changes and publicly known vulnerabilities fixed by a
+release will be listed here. The repository is currently pre-release; no
+public package or dataset release has been made.
+
+## Unreleased
+
+### Added
+
+- Public contribution, support, vulnerability-reporting, release, and OpenSSF
+  readiness documentation.
+- Dependabot, dependency review, CodeQL, and OpenSSF Scorecard automation.
+- Least-privilege, immutable-SHA GitHub Actions configuration.
+- Dependency auditing and coverage reporting in continuous integration.
+
+### Security
+
+- Reject insecure HTTP release manifests and artifact URLs, including HTTPS
+  redirects that downgrade to HTTP.
+- Raise the supported PyTorch and pytest dependency floors beyond versions
+  currently associated with published advisories.

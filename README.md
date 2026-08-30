@@ -15,7 +15,9 @@ learning under partial observation.</strong></p>
 [numerical solver gate](docs/NUMERICAL_VALIDATION.md) |
 [extension guide](docs/EXTENDING.md) |
 [Linux server guide](docs/SERVER.md) |
-[SeaWulf guide](hpc/seawulf/README.md)
+[SeaWulf guide](hpc/seawulf/README.md) |
+[contributing](CONTRIBUTING.md) |
+[security](SECURITY.md)
 
 PDE-OBS provides executable tools for factorized data generation, observation
 masks, IID/OOD splits, recovery/forward/inverse and rollout baselines, metrics, and
@@ -488,3 +490,12 @@ python -m http.server 8000 --directory docs
 Repository code is MIT licensed. External datasets, weights, and upstream code
 retain their original licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 Citation metadata are in [CITATION.cff](CITATION.cff).
+
+## Feedback, contributions, and security
+
+Use [GitHub Issues](https://github.com/ru1ch3n/PartialObs--PDEBench/issues) for
+reproducible bugs and enhancement requests. The contribution workflow, coding
+standard, and required tests are in [CONTRIBUTING.md](CONTRIBUTING.md). Please
+report suspected vulnerabilities privately as described in
+[SECURITY.md](SECURITY.md), not in a public issue. Release-facing changes are
+summarized in [CHANGELOG.md](CHANGELOG.md).

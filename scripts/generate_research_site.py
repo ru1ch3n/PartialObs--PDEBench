@@ -1726,6 +1726,12 @@ def render_contribute(papers: List[Dict[str, Any]]) -> str:
     <p class=\"muted\">Current DB: <b>{n_total}</b> papers (<b>{n_curated}</b> curated).</p>
 
     <div class=\"card\">
+      <h2>Contribute code or report a problem</h2>
+      <p>Code changes use GitHub pull requests. Read the <a href=\"https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/CONTRIBUTING.md\">contribution guide</a> before opening one, and use <a href=\"https://github.com/ru1ch3n/PartialObs--PDEBench/issues\">GitHub Issues</a> for reproducible bugs or enhancement requests.</p>
+      <p>Do not disclose a suspected vulnerability in a public issue. Follow the private process in the <a href=\"https://github.com/ru1ch3n/PartialObs--PDEBench/security/policy\">security policy</a>.</p>
+    </div>
+
+    <div class=\"card\">
       <h2>How the data is stored</h2>
       <ul>
         <li><b>Index list (metadata)</b>: <code>scripts/research_db.ndjson</code> (JSON Lines). Add new papers here (title/authors/year/links) when you want them searchable.</li>

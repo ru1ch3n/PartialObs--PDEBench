@@ -29,19 +29,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-train = ["torch>=2.1"]
+train = ["torch>=2.13"]
 analysis = ["pandas>=2.0", "matplotlib>=3.7"]
 site = ["bibtexparser>=1.4.0", "beautifulsoup4>=4.12"]
-test = ["pytest>=7.4", "pytest-cov>=4.1"]
+test = ["pytest>=9.0.3", "pytest-cov>=7.1"]
 dev = [
-  "torch>=2.1",
+  "torch>=2.13",
   "pandas>=2.0",
   "matplotlib>=3.7",
   "bibtexparser>=1.4.0",
   "beautifulsoup4>=4.12",
-  "pytest>=7.4",
-  "pytest-cov>=4.1",
-  "ruff>=0.5",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1",
+  "pip-audit>=2.10.1",
+  "ruff>=0.16.5",
 ]
 
 [project.scripts]
@@ -56,6 +57,9 @@ pdeobs = "pdeobs.cli:main"
 [project.urls]
 Homepage = "https://ru1ch3n.github.io/PartialObs--PDEBench/"
 Repository = "https://github.com/ru1ch3n/PartialObs--PDEBench"
+Documentation = "https://ru1ch3n.github.io/PartialObs--PDEBench/"
+Issues = "https://github.com/ru1ch3n/PartialObs--PDEBench/issues"
+Changelog = "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -74,4 +78,4 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
-ignore = ["E501", "UP038"]
+ignore = ["E501"]
