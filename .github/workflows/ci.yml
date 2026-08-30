@@ -29,35 +29,45 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-      - name: Install
-        run: python -m pip install -e ".[dev]"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.7"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install the hash-locked environment
+        run: uv sync --locked --extra dev --no-install-project
       - name: Check package style
+        env:
+          PYTHONPATH: src
         run: |
-          ruff format --check src tests
-          ruff check src tests
+          uv run --no-sync ruff format --check src tests .clusterfuzzlite/fuzz_config.py
+          uv run --no-sync ruff check src tests .clusterfuzzlite/fuzz_config.py
       - name: Check benchmark-paper protocol drift
-        run: pdeobs protocol --check --config configs/dataset/default.yaml
+        env:
+          PYTHONPATH: src
+        run: uv run --no-sync python -m pdeobs protocol --check --config configs/dataset/default.yaml
       - name: Validate shell launchers
         shell: bash
         run: bash -n hpc/seawulf/*.sh hpc/seawulf/*.sbatch
       - name: Validate research records
-        run: python scripts/validate_papers.py
+        run: uv run --no-sync python scripts/validate_papers.py
       - name: Verify generated benchmark website is current
         run: |
-          python scripts/generate_research_site.py
+          uv run --no-sync python scripts/generate_research_site.py
           git diff --exit-code -- docs
       - name: Test
-        run: pytest --cov=pdeobs --cov-report=term-missing --cov-report=xml
+        env:
+          PYTHONPATH: src
+        run: uv run --no-sync pytest --cov=pdeobs --cov-report=term-missing --cov-report=xml
       - name: Audit installed dependencies
         if: matrix.python-version == '3.12'
-        run: python -m pip_audit --local --skip-editable
+        run: uv run --no-sync python -m pip_audit --local --skip-editable
       - name: Build wheel
-        run: python -m pip wheel --no-deps --wheel-dir dist .
+        run: uv build --no-build-isolation --wheel --out-dir dist
       - name: Smoke-test the installed wheel outside the checkout
         run: |
-          python -m venv /tmp/pdeobs-wheel-smoke
-          /tmp/pdeobs-wheel-smoke/bin/python -m pip install dist/*.whl
+          uv pip install --python .venv/bin/python --reinstall --no-deps dist/*.whl
           cd /tmp
-          /tmp/pdeobs-wheel-smoke/bin/python -m pdeobs protocol --check
-          /tmp/pdeobs-wheel-smoke/bin/python -c "import os, pdeobs; assert os.environ['GITHUB_WORKSPACE'] not in pdeobs.__file__; print(pdeobs.__file__)"
+          "$GITHUB_WORKSPACE/.venv/bin/python" -m pdeobs protocol --check
+          "$GITHUB_WORKSPACE/.venv/bin/python" -c "import os, pathlib, pdeobs; module = pathlib.Path(pdeobs.__file__).resolve(); source = (pathlib.Path(os.environ['GITHUB_WORKSPACE']) / 'src').resolve(); assert not module.is_relative_to(source); assert 'site-packages' in module.parts; print(module)"

@@ -26,11 +26,13 @@ to satisfy a repository check.
 | Cryptographic practices | no custom cryptography; SHA-256 and platform TLS only, documented in security model | applicable controls documented |
 | MITM-resistant delivery | downloader enforces HTTPS and rejects downgrade redirects; artifacts are hash-checked | ready when regression tests pass |
 | Known vulnerabilities and secrets | dependency audit/review, Dependabot, CodeQL, secret scanning and push protection | continuous; all confirmed medium+ findings must be handled within policy |
-| Static and dynamic analysis | CodeQL on changes/schedule; pytest suite on changes | ready when workflows pass |
+| Static and dynamic analysis | CodeQL, pytest, and Atheris/ClusterFuzzLite on changes and schedules | ready when workflows pass |
+| Reproducible dependencies | `uv.lock` records exact versions, sources, and SHA-256 artifact hashes; CI refuses stale resolution | ready when CI passes |
 
 ## Remaining actions outside source control
 
-1. Merge this work through a pull request with all checks passing.
+1. Merge this work through a pull request with all checks passing and an
+   independent human approval.
 2. Keep GitHub vulnerability alerts, Dependabot security updates, secret
    scanning, and push protection enabled.
 3. Protect `main` against force-push and deletion and require the CI checks used

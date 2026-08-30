@@ -1,0 +1,1 @@
+data.mask={kind: random_ratio, ratio: 0.25}

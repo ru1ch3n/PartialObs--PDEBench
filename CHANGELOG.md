@@ -14,6 +14,8 @@ public package or dataset release has been made.
 - Dependabot, dependency review, CodeQL, and OpenSSF Scorecard automation.
 - Least-privilege, immutable-SHA GitHub Actions configuration.
 - Dependency auditing and coverage reporting in continuous integration.
+- Hash-locked CI environments and continuous Atheris/ClusterFuzzLite testing
+  of the public configuration parser.
 
 ### Security
 

@@ -17,6 +17,7 @@ learning under partial observation.</strong></p>
 [Linux server guide](docs/SERVER.md) |
 [SeaWulf guide](hpc/seawulf/README.md) |
 [contributing](CONTRIBUTING.md) |
+[code of conduct](CODE_OF_CONDUCT.md) |
 [security](SECURITY.md)
 
 PDE-OBS provides executable tools for factorized data generation, observation

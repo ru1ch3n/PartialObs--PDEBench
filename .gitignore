@@ -42,6 +42,7 @@ ignored/
 *.tmp
 *.partial
 *.lock
+!/uv.lock
 
 # Local cluster configuration may contain account/group names
 .env

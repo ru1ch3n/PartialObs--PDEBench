@@ -1,0 +1,4 @@
+# Keep the fuzz image minimal: the target exercises pdeobs.config, whose only
+# third-party runtime import is PyYAML. The generated requirements.txt pins the
+# resolved artifact by SHA-256.
+PyYAML==6.0.3
