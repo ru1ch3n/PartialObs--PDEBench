@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/ru1ch3n/PartialObs--PDEBench/security/advisories/new
+    about: Report suspected vulnerabilities privately.
+  - name: Documentation
+    url: https://ru1ch3n.github.io/PartialObs--PDEBench/
+    about: Read the project, benchmark, and server documentation.

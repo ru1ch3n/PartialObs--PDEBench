@@ -25,6 +25,25 @@ DEFAULT_RELEASE_MANIFEST_URL = (
 _TIERS = ("tiny", "debug", "signal", "medium", "full")
 
 
+def _require_secure_remote_url(url: str, *, label: str) -> urllib.parse.ParseResult:
+    """Allow local files and authenticated HTTPS, but never insecure remote delivery."""
+
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme and parsed.scheme not in {"file", "https"}:
+        raise DownloadError(
+            f"{label} must use HTTPS (or file:// for a trusted local file), not {parsed.scheme!r}"
+        )
+    return parsed
+
+
+def _require_https_response(response: Any, *, label: str) -> None:
+    """Reject a transport that was downgraded by a redirect."""
+
+    final_url = str(response.geturl())
+    if urllib.parse.urlparse(final_url).scheme != "https":
+        raise DownloadError(f"{label} redirected to a non-HTTPS URL: {final_url}")
+
+
 def sha256_file(path: Path, block_size: int = 1024 * 1024) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -35,10 +54,19 @@ def sha256_file(path: Path, block_size: int = 1024 * 1024) -> str:
 
 def load_release_manifest(source: str | Path) -> tuple[dict[str, Any], str | None]:
     text_source = str(source)
-    parsed = urllib.parse.urlparse(text_source)
-    if parsed.scheme in {"http", "https"}:
+    if isinstance(source, Path) or (
+        len(text_source) >= 3
+        and text_source[0].isalpha()
+        and text_source[1] == ":"
+        and text_source[2] in {"/", "\\"}
+    ):
+        parsed = urllib.parse.urlparse("")
+    else:
+        parsed = _require_secure_remote_url(text_source, label="Release manifest URL")
+    if parsed.scheme == "https":
         try:
             with urllib.request.urlopen(text_source) as response:  # noqa: S310
+                _require_https_response(response, label="Release manifest URL")
                 payload = json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError) as exc:
             suffix = (
@@ -52,7 +80,15 @@ def load_release_manifest(source: str | Path) -> tuple[dict[str, Any], str | Non
                 f"Could not load release manifest {text_source}: {exc}.{suffix}"
             ) from exc
         return payload, text_source.rsplit("/", 1)[0] + "/"
-    path = Path(source).expanduser().resolve()
+    path = (
+        (
+            Path(urllib.request.url2pathname(parsed.path))
+            if parsed.scheme == "file"
+            else Path(source)
+        )
+        .expanduser()
+        .resolve()
+    )
     if not path.is_file():
         raise DownloadError(f"Release manifest does not exist: {path}")
     return json.loads(path.read_text(encoding="utf-8")), path.parent.as_uri() + "/"
@@ -144,7 +180,7 @@ def download_release(
                 raise DownloadError(f"No URL for {relative}")
             url = urllib.parse.urljoin(base_url, relative.replace(os.sep, "/"))
         partial = output.with_name(output.name + ".partial")
-        parsed = urllib.parse.urlparse(str(url))
+        parsed = _require_secure_remote_url(str(url), label=f"Download URL for {relative}")
         offset = partial.stat().st_size if partial.exists() else 0
         if parsed.scheme == "file":
             source_path = Path(urllib.request.url2pathname(parsed.path))
@@ -163,6 +199,7 @@ def download_release(
                     f"Download interrupted for {relative}; resumable partial retained at {partial}: {exc}"
                 ) from exc
             with response:
+                _require_https_response(response, label=f"Download URL for {relative}")
                 append = bool(offset and getattr(response, "status", None) == 206)
                 with partial.open("ab" if append else "wb") as target:
                     shutil.copyfileobj(response, target)
