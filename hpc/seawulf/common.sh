@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 set -Eeuo pipefail
 
 : "${PDEOBS_ENV:?Set PDEOBS_ENV to the installed environment path.}"

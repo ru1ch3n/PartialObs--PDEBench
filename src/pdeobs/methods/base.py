@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Method interfaces and discovery for PDE-OBS baselines.
 
 The registry in this module is deliberately local to the method layer.  It does

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Canonical in-memory schema for PDE-OBS generation.
 
 One :class:`Sample` is channel-last ``HWC``/``THWC``.  HDF5 storage adds the

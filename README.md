@@ -20,6 +20,13 @@ learning under partial observation.</strong></p>
 [code of conduct](CODE_OF_CONDUCT.md) |
 [security](SECURITY.md)
 
+[governance](GOVERNANCE.md) |
+[maintainers](MAINTAINERS.md) |
+[roadmap](ROADMAP.md) |
+[architecture](docs/ARCHITECTURE.md) |
+[quickstart](docs/QUICKSTART.md) |
+[project maturity](docs/PROJECT_MATURITY.md)
+
 PDE-OBS provides executable tools for factorized data generation, observation
 masks, IID/OOD splits, recovery/forward/inverse and rollout baselines, metrics, and
 cluster-scale experiments. The existing `docs/` research map remains part of

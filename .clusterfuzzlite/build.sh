@@ -1,4 +1,6 @@
 #!/bin/bash -eu
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 
 cd "$SRC/pdeobs"
 export PYTHONPATH="$SRC/pdeobs/src"

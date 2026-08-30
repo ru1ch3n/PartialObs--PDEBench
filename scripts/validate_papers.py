@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Validate JSON curation files under data/curations/.
 
 This is a lightweight schema checker to catch common mistakes early
@@ -71,7 +73,20 @@ def validate_one(path: Path) -> Tuple[List[str], List[str]]:
         warnings.append("status should be 'index' or 'curated'.")
 
     # Lists
-    for key in ["pdes", "tasks", "setting", "baselines", "contrib", "theory", "core_math", "data_setting", "model_setting", "training_setting", "interesting", "benefits"]:
+    for key in [
+        "pdes",
+        "tasks",
+        "setting",
+        "baselines",
+        "contrib",
+        "theory",
+        "core_math",
+        "data_setting",
+        "model_setting",
+        "training_setting",
+        "interesting",
+        "benefits",
+    ]:
         if key in obj and obj[key] is not None and not isinstance(obj[key], list):
             errors.append(f"{key} must be a list, got {type(obj[key]).__name__}.")
 

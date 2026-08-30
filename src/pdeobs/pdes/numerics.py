@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Boundary-consistent numerical kernels used by the dataset generators.
 
 The routines in this module deliberately separate periodic Fourier solvers

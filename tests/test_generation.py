@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 import json
 from dataclasses import replace
 from pathlib import Path

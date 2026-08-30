@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Build a larger AI4PDE paper database (NDJSON).
 
 This script is intended as a *one-shot builder* for the website database.
@@ -99,7 +101,13 @@ def guess_method_class(category: str, title: str) -> str:
         return "Transformers"
     if "benchmark" in t or "dataset" in t or "arena" in t or "pdebench" in t:
         return "Benchmark"
-    if "pinn" in t or "physics-informed" in t or "physics informed" in t or "deep ritz" in t or "dgm" in t:
+    if (
+        "pinn" in t
+        or "physics-informed" in t
+        or "physics informed" in t
+        or "deep ritz" in t
+        or "dgm" in t
+    ):
         return "PINN / physics-constrained"
     return "SciML"
 
@@ -108,9 +116,11 @@ def extract_pde_tags(text: str) -> List[str]:
     # Keep this conservative: only tag when the string is explicitly mentioned.
     t = text.lower()
     tags: List[str] = []
+
     def add(name: str, *keys: str) -> None:
         if any(k in t for k in keys):
             tags.append(name)
+
     add("Navier–Stokes", "navier", "stokes")
     add("Burgers", "burgers")
     add("Darcy", "darcy")
@@ -124,11 +134,12 @@ def extract_pde_tags(text: str) -> List[str]:
     add("Shallow water", "shallow water")
     add("Maxwell", "maxwell")
     # Dedup while preserving order
-    out=[]
-    seen=set()
+    out = []
+    seen = set()
     for x in tags:
         if x not in seen:
-            out.append(x); seen.add(x)
+            out.append(x)
+            seen.add(x)
     return out
 
 
@@ -142,7 +153,9 @@ def load_curated_db() -> List[Dict[str, Any]]:
             papers.append(json.loads(line))
     for p in papers:
         p.setdefault("status", "curated")
-        p.setdefault("method_class", guess_method_class(p.get("category", ""), p.get("full_title", "")))
+        p.setdefault(
+            "method_class", guess_method_class(p.get("category", ""), p.get("full_title", ""))
+        )
     return papers
 
 
@@ -193,7 +206,21 @@ def parse_generic_list(html_path: Path, source: str) -> List[Dict[str, Any]]:
         for a in li.find_all("a", href=True):
             href = a["href"]
             ah = href.lower()
-            if any(x in ah for x in ["arxiv.org", "doi.org", "sciencedirect", "springer", "openreview", "ieee", "acm.org", "proceedings.mlr.press", "nature.com", "iopscience"]):
+            if any(
+                x in ah
+                for x in [
+                    "arxiv.org",
+                    "doi.org",
+                    "sciencedirect",
+                    "springer",
+                    "openreview",
+                    "ieee",
+                    "acm.org",
+                    "proceedings.mlr.press",
+                    "nature.com",
+                    "iopscience",
+                ]
+            ):
                 if paper_link is None:
                     paper_link = href
             if is_github_url(href) and code_link is None:
@@ -214,10 +241,22 @@ def parse_generic_list(html_path: Path, source: str) -> List[Dict[str, Any]]:
                 "authors": "",
                 "year": year,
                 "month": None,
-                "links": {k: v for k, v in {"paper": paper_link, "code": code_link, "project": project_link}.items() if v},
+                "links": {
+                    k: v
+                    for k, v in {
+                        "paper": paper_link,
+                        "code": code_link,
+                        "project": project_link,
+                    }.items()
+                    if v
+                },
                 "badges": [method_class, source] + pde_tags,
                 "tagline": "",
-                "quick_facts": [f"Source: {source}", "Summary: index-only (needs manual curation)", f"Class: {method_class}"],
+                "quick_facts": [
+                    f"Source: {source}",
+                    "Summary: index-only (needs manual curation)",
+                    f"Class: {method_class}",
+                ],
                 "tldr": f"Imported from {source} (section: {heading}). This page is currently an index entry; a full experiment + theory summary is not yet curated.",
                 "contrib": [],
                 "theory": [],
@@ -265,7 +304,9 @@ def parse_ai4phys_with_descriptions(html_path: Path) -> List[Dict[str, Any]]:
         li_txt = "\n".join(li.get_text(" ", strip=True) for li in ul.find_all("li"))
 
         date_m = re.search(r"Date:\s*([0-9]{4})\.([0-9]{2})", li_txt)
-        year = int(date_m.group(1)) if date_m else extract_year(li_txt) or extract_year(title) or None
+        year = (
+            int(date_m.group(1)) if date_m else extract_year(li_txt) or extract_year(title) or None
+        )
         month = int(date_m.group(2)) if date_m else None
         if year is None:
             continue
@@ -311,6 +352,7 @@ def parse_ai4phys_with_descriptions(html_path: Path) -> List[Dict[str, Any]]:
 def merge(papers: List[Dict[str, Any]], limit: int = 300) -> List[Dict[str, Any]]:
     # Deduplicate by normalized title.
     by_key: Dict[str, Dict[str, Any]] = {}
+
     def score(p: Dict[str, Any]) -> int:
         s = 0
         if p.get("status") == "curated":
@@ -344,17 +386,44 @@ def merge(papers: List[Dict[str, Any]], limit: int = 300) -> List[Dict[str, Any]
         used_slugs.add(slug)
 
     # Sort: curated first, then by year desc, then title.
-    merged.sort(key=lambda x: (0 if x.get("status") == "curated" else 1, -(x.get("year") or 0), (x.get("short_title") or "")))
+    merged.sort(
+        key=lambda x: (
+            0 if x.get("status") == "curated" else 1,
+            -(x.get("year") or 0),
+            (x.get("short_title") or ""),
+        )
+    )
 
     # Keep only recent-ish AI4PDE relevant papers
     keywords = [
-        "pde", "partial differential", "navier", "stokes", "burgers", "darcy", "poisson", "helmholtz",
-        "wave", "heat", "advection", "reaction", "diffusion", "operator", "deeponet", "neural operator",
-        "pinn", "physics-informed", "physics informed", "fourcastnet", "weather", "turbulence",
-        "shallow water", "maxwell",
+        "pde",
+        "partial differential",
+        "navier",
+        "stokes",
+        "burgers",
+        "darcy",
+        "poisson",
+        "helmholtz",
+        "wave",
+        "heat",
+        "advection",
+        "reaction",
+        "diffusion",
+        "operator",
+        "deeponet",
+        "neural operator",
+        "pinn",
+        "physics-informed",
+        "physics informed",
+        "fourcastnet",
+        "weather",
+        "turbulence",
+        "shallow water",
+        "maxwell",
     ]
+
     def relevant(p: Dict[str, Any]) -> bool:
-        blob = f"{p.get('full_title','')} {p.get('category','')} {p.get('method_class','')} {p.get('tldr','')}".lower()
+        blob = f"{p.get('full_title', '')} {p.get('category', '')} {p.get('method_class', '')} {p.get('tldr', '')}".lower()
         return any(k in blob for k in keywords)
 
     filtered = [p for p in merged if relevant(p) and (p.get("year") or 0) >= 2015]

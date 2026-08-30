@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 include: numerics_validation20.yaml
 
 # Paper-size numerical campaign: 2,000 samples per PDE/boundary/setting case,

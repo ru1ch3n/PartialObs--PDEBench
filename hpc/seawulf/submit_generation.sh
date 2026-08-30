@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 set -Eeuo pipefail
 
 plan_path="${1:?Usage: submit_generation.sh PLAN CONFIG OUTPUT [START STOP]}"

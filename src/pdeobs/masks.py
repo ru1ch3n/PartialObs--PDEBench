@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Official partial-observation masks.
 
 All functions return ``bool[H,W]`` with ``True`` denoting an observed value.

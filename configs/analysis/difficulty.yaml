@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 analysis:
   # Used to rank the hardest individual samples and factor combinations.
   primary_metric: relative_l2

@@ -1,6 +1,8 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 [build-system]
-requires = ["setuptools>=77", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27", "editables>=0.5"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pdeobs"
@@ -43,6 +45,8 @@ dev = [
   "pytest-cov>=7.1",
   "pip-audit>=2.10.1",
   "ruff>=0.16.5",
+  "hatchling>=1.27",
+  "editables>=0.5",
   "wheel>=0.46.1",
 ]
 
@@ -62,16 +66,16 @@ Documentation = "https://ru1ch3n.github.io/PartialObs--PDEBench/"
 Issues = "https://github.com/ru1ch3n/PartialObs--PDEBench/issues"
 Changelog = "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/CHANGELOG.md"
 
-[tool.setuptools]
-package-dir = { "" = "src" }
+[tool.hatch.build]
+reproducible = true
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["pdeobs*"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdeobs"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = ["tests"]
+pythonpath = ["src", "."]
 
 [tool.ruff]
 line-length = 100

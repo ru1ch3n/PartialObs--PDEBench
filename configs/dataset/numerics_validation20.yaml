@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 include: default.yaml
 
 # Full factor coverage at 20 samples per PDE x boundary x setting macro case.

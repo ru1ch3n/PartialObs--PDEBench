@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Transparent, non-learning partial-observation baselines."""
 
 from __future__ import annotations

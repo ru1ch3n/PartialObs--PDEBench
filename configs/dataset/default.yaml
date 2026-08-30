@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 schema_version: 1
 name: pdeobs-v0.1-reference
 seed: 20260804

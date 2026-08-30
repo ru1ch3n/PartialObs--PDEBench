@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Configuration loading with environment expansion and command-line overrides."""
 
 from __future__ import annotations

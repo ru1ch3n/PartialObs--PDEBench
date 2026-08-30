@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Balanced physical regimes, IID splits, OOD labels, and nested release tiers."""
 
 from __future__ import annotations

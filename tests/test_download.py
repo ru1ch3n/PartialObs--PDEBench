@@ -1,12 +1,27 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import hashlib
 import json
+import ssl
 from pathlib import Path
 
 import pytest
 
-from pdeobs.download import DownloadError, download_release, load_release_manifest
+from pdeobs.download import (
+    DownloadError,
+    _secure_ssl_context,
+    download_release,
+    load_release_manifest,
+)
+
+
+def test_remote_download_context_requires_certificates_and_tls12() -> None:
+    context = _secure_ssl_context()
+    assert context.check_hostname is True
+    assert context.verify_mode == ssl.CERT_REQUIRED
+    assert context.minimum_version >= ssl.TLSVersion.TLSv1_2
 
 
 def test_local_manifest_download_is_verified_and_resumable(tmp_path: Path) -> None:

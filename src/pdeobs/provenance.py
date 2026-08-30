@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Reproducibility metadata captured beside every run or dataset shard."""
 
 from __future__ import annotations

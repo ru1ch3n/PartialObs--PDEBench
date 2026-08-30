@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Dataset-shard validation and benchmark-result aggregation."""
 
 from __future__ import annotations

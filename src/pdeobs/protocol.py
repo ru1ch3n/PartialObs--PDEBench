@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Frozen, machine-verifiable contract for the PDE-OBS benchmark paper."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Scientific and structural quality control for generated PDE datasets.
 
 The quality layer is intentionally separate from model evaluation.  It measures

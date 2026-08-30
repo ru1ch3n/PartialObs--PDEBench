@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 # Documentation-only snapshot of the defaults in hpc/seawulf/*.sbatch.
 # Slurm does not read this YAML; edit or override the launchers themselves.
 documentation_only: true

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Anchor semantic-retrieval baselines and ambiguity metrics."""
 
 from __future__ import annotations

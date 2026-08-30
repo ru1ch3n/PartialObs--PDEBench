@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Code-defined presets for the benchmark's one-line command interface.
 
 The public CLI must keep working from an installed wheel, where repository-level

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Local and SeaWulf preflight checks."""
 
 from __future__ import annotations

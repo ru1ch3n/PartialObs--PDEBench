@@ -3,7 +3,11 @@
 PDE-OBS is a research benchmark and local/HPC command-line application. It is
 not an authentication service and does not intentionally collect credentials.
 Its security boundaries and known limitations are documented in
-[`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md).
+[`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md). The project's explicit
+security claims and evidence are in
+[`docs/ASSURANCE_CASE.md`](docs/ASSURANCE_CASE.md), and the status of the
+required independent human review is recorded in
+[`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md).
 
 ## Supported versions
 

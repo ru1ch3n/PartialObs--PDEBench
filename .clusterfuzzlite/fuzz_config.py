@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Atheris target for PDE-OBS configuration overrides and expansion."""
 
 from __future__ import annotations

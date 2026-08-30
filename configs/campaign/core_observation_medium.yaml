@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 schema_version: pdeobs.observation-campaign/v1
 name: core-observation-medium
 status: mixed_executable_and_planning

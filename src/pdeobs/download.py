@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Manifest-driven, checksum-verified dataset downloader."""
 
 from __future__ import annotations
@@ -6,6 +8,7 @@ import hashlib
 import json
 import os
 import shutil
+import ssl
 import urllib.parse
 import urllib.request
 from collections.abc import Iterable
@@ -23,6 +26,14 @@ DEFAULT_RELEASE_MANIFEST_URL = (
 )
 
 _TIERS = ("tiny", "debug", "signal", "medium", "full")
+
+
+def _secure_ssl_context() -> ssl.SSLContext:
+    """Return a certificate-verifying context that refuses TLS before 1.2."""
+
+    context = ssl.create_default_context()
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    return context
 
 
 def _require_secure_remote_url(url: str, *, label: str) -> urllib.parse.ParseResult:
@@ -65,7 +76,9 @@ def load_release_manifest(source: str | Path) -> tuple[dict[str, Any], str | Non
         parsed = _require_secure_remote_url(text_source, label="Release manifest URL")
     if parsed.scheme == "https":
         try:
-            with urllib.request.urlopen(text_source) as response:  # noqa: S310
+            with urllib.request.urlopen(  # noqa: S310
+                text_source, context=_secure_ssl_context()
+            ) as response:
                 _require_https_response(response, label="Release manifest URL")
                 payload = json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError) as exc:
@@ -193,7 +206,9 @@ def download_release(
                 str(url), headers={"Range": f"bytes={offset}-"} if offset else {}
             )
             try:
-                response = urllib.request.urlopen(request)  # noqa: S310
+                response = urllib.request.urlopen(  # noqa: S310
+                    request, context=_secure_ssl_context()
+                )
             except (HTTPError, URLError) as exc:
                 raise DownloadError(
                     f"Download interrupted for {relative}; resumable partial retained at {partial}: {exc}"

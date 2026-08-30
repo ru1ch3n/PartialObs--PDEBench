@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Compact deterministic 2-D incompressible Navier--Stokes generator."""
 
 from __future__ import annotations

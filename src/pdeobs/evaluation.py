@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Inference and evaluation runners for learning and non-learning methods."""
 
 from __future__ import annotations
