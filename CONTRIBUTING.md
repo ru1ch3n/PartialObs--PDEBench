@@ -3,6 +3,7 @@
 PDE-OBS welcomes reproducible bug reports, documentation improvements,
 scientific validation, and well-tested code changes. By contributing, you
 agree that your contribution is licensed under the repository's MIT license.
+Participation is governed by the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Before proposing a change
 
@@ -17,30 +18,35 @@ agree that your contribution is licensed under the repository's MIT license.
 
 ## Development environment
 
-Python 3.10 or newer is required. A standard editable installation provides
-the package, tests, linter, dependency audit, and optional research-site tools:
+Python 3.10 or newer is required. CI uses the checked-in `uv.lock`, including
+artifact SHA-256 hashes, so contributors can reproduce the same complete
+environment instead of resolving mutable dependency ranges:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-python -m pip install -e ".[dev]"
+uv sync --locked --extra dev --no-install-project
+uv sync --locked --extra dev --no-build-isolation
 ```
 
 Run the same core checks used by continuous integration:
 
 ```bash
-ruff format --check src tests
-ruff check src tests
-pdeobs protocol --check --config configs/dataset/default.yaml
-python scripts/validate_papers.py
-python scripts/generate_research_site.py
+uv run --no-sync ruff format --check src tests
+uv run --no-sync ruff check src tests
+uv run --no-sync pdeobs protocol --check --config configs/dataset/default.yaml
+uv run --no-sync python scripts/validate_papers.py
+uv run --no-sync python scripts/generate_research_site.py
 git diff --exit-code -- docs
-pytest --cov=pdeobs
-python -m pip_audit --local --skip-editable
+uv run --no-sync pytest --cov=pdeobs
+uv run --no-sync python -m pip_audit --local --skip-editable
 ```
 
 Shell launchers must also pass `bash -n hpc/seawulf/*.sh
 hpc/seawulf/*.sbatch` on a POSIX system.
+
+When dependencies change, regenerate `uv.lock` with the repository's pinned CI
+version of uv and regenerate `.clusterfuzzlite/requirements.txt` from
+`.clusterfuzzlite/requirements.in`. Review both diffs and their hashes before
+committing them; CI rejects a stale lock file.
 
 ## Coding and test policy
 

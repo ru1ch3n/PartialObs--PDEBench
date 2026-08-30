@@ -1,0 +1,1 @@
+training.learning_rate=0.0003

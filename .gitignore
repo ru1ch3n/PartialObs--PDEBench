@@ -9,6 +9,7 @@ dist/
 .pytest-agent/
 .ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
 .venv/
 venv/
@@ -42,6 +43,7 @@ ignored/
 *.tmp
 *.partial
 *.lock
+!/uv.lock
 
 # Local cluster configuration may contain account/group names
 .env

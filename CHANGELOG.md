@@ -14,6 +14,8 @@ public package or dataset release has been made.
 - Dependabot, dependency review, CodeQL, and OpenSSF Scorecard automation.
 - Least-privilege, immutable-SHA GitHub Actions configuration.
 - Dependency auditing and coverage reporting in continuous integration.
+- Hash-locked CI environments and continuous Atheris/ClusterFuzzLite testing
+  of the public configuration parser.
 
 ### Security
 
@@ -21,3 +23,5 @@ public package or dataset release has been made.
   redirects that downgrade to HTTP.
 - Raise the supported PyTorch and pytest dependency floors beyond versions
   currently associated with published advisories.
+- Reject ambiguous non-string mapping keys and recursive configuration values
+  before stable hashing or environment expansion.

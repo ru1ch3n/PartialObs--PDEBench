@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pdeobs.config import config_hash, load_config
+import pytest
+
+from pdeobs.config import ConfigError, apply_overrides, config_hash, load_config
 
 
 def test_config_include_override_and_environment(tmp_path: Path, monkeypatch) -> None:
@@ -20,6 +22,25 @@ def test_config_include_override_and_environment(tmp_path: Path, monkeypatch) ->
     assert config["model"] == {"width": 16, "depth": 2}
     assert config["flag"] is True
     assert config_hash(config) == config_hash(dict(reversed(list(config.items()))))
+
+
+def test_config_rejects_non_string_nested_mapping_keys() -> None:
+    with pytest.raises(ConfigError, match="mapping keys must be strings"):
+        apply_overrides({}, ["data.mask={1: 0, kind: random_ratio}"])
+
+    with pytest.raises(ConfigError, match="mapping keys must be strings"):
+        config_hash({"data": {1: "ambiguous"}})
+
+
+def test_config_rejects_recursive_values() -> None:
+    recursive: list[object] = []
+    recursive.append(recursive)
+
+    with pytest.raises(ConfigError, match="Recursive configuration value"):
+        config_hash({"recursive": recursive})
+
+    with pytest.raises(ConfigError, match="Recursive configuration value"):
+        apply_overrides({}, ["recursive=&anchor [*anchor]"])
 
 
 def test_checked_in_experiments_select_one_data_tier(tmp_path: Path, monkeypatch) -> None:
