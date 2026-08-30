@@ -23,3 +23,5 @@ public package or dataset release has been made.
   redirects that downgrade to HTTP.
 - Raise the supported PyTorch and pytest dependency floors beyond versions
   currently associated with published advisories.
+- Reject ambiguous non-string mapping keys and recursive configuration values
+  before stable hashing or environment expansion.

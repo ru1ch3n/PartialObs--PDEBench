@@ -9,6 +9,7 @@ dist/
 .pytest-agent/
 .ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
 .venv/
 venv/

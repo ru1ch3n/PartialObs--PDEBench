@@ -19,6 +19,53 @@ class ConfigError(ValueError):
 
 
 _ENV_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+_MAX_CONFIG_DEPTH = 100
+_MAX_CONFIG_CONTAINERS = 100_000
+
+
+def _validate_config_structure(value: Any) -> None:
+    """Reject ambiguous mapping keys and unsafe recursive configuration trees."""
+
+    stack: list[tuple[Any, str, int, bool]] = [(value, "config", 0, False)]
+    active_containers: set[int] = set()
+    visited_containers = 0
+
+    while stack:
+        current, path, depth, exiting = stack.pop()
+        is_mapping = isinstance(current, Mapping)
+        is_sequence = isinstance(current, (list, tuple))
+        if not (is_mapping or is_sequence):
+            continue
+
+        identity = id(current)
+        if exiting:
+            active_containers.remove(identity)
+            continue
+        if identity in active_containers:
+            raise ConfigError(f"Recursive configuration value at {path!r} is not supported")
+        if depth > _MAX_CONFIG_DEPTH:
+            raise ConfigError(
+                f"Configuration nesting exceeds {_MAX_CONFIG_DEPTH} levels at {path!r}"
+            )
+        visited_containers += 1
+        if visited_containers > _MAX_CONFIG_CONTAINERS:
+            raise ConfigError("Configuration contains too many nested containers")
+
+        active_containers.add(identity)
+        stack.append((current, path, depth, True))
+        if is_mapping:
+            children: list[tuple[Any, str]] = []
+            for key, item in current.items():
+                if not isinstance(key, str):
+                    raise ConfigError(
+                        f"Configuration mapping keys must be strings; {path!r} contains "
+                        f"{key!r} ({type(key).__name__})"
+                    )
+                children.append((item, f"{path}.{key}"))
+        else:
+            children = [(item, f"{path}[{index}]") for index, item in enumerate(current)]
+        for item, child_path in reversed(children):
+            stack.append((item, child_path, depth + 1, False))
 
 
 def _expand_string(value: str) -> str:
@@ -63,7 +110,10 @@ def _load_yaml(path: Path, seen: set[Path]) -> dict[str, Any]:
     if not resolved.is_file():
         raise ConfigError(f"Configuration file does not exist: {resolved}")
     seen.add(resolved)
-    payload = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
+    try:
+        payload = yaml.safe_load(resolved.read_text(encoding="utf-8")) or {}
+    except RecursionError as exc:
+        raise ConfigError(f"Configuration YAML is nested too deeply: {resolved}") from exc
     if not isinstance(payload, dict):
         raise ConfigError(f"Top level of {resolved} must be a mapping")
 
@@ -92,7 +142,10 @@ def apply_overrides(config: dict[str, Any], overrides: Sequence[str] | None) -> 
         keys = [key for key in dotted_key.split(".") if key]
         if not keys:
             raise ConfigError(f"Override has an empty key: {override!r}")
-        value = yaml.safe_load(raw)
+        try:
+            value = yaml.safe_load(raw)
+        except RecursionError as exc:
+            raise ConfigError(f"Override YAML is nested too deeply: {dotted_key!r}") from exc
         target = result
         for key in keys[:-1]:
             child = target.setdefault(key, {})
@@ -100,6 +153,7 @@ def apply_overrides(config: dict[str, Any], overrides: Sequence[str] | None) -> 
                 raise ConfigError(f"Cannot set {dotted_key!r}; {key!r} is not a mapping")
             target = child
         target[keys[-1]] = value
+    _validate_config_structure(result)
     return result
 
 
@@ -114,6 +168,7 @@ def load_config(path: str | Path, overrides: Sequence[str] | None = None) -> dic
 def config_hash(config: Mapping[str, Any]) -> str:
     """Return a stable 16-character identifier for a resolved configuration."""
 
+    _validate_config_structure(config)
     encoded = json.dumps(config, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(encoded).hexdigest()[:16]
 
