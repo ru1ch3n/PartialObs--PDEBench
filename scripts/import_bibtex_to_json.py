@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Import BibTeX into JSON Lines (NDJSON) index entries.
 
 This utility is meant for *index* ingestion (metadata only). It does NOT create
@@ -50,7 +52,9 @@ def parse_bibtex(path: Path) -> List[Dict[str, Any]]:
     try:
         import bibtexparser  # type: ignore
     except Exception as e:
-        raise RuntimeError("Missing dependency bibtexparser. Install with: pip install bibtexparser") from e
+        raise RuntimeError(
+            "Missing dependency bibtexparser. Install with: pip install bibtexparser"
+        ) from e
 
     bib_db = bibtexparser.parse_file(str(path))
     entries = []

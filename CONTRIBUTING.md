@@ -30,13 +30,15 @@ uv sync --locked --extra dev --no-build-isolation
 Run the same core checks used by continuous integration:
 
 ```bash
-uv run --no-sync ruff format --check src tests
-uv run --no-sync ruff check src tests
+uv run --no-sync ruff format --check src tests scripts/check_*.py .clusterfuzzlite/fuzz_config.py
+uv run --no-sync ruff check src tests scripts/check_*.py .clusterfuzzlite/fuzz_config.py
+uv run --no-sync python scripts/check_spdx_headers.py
 uv run --no-sync pdeobs protocol --check --config configs/dataset/default.yaml
 uv run --no-sync python scripts/validate_papers.py
 uv run --no-sync python scripts/generate_research_site.py
 git diff --exit-code -- docs
-uv run --no-sync pytest --cov=pdeobs
+uv run --no-sync pytest --cov=pdeobs --cov-branch --cov-report=json:coverage.json
+uv run --no-sync python scripts/check_coverage_thresholds.py coverage.json --min-statements 75 --min-branches 60
 uv run --no-sync python -m pip_audit --local --skip-editable
 ```
 
@@ -61,6 +63,11 @@ content must update the generator and the checked-in output together. Changes
 to scientific protocols must preserve fail-closed validation and document the
 reason for the change.
 
+Every commit must certify the
+[Developer Certificate of Origin](https://developercertificate.org/) with a
+`Signed-off-by` trailer matching the commit author. The normal command is
+`git commit -s`. The DCO workflow checks every pull-request commit.
+
 ## Pull request process
 
 1. Create a focused branch from `main`.
@@ -68,8 +75,13 @@ reason for the change.
 3. Run the checks above and include the results in the pull request.
 4. Open a pull request that explains the problem, solution, scientific impact,
    and compatibility or security implications.
-5. Address CI findings and review comments. Do not merge with failing required
+5. Obtain at least one approving review from a human who is not the author.
+   Automated tools and AI-generated feedback do not count as that approval.
+6. Address CI findings and review comments. Do not merge with failing required
    checks.
+
+The complete review standard, including security-sensitive changes and the
+OpenSSF review-history target, is in [`docs/CODE_REVIEW.md`](docs/CODE_REVIEW.md).
 
 Release notes are maintained in [`CHANGELOG.md`](CHANGELOG.md). User-visible
 changes should add an entry under **Unreleased**.

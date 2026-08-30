@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Task views over immutable canonical PDE-OBS shards."""
 
 from __future__ import annotations

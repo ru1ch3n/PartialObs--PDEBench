@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Deterministic, NumPy-only reference generators for the seven PDE families.
 
 The public entry point is :func:`generate_sample`.  Each result follows the

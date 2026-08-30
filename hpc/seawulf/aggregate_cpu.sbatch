@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 #SBATCH --job-name=pdeobs-aggregate
 #SBATCH --partition=short-40core-shared
 #SBATCH --nodes=1

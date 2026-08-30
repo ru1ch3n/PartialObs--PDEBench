@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Atomic, resumable HDF5 shards and a process-safe lazy reader.
 
 Each generation task owns one shard.  Rows are first appended to ``*.partial``;

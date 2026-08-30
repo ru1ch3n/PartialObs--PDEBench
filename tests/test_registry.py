@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pdeobs.registry import Registry

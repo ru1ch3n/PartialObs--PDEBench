@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Deterministic, dependency-free problem-difficulty summaries.
 
 The analyzer consumes the flat or nested JSON/CSV records emitted by benchmark

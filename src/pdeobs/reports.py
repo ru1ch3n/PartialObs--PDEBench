@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Dependency-free CSV/JSON result aggregation for cluster sweeps."""
 
 from __future__ import annotations

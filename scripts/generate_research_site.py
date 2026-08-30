@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Static-site generator for the *docs/* pages.
 
 Source of truth
@@ -895,11 +897,15 @@ def page(
     body_class_attribute = f' class="{html_escape(body_class)}"' if body_class else ""
 
     return f"""<!doctype html>
+<!-- Copyright 2026 PDE-OBS contributors -->
+<!-- SPDX-License-Identifier: MIT -->
 <html lang=\"en\">
 <head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />
   <meta name=\"theme-color\" content=\"#071225\" />
+  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests\" />
+  <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\" />
   <title>{html_escape(title)}</title>
   <link rel=\"stylesheet\" href=\"{root}assets/style.css?v=2026-08-18-design-v4\" />
   {extra_head}
@@ -1317,10 +1323,10 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         hero_card_html=hero_card,
         hero_stats_html=(
             '<dl class="hero-stats" aria-label="Benchmark overview">'
-            '  <div><dt>7</dt><dd>PDE families</dd></div>'
-            '  <div><dt>4</dt><dd>Boundary protocols</dd></div>'
-            '  <div><dt>10</dt><dd>Condition generators</dd></div>'
-            f'  <div><dt>{n_total}</dt><dd>Indexed AI4PDE papers</dd></div>'
+            "  <div><dt>7</dt><dd>PDE families</dd></div>"
+            "  <div><dt>4</dt><dd>Boundary protocols</dd></div>"
+            "  <div><dt>10</dt><dd>Condition generators</dd></div>"
+            f"  <div><dt>{n_total}</dt><dd>Indexed AI4PDE papers</dd></div>"
             "</dl>"
         ),
         body_class="home",

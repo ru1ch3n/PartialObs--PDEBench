@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 name: CI
 
 on:
@@ -41,8 +43,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          uv run --no-sync ruff format --check src tests .clusterfuzzlite/fuzz_config.py
-          uv run --no-sync ruff check src tests .clusterfuzzlite/fuzz_config.py
+          uv run --no-sync ruff format --check src tests scripts/check_*.py .clusterfuzzlite/fuzz_config.py
+          uv run --no-sync ruff check src tests scripts/check_*.py .clusterfuzzlite/fuzz_config.py
+      - name: Verify copyright and license headers
+        run: uv run --no-sync python scripts/check_spdx_headers.py
       - name: Check benchmark-paper protocol drift
         env:
           PYTHONPATH: src
@@ -59,15 +63,28 @@ jobs:
       - name: Test
         env:
           PYTHONPATH: src
-        run: uv run --no-sync pytest --cov=pdeobs --cov-report=term-missing --cov-report=xml
+        run: |
+          uv run --no-sync pytest --cov=pdeobs --cov-branch --cov-report=term-missing --cov-report=xml --cov-report=json:coverage.json
+          # These floors prevent regression from the audited baseline. The
+          # published Gold target remains 90% statements and 80% branches.
+          uv run --no-sync python scripts/check_coverage_thresholds.py coverage.json --min-statements 75 --min-branches 60
       - name: Audit installed dependencies
         if: matrix.python-version == '3.12'
         run: uv run --no-sync python -m pip_audit --local --skip-editable
-      - name: Build wheel
-        run: uv build --no-build-isolation --wheel --out-dir dist
+      - name: Verify reproducible source and wheel builds
+        shell: bash
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+          export PYTHONHASHSEED=0
+          mkdir -p /tmp/pdeobs-dist-a /tmp/pdeobs-dist-b
+          uv build --python .venv/bin/python --no-build-isolation --sdist --wheel --out-dir /tmp/pdeobs-dist-a
+          uv build --python .venv/bin/python --no-build-isolation --sdist --wheel --out-dir /tmp/pdeobs-dist-b
+          (cd /tmp/pdeobs-dist-a && sha256sum *) > /tmp/pdeobs-dist-a.sha256
+          (cd /tmp/pdeobs-dist-b && sha256sum *) > /tmp/pdeobs-dist-b.sha256
+          diff -u /tmp/pdeobs-dist-a.sha256 /tmp/pdeobs-dist-b.sha256
       - name: Smoke-test the installed wheel outside the checkout
         run: |
-          uv pip install --python .venv/bin/python --reinstall --no-deps dist/*.whl
+          uv pip install --python .venv/bin/python --reinstall --no-deps /tmp/pdeobs-dist-a/*.whl
           cd /tmp
           "$GITHUB_WORKSPACE/.venv/bin/python" -m pdeobs protocol --check
           "$GITHUB_WORKSPACE/.venv/bin/python" -c "import os, pathlib, pdeobs; module = pathlib.Path(pdeobs.__file__).resolve(); source = (pathlib.Path(os.environ['GITHUB_WORKSPACE']) / 'src').resolve(); assert not module.is_relative_to(source); assert 'site-packages' in module.parts; print(module)"

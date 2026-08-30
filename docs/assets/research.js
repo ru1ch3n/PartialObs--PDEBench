@@ -1,3 +1,5 @@
+/* Copyright 2026 PDE-OBS contributors */
+/* SPDX-License-Identifier: MIT */
 /* PartialObs–PDEBench: Research index client-side UI
  *
  * - Loads window.PAPERS_DB_URL (docs/assets/papers_db.json)

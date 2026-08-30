@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Command-line interface for generation, training, evaluation, and SeaWulf."""
 
 from __future__ import annotations

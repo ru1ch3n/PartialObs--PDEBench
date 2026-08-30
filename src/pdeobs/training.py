@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Reproducible recovery and rollout training loops.
 
 The adapter accepts ordinary PyTorch ``DataLoader`` batches, including batches

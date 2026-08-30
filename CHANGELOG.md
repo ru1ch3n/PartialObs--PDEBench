@@ -16,11 +16,18 @@ public package or dataset release has been made.
 - Dependency auditing and coverage reporting in continuous integration.
 - Hash-locked CI environments and continuous Atheris/ClusterFuzzLite testing
   of the public configuration parser.
+- Public governance, maintainer, roadmap, architecture, assurance-case,
+  code-review, reproducible-build, and maturity documentation.
+- Automated DCO and per-source SPDX/copyright checks.
+- Separate statement and branch coverage regression gates.
+- Reproducible Hatchling source-distribution and wheel builds verified by
+  independent SHA-256 comparisons in CI.
 
 ### Security
 
 - Reject insecure HTTP release manifests and artifact URLs, including HTTPS
   redirects that downgrade to HTTP.
+- Require certificate verification and TLS 1.2 or newer for HTTPS downloads.
 - Raise the supported PyTorch and pytest dependency floors beyond versions
   currently associated with published advisories.
 - Reject ambiguous non-string mapping keys and recursive configuration values

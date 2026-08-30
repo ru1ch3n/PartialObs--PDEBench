@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Config adapters used by the high-level CLI commands."""
 
 from __future__ import annotations

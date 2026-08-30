@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Compact PyTorch reference baselines.
 
 The networks below are intentionally small, auditable architectural references

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Shared, dependency-light utilities for PDE-OBS reference generators.
 
 The solvers in :mod:`pdeobs.pdes` are deliberately compact reference

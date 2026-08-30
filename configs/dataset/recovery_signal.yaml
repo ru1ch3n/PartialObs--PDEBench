@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 include: default.yaml
 name: pdeobs-recovery-signal
 tier: signal

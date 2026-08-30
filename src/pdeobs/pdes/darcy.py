@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Compact deterministic Darcy-flow reference generator."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+/* Copyright 2026 PDE-OBS contributors */
+/* SPDX-License-Identifier: MIT */
 /* Generic paper page (index placeholders) */
 
 function qs(sel) { return document.querySelector(sel); }

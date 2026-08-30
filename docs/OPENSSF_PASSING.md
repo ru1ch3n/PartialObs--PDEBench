@@ -46,3 +46,6 @@ to satisfy a repository check.
 Scorecard is tracked separately because it produces per-check scores from 0 to
 10 and has no universal `passing` threshold. Its workflow is included as a
 continuous diagnostic, not as a substitute for the Best Practices badge.
+Silver and Gold are cumulative levels with additional requirements. Their
+dated evidence and unresolved conditions are tracked separately in
+[`PROJECT_MATURITY.md`](PROJECT_MATURITY.md).

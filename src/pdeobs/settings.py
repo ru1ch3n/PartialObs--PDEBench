@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Deterministic input/source/initial-condition setting generators."""
 
 from __future__ import annotations

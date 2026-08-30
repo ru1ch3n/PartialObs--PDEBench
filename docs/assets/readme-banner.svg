@@ -1,3 +1,5 @@
+<!-- Copyright 2026 PDE-OBS contributors -->
+<!-- SPDX-License-Identifier: MIT -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
   <title id="title">PDE-OBS — Partial Observation PDE Benchmark</title>
   <desc id="desc">A deep navy scientific benchmark banner with cobalt and cyan field visualization.</desc>

@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Render the deterministic PDE-OBS field used by the project website hero."""
 
 from __future__ import annotations

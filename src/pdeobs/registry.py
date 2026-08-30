@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Small, dependency-free registries used throughout :mod:`pdeobs`.
 
 The project deliberately keeps discovery here instead of hard-coding a switch in

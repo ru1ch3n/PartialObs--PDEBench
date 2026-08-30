@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pdeobs.doctor import checks_succeeded, format_checks, run_doctor

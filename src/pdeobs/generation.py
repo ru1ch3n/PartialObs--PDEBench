@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Deterministic local and Slurm-array dataset generation orchestration."""
 
 from __future__ import annotations

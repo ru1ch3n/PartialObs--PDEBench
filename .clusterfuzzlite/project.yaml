@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 homepage: "https://github.com/ru1ch3n/PartialObs--PDEBench"
 language: python
 main_repo: "https://github.com/ru1ch3n/PartialObs--PDEBench.git"

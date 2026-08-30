@@ -1,3 +1,5 @@
+# Copyright 2026 PDE-OBS contributors
+# SPDX-License-Identifier: MIT
 """Numerical, spectral, physical, rollout, and OOD benchmark metrics."""
 
 from __future__ import annotations
