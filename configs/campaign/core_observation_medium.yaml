@@ -114,7 +114,7 @@ compute_planning:
   full_gpu_hours_pinn_or_pino_three_seeds: [7000, 7400]
   medium_gpu_hours_pinn_or_pino_three_seeds: [1800, 2300]
   pilot_required: true
-  seawulf_capacity_promise: false
+  slurm_site_capacity_promise: false
 
 scientific_constraints:
   navier_stokes_representation: >-

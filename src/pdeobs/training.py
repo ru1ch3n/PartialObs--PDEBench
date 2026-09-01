@@ -2,7 +2,7 @@
 
 The adapter accepts ordinary PyTorch ``DataLoader`` batches, including batches
 backed by lazily opened HDF5 datasets. No h5py objects are retained here, which
-keeps multi-worker loading and Seawulf jobs safe when the dataset opens files in
+keeps multi-worker loading and Slurm jobs safe when the dataset opens files in
 each worker process.
 """
 

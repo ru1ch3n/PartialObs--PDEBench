@@ -5,11 +5,33 @@ set -Eeuo pipefail
 : "${PDEOBS_DATA:?Set PDEOBS_DATA to the dataset root.}"
 : "${PDEOBS_RUNS:?Set PDEOBS_RUNS to the run root.}"
 
-module purge
-module load slurm
-module load anaconda/3
-if [[ -n "${PDEOBS_CUDA_MODULE:-}" ]]; then
-  module load "$PDEOBS_CUDA_MODULE"
+if [[ -n "${PDEOBS_MODULE_SETUP:-}" ]]; then
+  if [[ ! -r "$PDEOBS_MODULE_SETUP" ]]; then
+    echo "PDEOBS_MODULE_SETUP is not readable: $PDEOBS_MODULE_SETUP" >&2
+    exit 2
+  fi
+  # shellcheck disable=SC1090
+  source "$PDEOBS_MODULE_SETUP"
+fi
+if [[ -n "${PDEOBS_MODULES:-}" ]]; then
+  if ! command -v module >/dev/null 2>&1; then
+    echo "PDEOBS_MODULES is set, but the environment-modules command is unavailable." >&2
+    exit 2
+  fi
+  if [[ "${PDEOBS_MODULE_PURGE:-0}" == "1" ]]; then
+    module purge
+  fi
+  read -r -a pdeobs_modules <<<"$PDEOBS_MODULES"
+  module load "${pdeobs_modules[@]}"
+fi
+
+if [[ -z "${SLURM_JOB_ID:-}" ]]; then
+  echo "This launcher must run inside a Slurm allocation." >&2
+  exit 2
+fi
+if ! command -v "${PDEOBS_SRUN:-srun}" >/dev/null 2>&1; then
+  echo "Slurm srun is unavailable; set PDEOBS_SRUN to its absolute path if needed." >&2
+  exit 2
 fi
 
 export PYTHONUNBUFFERED=1
@@ -34,7 +56,7 @@ fi
 commit_marker="$PDEOBS_ENV/.pdeobs-git-commit"
 if [[ ! -f "$commit_marker" ]]; then
   echo "The environment has no PDE-OBS commit marker: $commit_marker" >&2
-  echo "Run hpc/seawulf/bootstrap.sh from this checkout before submitting jobs." >&2
+  echo "Run hpc/slurm/bootstrap.sh from this checkout before submitting jobs." >&2
   exit 2
 fi
 installed_commit="$(<"$commit_marker")"
@@ -49,7 +71,7 @@ installed_module="$("$PDEOBS_ENV/bin/python" -c 'import pathlib, pdeobs; print(p
 case "$installed_module" in
   "$repository_dir"/*)
     echo "PDE-OBS resolves from the checkout instead of the installed wheel: $installed_module" >&2
-    echo "Rerun hpc/seawulf/bootstrap.sh to replace the editable installation." >&2
+    echo "Rerun hpc/slurm/bootstrap.sh to replace the editable installation." >&2
     exit 2
     ;;
 esac

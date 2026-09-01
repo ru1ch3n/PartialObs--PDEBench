@@ -1,4 +1,4 @@
-"""Local and SeaWulf preflight checks."""
+"""Local and portable Slurm preflight checks."""
 
 from __future__ import annotations
 
@@ -52,17 +52,17 @@ def run_doctor(
 
         checks.append(Check("CUDA available", torch.cuda.is_available(), str(torch.version.cuda)))
 
-    checks.append(_path_check("data root", os.environ.get("PDEOBS_DATA"), cluster == "seawulf"))
-    checks.append(_path_check("run root", os.environ.get("PDEOBS_RUNS"), cluster == "seawulf"))
+    checks.append(_path_check("data root", os.environ.get("PDEOBS_DATA"), cluster == "slurm"))
+    checks.append(_path_check("run root", os.environ.get("PDEOBS_RUNS"), cluster == "slurm"))
 
-    if cluster == "seawulf":
-        checks.append(
-            Check("Slurm command", shutil.which("sbatch") is not None, str(shutil.which("sbatch")))
-        )
-        checks.append(Check("SeaWulf filesystem", Path("/gpfs").exists(), "/gpfs"))
+    if cluster == "slurm":
+        for name, environment_name in (("sbatch", "PDEOBS_SBATCH"), ("srun", "PDEOBS_SRUN")):
+            command = os.environ.get(environment_name, name)
+            resolved = shutil.which(command)
+            checks.append(Check(f"Slurm command: {name}", resolved is not None, str(resolved)))
         checks.append(
             Check(
-                "not on login node",
+                "inside a Slurm allocation",
                 "SLURM_JOB_ID" in os.environ,
                 "run preflight inside an interactive or batch allocation",
             )

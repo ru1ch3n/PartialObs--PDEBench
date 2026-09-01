@@ -14,7 +14,7 @@ from pdeobs.runner import _allow_split_fallback
 from pdeobs.splits import build_split_plan, tier_regime_counts
 
 ROOT = Path(__file__).resolve().parents[1]
-SEAWULF = ROOT / "hpc" / "seawulf"
+SLURM = ROOT / "hpc" / "slurm"
 SHELL_FILES = (
     "aggregate_cpu.sbatch",
     "bootstrap.sh",
@@ -24,6 +24,7 @@ SHELL_FILES = (
     "monitor_full_t15.sh",
     "submit_full_t15.sh",
     "submit_generation.sh",
+    "submit_validation20.sh",
     "train_gpu.sbatch",
 )
 
@@ -39,28 +40,31 @@ def _bash_executable() -> str | None:
     return None
 
 
-def test_seawulf_shell_files_parse_without_a_slurm_installation() -> None:
+def test_slurm_shell_files_parse_without_a_slurm_installation() -> None:
     bash = _bash_executable()
     if bash is None:
         pytest.skip("bash is unavailable")
     relative_paths = [
-        path.relative_to(ROOT).as_posix() for path in map(SEAWULF.__truediv__, SHELL_FILES)
+        path.relative_to(ROOT).as_posix() for path in map(SLURM.__truediv__, SHELL_FILES)
     ]
     subprocess.run([bash, "-n", *relative_paths], cwd=ROOT, check=True)
 
 
-def test_seawulf_runtime_restores_slurm_after_module_purge() -> None:
-    for name in ("bootstrap.sh", "common.sh"):
-        script = (SEAWULF / name).read_text(encoding="utf-8")
-        purge = script.index("module purge")
-        slurm = script.index("module load slurm", purge)
-        anaconda = script.index("module load anaconda/3", slurm)
-        assert purge < slurm < anaconda
+def test_slurm_runtime_has_no_site_specific_software_assumptions() -> None:
+    scripts = "\n".join(
+        (SLURM / name).read_text(encoding="utf-8") for name in ("bootstrap.sh", "common.sh")
+    )
+    assert "PDEOBS_MODULES" in scripts
+    assert "PDEOBS_MODULE_SETUP" in scripts
+    assert "PDEOBS_ENV_MANAGER" in scripts
+    assert "module load slurm" not in scripts
+    assert "module load anaconda" not in scripts
+    assert "module load cuda" not in scripts
 
 
-def test_seawulf_environment_is_wheel_installed_and_commit_guarded() -> None:
-    bootstrap = (SEAWULF / "bootstrap.sh").read_text(encoding="utf-8")
-    common = (SEAWULF / "common.sh").read_text(encoding="utf-8")
+def test_slurm_environment_is_wheel_installed_and_commit_guarded() -> None:
+    bootstrap = (SLURM / "bootstrap.sh").read_text(encoding="utf-8")
+    common = (SLURM / "common.sh").read_text(encoding="utf-8")
     environment = (ROOT / "environment.yml").read_text(encoding="utf-8")
     generation_environment = (ROOT / "environment-generation.yml").read_text(encoding="utf-8")
 
@@ -77,9 +81,14 @@ def test_seawulf_environment_is_wheel_installed_and_commit_guarded() -> None:
     assert "h5py" in generation_environment.lower()
 
 
-def test_cluster_yaml_is_explicitly_documentation_only() -> None:
-    config = yaml.safe_load((ROOT / "configs/cluster/seawulf.yaml").read_text(encoding="utf-8"))
+def test_cluster_yaml_is_documentation_only_and_portable() -> None:
+    config = yaml.safe_load((ROOT / "configs/cluster/slurm.yaml").read_text(encoding="utf-8"))
     assert config["documentation_only"] is True
+    assert config["cluster"] == "slurm"
+    assert config["routing"]["cpu_partition_env"] == "PDEOBS_CPU_PARTITION"
+    assert config["routing"]["gpu_partition_env"] == "PDEOBS_GPU_PARTITION"
+    assert "partition" not in config["examples"]["cpu"]
+    assert "partition" not in config["examples"]["gpu"]
 
 
 def test_production_and_smoke_split_policies_are_explicit() -> None:
@@ -121,7 +130,7 @@ def test_download_cli_has_a_manifest_free_release_contract() -> None:
     assert args.manifest is None
 
 
-def test_github_readme_exposes_server_and_seawulf_quick_starts() -> None:
+def test_github_readme_exposes_server_and_slurm_quick_starts() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert "[Linux server guide](docs/SERVER.md)" in readme
@@ -129,7 +138,7 @@ def test_github_readme_exposes_server_and_seawulf_quick_starts() -> None:
     assert "pdeobs generate-case" in readme
     assert "--preset fno_sparse_recovery" in readme
     assert "runs/<run-id>" not in readme
-    assert "## SeaWulf quick start" in readme
+    assert "## Slurm HPC quick start" in readme
     assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in readme
     assert '--dependency="afterok:$smoke_job"' in readme
 
@@ -138,35 +147,48 @@ def test_github_readme_exposes_server_and_seawulf_quick_starts() -> None:
     assert "data/pdeobs_cases/" in ignored
 
 
-def test_seawulf_guide_uses_exact_plans_and_dependency_chains() -> None:
-    guide = (SEAWULF / "README.md").read_text(encoding="utf-8")
+def test_slurm_guide_uses_exact_plans_and_dependency_chains() -> None:
+    guide = (SLURM / "README.md").read_text(encoding="utf-8")
 
-    assert "srun --partition=short-40core-shared" in guide
-    assert "configs/dataset/recovery_signal.yaml" in guide
+    assert "portable Slurm templates" in guide
+    assert "do not name a cluster, partition, account, QOS" in guide
     assert '"$PDEOBS_DATA/plans/smoke.jsonl"' in guide
     assert '--dependency="afterok:${generation_job}"' in guide
     assert "does **not** submit model training" in guide
-    assert "short-40core-shared" in guide
-    assert "about 215 GiB" in guide
-    assert '"$PDEOBS_DATA/plans/tiny.resolved.yaml"' in guide
-    assert "conservative safety cap" in guide
-    assert "numerics_full_t15.yaml" in guide
-    assert "0-83%6" in guide
-    assert "240 CPU cores" in guide
+    assert "PDEOBS_CPU_PARTITION" in guide
+    assert "PDEOBS_GPU_PARTITION" in guide
+    assert "PDEOBS_ACCOUNT" in guide
+    assert "PDEOBS_MAX_QUEUED_TASKS" in guide
+    assert "Slurm documentation" in guide
 
 
 def test_full_t15_launcher_is_dataset_only_bounded_and_quality_gated() -> None:
-    launcher = (SEAWULF / "submit_full_t15.sh").read_text(encoding="utf-8")
-    array = (SEAWULF / "generate_array.sbatch").read_text(encoding="utf-8")
+    launcher = (SLURM / "submit_full_t15.sh").read_text(encoding="utf-8")
+    array = (SLURM / "generate_array.sbatch").read_text(encoding="utf-8")
 
     assert 'task_count" != 3360' in launcher
     assert 'sample_count" != 560000' in launcher
     assert "bad_stored_steps" in launcher
-    assert "PDEOBS_FULL_CPUS_PER_TASK:-40" in launcher
-    assert "PDEOBS_FULL_CONCURRENCY:-6" in launcher
-    assert "array_count + 1 > 100" in launcher
+    assert "PDEOBS_FULL_CPUS_PER_TASK:-8" in launcher
+    assert "PDEOBS_FULL_CONCURRENCY:-4" in launcher
+    assert "PDEOBS_MAX_QUEUED_TASKS:-100" in launcher
+    assert "array_count + 1 > max_queued" in launcher
+    assert "PDEOBS_CPU_PARTITION" in launcher
+    assert "PDEOBS_ACCOUNT" in launcher
     assert "--quality-strict --max-pde-loss 0.05 --require-all-pdes" in launcher
     assert "train_gpu.sbatch" not in launcher
     assert "--array-bundle-size" in array
     assert '"${SLURM_CPUS_PER_TASK:-1}"' in array
     assert "export OMP_NUM_THREADS=1" in array
+
+
+def test_slurm_templates_do_not_pin_site_resources() -> None:
+    text = "\n".join((SLURM / name).read_text(encoding="utf-8") for name in SHELL_FILES)
+    forbidden = (
+        "#SBATCH --partition=",
+        "#SBATCH --account=",
+        "#SBATCH --qos=",
+        "#SBATCH --constraint=",
+    )
+    for token in forbidden:
+        assert token not in text

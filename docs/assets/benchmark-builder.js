@@ -25,7 +25,7 @@
     runRoot: byId("builder-run-root"),
     workers: byId("builder-workers"),
     shardSize: byId("builder-shard-size"),
-    group: byId("builder-group"),
+    account: byId("builder-account"),
   };
   const campaignControls = {
     preset: byId("campaign-preset"),
@@ -174,7 +174,7 @@
       runRoot: inputs.runRoot.value.trim() || "runs",
       workers: integerValue(inputs.workers, 4, 1, 128),
       shardSize: integerValue(inputs.shardSize, 700, 1, 2000),
-      group: inputs.group.value.trim() || "YOUR_GROUP",
+      account: inputs.account.value.trim() || "YOUR_ACCOUNT",
     };
   }
 
@@ -326,8 +326,8 @@
       `  dedicated_gpus: ${campaignState.gpus}`,
       `  campaign_days: ${campaignState.days}`,
       `  utilization_fraction: [${campaignState.utilizationLow / 100}, ${campaignState.utilizationHigh / 100}]`,
-      "  source_hardware: NVIDIA RTX A6000",
-      "  seawulf_a100_transferable: false",
+      "  source_hardware: dedicated reference GPU",
+      "  slurm_site_transferable: false",
       "execution:",
       "  runnable: false",
       "  reason: planning rows without registered adapters are present",
@@ -359,14 +359,11 @@
       "git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git",
       "cd PartialObs--PDEBench",
     ];
-    if (state.environment === "seawulf") {
+    if (state.environment === "slurm") {
       return [
-        "# Run this command separately on your local computer:",
-        "# ssh YOUR_NETID@milan.seawulf.stonybrook.edu",
-        "# Then paste the remaining commands only after the SeaWulf prompt appears.",
+        "# Connect to the HPC login host documented by your site, then paste:",
         "set -Eeuo pipefail",
-        "module load slurm",
-        'export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"',
+        'export PDEOBS_BASE="${SCRATCH:-$PWD}/pdeobs"',
         'mkdir -p "$PDEOBS_BASE"',
         'git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git "$PDEOBS_BASE/PartialObs--PDEBench"',
         'cd "$PDEOBS_BASE/PartialObs--PDEBench"',
@@ -375,14 +372,16 @@
         'export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"',
         `export PDEOBS_DATA=${shellQuote(state.dataRoot)}`,
         `export PDEOBS_RUNS=${shellQuote(state.runRoot)}`,
+        `export PDEOBS_ACCOUNT=${shellQuote(state.account)}`,
+        'export PDEOBS_CPU_PARTITION="YOUR_CPU_PARTITION"',
+        'export PDEOBS_GPU_PARTITION="YOUR_GPU_PARTITION"',
+        "# Optional: export PDEOBS_MODULES=\"python cuda\"",
         'mkdir -p logs "$PDEOBS_DATA" "$PDEOBS_RUNS"',
         "",
-        "# Build only inside a compute allocation, never on the login node.",
-        "srun --partition=short-96core-shared --nodes=1 --ntasks=1 \\",
-        "  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l",
-        "bash hpc/seawulf/bootstrap.sh",
-        "exit",
-        '"$PDEOBS_ENV/bin/python" -m pdeobs doctor --cluster seawulf --offline',
+        "# Start a short compute allocation using the site-approved salloc/srun command.",
+        "# From inside that allocation:",
+        "bash hpc/slurm/bootstrap.sh",
+        '"$PDEOBS_ENV/bin/python" -m pdeobs doctor --cluster slurm --offline',
       ].join("\n");
     }
     const session = state.environment === "server" ? ["tmux new -s pdeobs"] : [];
@@ -491,8 +490,8 @@
   }
 
   function buildRun(state, yaml) {
-    if (state.environment === "seawulf") {
-      return "# SeaWulf is selected. Use the 'SeaWulf chain' tab for bounded Slurm arrays, validation, and quality gating.";
+    if (state.environment === "slurm") {
+      return "# Slurm HPC is selected. Use the 'Slurm chain' tab for bounded arrays, validation, and quality gating.";
     }
     const aggregateArgs = qualityArgs(state, true);
     const auditArgs = qualityArgs(state, false);
@@ -551,15 +550,16 @@
     ].join("\n");
   }
 
-  function buildSeaWulf(state, yaml) {
+  function buildSlurm(state, yaml) {
     const aggregateArgs = qualityArgs(state, true);
     return [
       "set -Eeuo pipefail",
       publicationBlock(state),
-      "# Run after the SeaWulf setup tab. This submits exactly one window of at most 100 tasks.",
-      ': "${PDEOBS_ENV:?Run the SeaWulf setup tab and export PDEOBS_ENV}"',
-      ': "${PDEOBS_DATA:?Run the SeaWulf setup tab and export PDEOBS_DATA}"',
-      ': "${PDEOBS_RUNS:?Run the SeaWulf setup tab and export PDEOBS_RUNS}"',
+      "# Run after the Slurm setup tab. This submits one site-bounded array window.",
+      ': "${PDEOBS_ENV:?Run the Slurm setup tab and export PDEOBS_ENV}"',
+      ': "${PDEOBS_DATA:?Run the Slurm setup tab and export PDEOBS_DATA}"',
+      ': "${PDEOBS_RUNS:?Run the Slurm setup tab and export PDEOBS_RUNS}"',
+      'export PDEOBS_MAX_QUEUED_TASKS="${PDEOBS_MAX_QUEUED_TASKS:-100}"',
       'REPO_ROOT="$(git rev-parse --show-toplevel)"',
       'cd "$REPO_ROOT"',
       'CONFIG_DIR="$PDEOBS_DATA/configs"',
@@ -584,9 +584,9 @@
       'start="${PDEOBS_WINDOW_START:-0}"',
       '[[ "$start" =~ ^[0-9]+$ ]] || { echo "PDEOBS_WINDOW_START must be a non-negative integer" >&2; exit 2; }',
       '(( start < task_count )) || { echo "Window start $start is outside 0-$((task_count - 1))" >&2; exit 2; }',
-      'stop=$((start + 99))',
+      'stop=$((start + PDEOBS_MAX_QUEUED_TASKS - 1))',
       '(( stop < task_count )) || stop=$((task_count - 1))',
-      'submission="$(bash hpc/seawulf/submit_generation.sh "$PLAN" "$CONFIG" "$DATASET_ROOT" "$start" "$stop")"',
+      'submission="$(bash hpc/slurm/submit_generation.sh "$PLAN" "$CONFIG" "$DATASET_ROOT" "$start" "$stop")"',
       'generation_job="${submission##* }"',
       'generation_job="${generation_job%%;*}"',
       '[[ "$generation_job" =~ ^[0-9]+$ ]] || { echo "Could not parse Slurm job ID: $submission" >&2; exit 2; }',
@@ -594,10 +594,14 @@
       "",
       'if (( stop + 1 < task_count )); then',
       '  echo "Wait for job $generation_job to complete successfully."',
-      '  echo "Then export PDEOBS_WINDOW_START=$((stop + 1)) and rerun this SeaWulf tab."',
+      '  echo "Then export PDEOBS_WINDOW_START=$((stop + 1)) and rerun this Slurm tab."',
       '  squeue -j "$generation_job"',
       'else',
-      '  validation_job="$(sbatch --parsable --dependency="afterok:$generation_job" hpc/seawulf/aggregate_cpu.sbatch "$DATASET_ROOT" "$DATASET_ROOT/summary.json" "$PLAN"' +
+      '  site_args=()' ,
+      '  [[ -n "${PDEOBS_CPU_PARTITION:-}" ]] && site_args+=(--partition="$PDEOBS_CPU_PARTITION")',
+      '  [[ -n "${PDEOBS_ACCOUNT:-}" ]] && site_args+=(--account="$PDEOBS_ACCOUNT")',
+      '  [[ -n "${PDEOBS_QOS:-}" ]] && site_args+=(--qos="$PDEOBS_QOS")',
+      '  validation_job="$(sbatch --parsable "${site_args[@]}" --dependency="afterok:$generation_job" hpc/slurm/aggregate_cpu.sbatch "$DATASET_ROOT" "$DATASET_ROOT/summary.json" "$PLAN"' +
         (aggregateArgs.length ? " " + aggregateArgs.join(" ") : "") +
         ')"',
       '  validation_job="${validation_job%%;*}"',
@@ -607,7 +611,7 @@
       "",
       "# Inspect summary.json, summary.quality.json/.csv, per-shard *.quality.json,",
       "# any strict *.quality-failures.jsonl records, logs, and checksums before training.",
-      "# SeaWulf scratch is temporary and not backed up; archive validated outputs independently.",
+      "# Treat scratch as temporary unless the site guarantees retention; archive validated outputs independently.",
     ].join("\n");
   }
 
@@ -742,8 +746,8 @@
     );
     const blocked = included.filter((method) => method.command_generation === "blocked");
     const messages = [
-      "GPU-hour figures are unmeasured A6000 planning estimates, not benchmark results.",
-      "SeaWulf uses a shared A100 queue; run a SeaWulf pilot and do not transfer the A6000 estimate.",
+      "GPU-hour figures are unmeasured dedicated-GPU planning estimates, not benchmark results.",
+      "Accelerators, queue sharing, and policy differ by Slurm site; run a measured pilot before scaling.",
       "Primary results use matched-mask training; random 3% transfer is a separate mask-OOD analysis.",
       `Campaign commands are blocked for: ${blocked.map((method) => method.label).join(", ")}.`,
     ];
@@ -777,8 +781,8 @@
     if (state.tier === "full") {
       messages.push("The full matrix is a large campaign. Complete smoke and signal tiers, estimate storage/runtime, and archive validated results first.");
     }
-    if (plan.jobs > 100 && state.environment === "seawulf") {
-      messages.push("The SeaWulf code submits one window of at most 100 array tasks. After it succeeds, rerun with the displayed PDEOBS_WINDOW_START value.");
+    if (plan.jobs > 100 && state.environment === "slurm") {
+      messages.push("The Slurm code submits one bounded array window. After it succeeds, rerun with the displayed PDEOBS_WINDOW_START value.");
     }
     return messages;
   }
@@ -836,7 +840,7 @@
       setup: buildSetup(state),
       yaml,
       run: buildRun(state, yaml),
-      seawulf: buildSeaWulf(state, yaml),
+      slurm: buildSlurm(state, yaml),
       campaign: buildCampaignManifest(campaignState),
     };
     byId("builder-macro-cases").textContent = plan.macroCases.toLocaleString();
@@ -907,11 +911,11 @@
   function bindEvents() {
     form.addEventListener("change", (event) => {
       render();
-      if (event.target === selectors.environment && selectors.environment.value === "seawulf") {
-        selectTab("seawulf", false);
+      if (event.target === selectors.environment && selectors.environment.value === "slurm") {
+        selectTab("slurm", false);
       }
     });
-    [inputs.threshold, inputs.name, inputs.dataRoot, inputs.runRoot, inputs.workers, inputs.shardSize, inputs.group].forEach(
+    [inputs.threshold, inputs.name, inputs.dataRoot, inputs.runRoot, inputs.workers, inputs.shardSize, inputs.account].forEach(
       (input) => input.addEventListener("input", render),
     );
     campaignControls.preset.addEventListener("change", render);

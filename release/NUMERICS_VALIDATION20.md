@@ -1,6 +1,6 @@
 # Numerical validation20 report
 
-This report records the completed SeaWulf factor-validation campaign for Git
+This report records the completed reference Slurm factor-validation campaign for Git
 commit `c70c726e13b812764711a60ea6cbef2ad54afb4e`. It is a dataset-generation
 report only: no model was trained.
 
@@ -21,14 +21,14 @@ completed with exit code zero. Strict plan coverage and shard validation found
 840 HDF5 shards, 5,600 samples, seven PDE families, 5,600 valid quality records,
 zero missing or invalid records, and zero non-empty
 `*.quality-failures.jsonl` files. The generated campaign occupied 27 GiB on
-SeaWulf scratch.
+temporary HPC scratch.
 
 That 27 GiB campaign preserved every dense audit frame (`T=33` through
 `T=513`) and is retained as historical validation evidence. The subsequent
 storage protocol separates quality cadence from release cadence: PDE loss is
 still measured on a dense in-memory trajectory, while each temporal HDF5 row
 stores 30 uniformly spaced exact frames plus the dense `quality_T` and selected
-frame indices. A new 30-frame SeaWulf pass is required before replacing the
+frame indices. A new 30-frame Slurm pass is required before replacing the
 historical hashes below.
 
 ## Normalized PDE losses
@@ -58,6 +58,6 @@ records `status=pass`, while `publication_ready=false` remains intentional.
 | `summary.quality.json` | `420e8f07fd87e5f56151a9e32288a99db82675171048ffb51490b9730825debf` |
 | `summary.quality.csv` | `85b40dfff40a4c5a3cc74e8eda72454726cc8cb6250d9f507d9a7fe9d6a2bf04` |
 
-The source plan, generated arrays, and full reports remain on temporary
-SeaWulf scratch and require an independent archival copy before the site purge
-window.
+The source plan, generated arrays, and full reports were produced on temporary
+HPC scratch and require an independent archival copy before the retention
+window expires.

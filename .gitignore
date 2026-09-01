@@ -47,4 +47,4 @@ ignored/
 
 # Local cluster configuration may contain account/group names
 .env
-hpc/seawulf/local.env
+hpc/slurm/local.env
