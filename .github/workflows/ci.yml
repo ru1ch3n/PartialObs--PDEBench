@@ -49,7 +49,7 @@ jobs:
         run: uv run --no-sync python -m pdeobs protocol --check --config configs/dataset/default.yaml
       - name: Validate shell launchers
         shell: bash
-        run: bash -n hpc/seawulf/*.sh hpc/seawulf/*.sbatch
+        run: bash -n hpc/slurm/*.sh hpc/slurm/*.sbatch
       - name: Validate research records
         run: uv run --no-sync python scripts/validate_papers.py
       - name: Verify generated benchmark website is current

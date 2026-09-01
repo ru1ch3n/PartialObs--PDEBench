@@ -15,7 +15,7 @@ learning under partial observation.</strong></p>
 [numerical solver gate](docs/NUMERICAL_VALIDATION.md) |
 [extension guide](docs/EXTENDING.md) |
 [Linux server guide](docs/SERVER.md) |
-[SeaWulf guide](hpc/seawulf/README.md) |
+[Slurm HPC guide](hpc/slurm/README.md) |
 [contributing](CONTRIBUTING.md) |
 [code of conduct](CODE_OF_CONDUCT.md) |
 [security](SECURITY.md)
@@ -65,8 +65,8 @@ this repository.
 - One CLI for protocol checks, planning, generation, one-case generation,
   download, training, inference, evaluation,
   aggregation, problem-difficulty analysis, diagnostics, and component discovery.
-- CPU/GPU Slurm scripts for SeaWulf, including manifest-driven arrays and
-  resume-safe independent shards.
+- Portable CPU/GPU Slurm templates, including manifest-driven arrays,
+  dependency-gated quality checks, and resume-safe independent shards.
 
 ## Install directly from Git
 
@@ -128,14 +128,14 @@ pdeobs generate \
   --output datasets/numerics-demo
 
 # Complete 280-factor coverage, 20 samples per macro case, 5,600 total.
-# Use the SeaWulf submission workflow rather than running this on a laptop.
+# Use the Slurm submission workflow rather than running this on a laptop.
 pdeobs plan \
   --config configs/dataset/numerics_validation20.yaml \
   --output datasets/plans/numerics-validation20.jsonl
 ```
 
-The exact scratch-only SeaWulf commands, CPU policy, dependency windows, and
-quality-report paths are in the [SeaWulf guide](hpc/seawulf/README.md).
+Portable Slurm commands, bounded dependency windows, scheduler overrides, and
+quality-report paths are in the [Slurm HPC guide](hpc/slurm/README.md).
 
 Default/debug temporal rows store exactly 30 ordered snapshots; the checked-in
 560,000-sample full campaign stores `T=15` (`T=1` for static PDEs) and can use
@@ -148,7 +148,7 @@ frames are discarded after quality evaluation; metadata preserves the dense
 
 For a tailored PDE/boundary/setting slice, use the
 [interactive Benchmark Builder](https://ru1ch3n.github.io/PartialObs--PDEBench/builder/).
-It generates local, Linux-server, and SeaWulf commands together with report and
+It generates local, Linux-server, and Slurm commands together with report and
 strict quality profiles plus per-PDE loss reporting. The publication-candidate
 choice is shown but intentionally blocked until a trusted external evidence
 verifier and frozen per-stratum thresholds exist. Rejected samples are logged
@@ -160,7 +160,7 @@ complete [the numerical validation gate](docs/NUMERICAL_VALIDATION.md). A
 validated solver plugin is also required and must provide a registered
 case-specific residual/solver-evidence contract.
 
-The completed 5,600-sample SeaWulf factor gate and all seven normalized PDE
+The completed 5,600-sample reference Slurm factor gate and all seven normalized PDE
 losses are recorded in the
 [validation20 report](release/NUMERICS_VALIDATION20.md). Ground truth is always
 solved and checksummed before any observation mask is applied; case-specific
@@ -298,7 +298,7 @@ all tier and OOD definitions.
 
 ```text
 pdeobs protocol     print/check the frozen benchmark-paper contract
-pdeobs doctor       verify a local or SeaWulf environment
+pdeobs doctor       verify a local or Slurm environment
 pdeobs list         discover registered components
 pdeobs plan         write explicit generation jobs for a Slurm array
 pdeobs generate     produce one job, a plan, or a local tier
@@ -341,7 +341,7 @@ for the complete ten-slot/nine-mask comparison, followed by a reduced
 560,000-record full-tier anchor table. Medium contains 20,000 records per PDE
 and approximately 14,000 optimizer-training records per PDE; full contains
 80,000 and exactly 56,000 respectively. Runtime figures in the protocol are
-unmeasured A6000 capacity estimates, not SeaWulf/A100 guarantees. Every real
+unmeasured dedicated-GPU capacity estimates, not guarantees for any Slurm site. Every real
 campaign must begin with a measured pilot, equal-seed uncertainty reporting,
 and the dataset-quality gate.
 
@@ -397,48 +397,47 @@ Detach from `tmux` with `Ctrl-b d` and reconnect with
 evaluation, resume commands, and update procedure, use the complete
 [Linux server guide](docs/SERVER.md).
 
-## SeaWulf quick start
+## Slurm HPC quick start
 
-SeaWulf work must be submitted through Slurm. The repository includes CPU
-generation/aggregation launchers and A100 training/evaluation launchers. After
-cloning the repository on `milan.seawulf.stonybrook.edu`, set your group name
-and run:
+Managed-cluster work must be submitted through Slurm rather than run on a login
+node. The repository includes portable CPU generation/aggregation and generic
+one-GPU training/evaluation templates. After cloning the repository on a shared
+filesystem, set paths and optional site routing:
 
 ```bash
-module load slurm
 cd PartialObs--PDEBench
 
-export PDEOBS_BASE="/gpfs/scratch/$USER/pdeobs"
+export PDEOBS_BASE="${SCRATCH:-$PWD}/pdeobs"
 export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
 export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
 export PDEOBS_ENV_FILE="environment-generation.yml"
 export PDEOBS_DATA="$PDEOBS_BASE/data"
 export PDEOBS_RUNS="$PDEOBS_BASE/runs"
-export CONDA_PKGS_DIRS="$PDEOBS_BASE/conda-pkgs"
-export PIP_CACHE_DIR="$PDEOBS_BASE/pip-cache"
-export XDG_CACHE_HOME="$PDEOBS_BASE/cache"
-mkdir -p logs "$(dirname "$PDEOBS_ENV")" \
-  "$PDEOBS_DATA/plans" "$PDEOBS_RUNS" "$CONDA_PKGS_DIRS" \
-  "$PIP_CACHE_DIR" "$XDG_CACHE_HOME"
+# Optional: leave unset to use scheduler defaults.
+export PDEOBS_CPU_PARTITION="YOUR_CPU_PARTITION"
+export PDEOBS_GPU_PARTITION="YOUR_GPU_PARTITION"
+export PDEOBS_ACCOUNT="YOUR_ACCOUNT"
+mkdir -p logs "$(dirname "$PDEOBS_ENV")" "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
 
 # Bootstrap only inside a compute allocation, never on the login node.
-srun --partition=short-40core-shared --nodes=1 --ntasks=1 \
-  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
-bash hpc/seawulf/bootstrap.sh
-exit
+# Start that allocation with the site-approved salloc/srun command, then:
+bash hpc/slurm/bootstrap.sh
 
 # Make an exact smoke plan, then chain generation and validation. Model
 # training is a later phase and uses a separate full environment.
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \
-  --config configs/dataset/smoke.yaml --tier tiny \
+  --config configs/dataset/smoke.yaml \
   --output "$PDEOBS_DATA/plans/smoke.jsonl"
-smoke_job="$(sbatch --parsable --array=0-0 \
-  hpc/seawulf/generate_array.sbatch \
+site_args=()
+[[ -n "${PDEOBS_CPU_PARTITION:-}" ]] && site_args+=(--partition="$PDEOBS_CPU_PARTITION")
+[[ -n "${PDEOBS_ACCOUNT:-}" ]] && site_args+=(--account="$PDEOBS_ACCOUNT")
+smoke_job="$(sbatch --parsable "${site_args[@]}" --array=0-0 \
+  hpc/slurm/generate_array.sbatch \
   configs/dataset/smoke.yaml "$PDEOBS_DATA/smoke" \
   "$PDEOBS_DATA/plans/smoke.jsonl")"
 smoke_job="${smoke_job%%;*}"
-check_job="$(sbatch --parsable --dependency="afterok:$smoke_job" \
-  hpc/seawulf/aggregate_cpu.sbatch \
+check_job="$(sbatch --parsable "${site_args[@]}" --dependency="afterok:$smoke_job" \
+  hpc/slurm/aggregate_cpu.sbatch \
   "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/smoke/summary.json" \
   "$PDEOBS_DATA/plans/smoke.jsonl")"
 check_job="${check_job%%;*}"
@@ -446,18 +445,18 @@ echo "generation=$smoke_job validation=$check_job"
 squeue --user="$USER"
 ```
 
-Do not submit the full dataset first. Inspect `logs/`, the validation summary,
-and `seff JOB_ID`; then follow the exact-commit, signal-tier, array-window,
-resume, storage, and archive instructions in the full
-[SeaWulf guide](hpc/seawulf/README.md). SeaWulf scratch is temporary and not
-backed up.
+Do not submit the full dataset first. Inspect `logs/`, scheduler accounting, and
+the validation summary; then follow the exact-commit, array-window, resume,
+storage, and archive instructions in the full
+[Slurm HPC guide](hpc/slurm/README.md). Treat scratch as temporary unless the
+local site explicitly guarantees archival retention.
 
 ## Repository structure
 
 ```text
 src/pdeobs/          package, solvers, masks, methods, metrics, runners
-configs/             dataset, method, experiment, and SeaWulf YAML
-hpc/seawulf/         environment and Slurm launchers
+configs/             dataset, method, experiment, and portable Slurm YAML
+hpc/slurm/           environment and Slurm launchers
 tests/               deterministic unit and end-to-end smoke tests
 docs/                benchmark protocol, extension guide, and research website
 scripts/             research-map maintenance utilities

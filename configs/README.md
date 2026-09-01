@@ -21,11 +21,11 @@ The checked-in configurations are executable reference protocols:
   dense `trajectory_steps_by_case` values are used only for in-memory PDE-loss
   measurement; `stored_trajectory_steps: 30` fixes the temporal HDF5 size.
   Solver mappings remain independent of observation masks.
-- `dataset/numerics_full_t15.yaml`: the 560,000-sample, dataset-only SeaWulf
+- `dataset/numerics_full_t15.yaml`: the 560,000-sample, dataset-only Slurm
   campaign. It inherits the topology-matched numerical routes and strict PDE
   loss gate, stores `T=15` for temporal data (`T=1` for static data), keeps the
   denser audit path in memory, and limits each resumable shard to 200 samples.
-- `dataset/smoke.yaml`: a tiny local or SeaWulf preflight run.
+- `dataset/smoke.yaml`: a tiny local or Slurm preflight run.
 - `dataset/recovery_signal.yaml` and `dataset/rollout_signal.yaml`: focused
   34-sample cases with strict train/validation/test coverage for the default
   recovery and heat-rollout experiments.
@@ -55,9 +55,9 @@ The checked-in configurations are executable reference protocols:
   deliberately not an executable benchmark config: six requested external
   adapters are absent, and planning-only rows must never be submitted as jobs.
 - `analysis/difficulty.yaml`: metric direction, grouping, and failure-ranking defaults.
-- `cluster/seawulf.yaml`: documentation-only snapshot of the checked-in Slurm
-  defaults. The launchers do not consume this YAML; use `sbatch` overrides or
-  edit a copied launcher when a measured run needs different resources.
+- `cluster/slurm.yaml`: documentation-only map of the portable Slurm interface.
+  The launchers do not consume this YAML; use environment variables and normal
+  `sbatch` overrides after a measured site-specific pilot.
 
 For example:
 

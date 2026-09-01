@@ -135,7 +135,7 @@ all six normal slots would require 1,134 neural fits.
 ## 6. Provisional A6000 capacity scenario
 
 The following values are rough, unmeasured planning assumptions from the
-proposal. They are not benchmark results, SLAs, or SeaWulf runtime predictions.
+proposal. They are not benchmark results, SLAs, or runtime predictions for a Slurm site.
 
 ```text
 12 GPUs x 10 days x 24 hours = 2,880 theoretical GPU-hours
@@ -154,9 +154,9 @@ full to medium is not a validated scaling law for per-instance PINNs,
 fixed-cost prior training, diffusion sampling, or I/O. Run a measured pilot and
 recompute the schedule.
 
-SeaWulf currently uses a shared A100 partition, one GPU per launcher job, with
-site queue and time limits. It does not guarantee twelve simultaneous GPUs.
-Do not transfer the A6000 estimate directly to SeaWulf.
+Slurm sites differ in accelerator type, queue sharing, accounting, and time
+limits. A dedicated-GPU estimate does not guarantee simultaneous capacity on
+any managed cluster; size the campaign from a measured site-specific pilot.
 
 ## 7. Recommended campaign presets
 

@@ -2,8 +2,8 @@
 
 This guide covers a single Linux server reached over SSH. If the machine is a
 managed cluster, use its scheduler instead of running long work on a login
-node. SeaWulf users should follow the dedicated
-[SeaWulf Slurm guide](../hpc/seawulf/README.md).
+node. Managed-cluster users should follow the portable
+[Slurm HPC guide](../hpc/slurm/README.md).
 
 ## 1. Clone and install
 

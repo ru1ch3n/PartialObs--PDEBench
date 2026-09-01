@@ -6,6 +6,12 @@ config_path="${2:?Usage: submit_generation.sh PLAN CONFIG OUTPUT [START STOP]}"
 output_root="${3:?Usage: submit_generation.sh PLAN CONFIG OUTPUT [START STOP]}"
 : "${PDEOBS_ENV:?Set PDEOBS_ENV to the installed environment path.}"
 
+sbatch_command="${PDEOBS_SBATCH:-sbatch}"
+if ! command -v "$sbatch_command" >/dev/null 2>&1; then
+  echo "Slurm sbatch is unavailable; set PDEOBS_SBATCH to its absolute path if needed." >&2
+  exit 2
+fi
+
 if [[ ! -x "$PDEOBS_ENV/bin/python" ]]; then
   echo "PDEOBS_ENV does not contain an executable Python: $PDEOBS_ENV" >&2
   exit 2
@@ -51,5 +57,20 @@ if (( window_size > max_queued )); then
   exit 2
 fi
 
-sbatch --array="${start_index}-${stop_index}%${concurrency}" \
-  hpc/seawulf/generate_array.sbatch "$config_path" "$output_root" "$plan_path"
+sbatch_args=(--array="${start_index}-${stop_index}%${concurrency}")
+if [[ -n "${PDEOBS_CPU_PARTITION:-}" ]]; then
+  sbatch_args+=(--partition="$PDEOBS_CPU_PARTITION")
+fi
+if [[ -n "${PDEOBS_ACCOUNT:-}" ]]; then
+  sbatch_args+=(--account="$PDEOBS_ACCOUNT")
+fi
+if [[ -n "${PDEOBS_QOS:-}" ]]; then
+  sbatch_args+=(--qos="$PDEOBS_QOS")
+fi
+if [[ -n "${PDEOBS_RESERVATION:-}" ]]; then
+  sbatch_args+=(--reservation="$PDEOBS_RESERVATION")
+fi
+
+job_id="$("$sbatch_command" --parsable "${sbatch_args[@]}" \
+  hpc/slurm/generate_array.sbatch "$config_path" "$output_root" "$plan_path")"
+printf '%s\n' "${job_id%%;*}"

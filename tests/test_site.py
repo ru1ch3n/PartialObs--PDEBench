@@ -25,10 +25,12 @@ def test_server_page_contains_both_supported_workflows() -> None:
     html = (DOCS / "server" / "index.html").read_text(encoding="utf-8")
 
     assert "Linux server: verified smoke run" in html
-    assert "SeaWulf: dependency-chained smoke example" in html
+    assert "Slurm HPC: dependency-chained smoke example" in html
     assert "configs/dataset/smoke.yaml" in html
     assert "git checkout YOUR_RELEASE_TAG_OR_COMMIT" in html
-    assert "hpc/seawulf/generate_array.sbatch" in html
+    assert "hpc/slurm/generate_array.sbatch" in html
+    assert "YOUR_CPU_PARTITION" in html
+    assert "YOUR_GPU_PARTITION" in html
     assert 'href="../builder/">Benchmark Builder</a>' in html
     assert "OBSERVATION_TRAINING_PROTOCOL.md" in html
     assert "random 3% checkpoint belongs to a separate transfer/OOD table" in html
@@ -44,7 +46,7 @@ def test_builder_page_is_bilingual_accessible_and_quality_explicit() -> None:
     assert 'role="tablist"' in html
     assert 'aria-live="polite"' in html
     assert "benchmark-builder.js?v=" in html
-    assert "benchmark-builder.js?v=2026-08-16-observation-v3" in html
+    assert "benchmark-builder.js?v=2026-08-31-slurm-v1" in html
     assert "Training per observation type" in html
     assert "Primary matched-mask comparison" in html
     assert "random 3%" in html
@@ -149,8 +151,9 @@ def test_builder_options_are_generated_from_the_frozen_contract() -> None:
     assert planner["dataset_accounting"]["medium"]["records_per_pde"] == 20_000
     assert planner["dataset_accounting"]["full"]["records_per_pde"] == 80_000
     assert planner["budget"]["status"] == "unmeasured_planning_scenario"
-    assert "A100" in planner["budget"]["warning"]
+    assert "not a capacity promise for any Slurm system" in planner["budget"]["warning"]
     assert payload["environments"][0]["label"] == "Linux/macOS/local Bash"
+    assert {row["value"] for row in payload["environments"]} == {"local", "server", "slurm"}
 
 
 def test_builder_script_generates_safe_reproducible_workflows() -> None:
@@ -168,7 +171,7 @@ def test_builder_script_generates_safe_reproducible_workflows() -> None:
     assert script.count("set -Eeuo pipefail") >= 3
     assert 'CONFIG_DIR="$PDEOBS_DATA/configs"' in script
     assert "PDEOBS_WINDOW_START" in script
-    assert "one window of at most 100" in script
+    assert "PDEOBS_MAX_QUEUED_TASKS" in script
     assert "afterok:$generation_job" in script
     assert "summary.quality.json/.csv" in script
     assert "publication_ready remains false" in script
@@ -182,7 +185,7 @@ def test_builder_script_generates_safe_reproducible_workflows() -> None:
     assert "seeds: ${row.default_seeds}" in script
     assert "fit_scope: ${yamlString(row.fit_scope)}" in script
     assert "No training, evaluation, or scheduler command is emitted" in script
-    assert "seawulf_a100_transferable: false" in script
+    assert "slurm_site_transferable: false" in script
     assert "command_generation" in script
     assert 'state.model === "autoregressive"' in script
     for split in (
@@ -200,8 +203,9 @@ def test_builder_script_generates_safe_reproducible_workflows() -> None:
     assert "previous_job" not in script
     assert "PowerShell alternative" not in script
     assert "dependency-chained windows" not in script
-    assert '"ssh YOUR_NETID@milan' not in script
-    assert '"# ssh YOUR_NETID@milan' in script
+    assert "YOUR_CPU_PARTITION" in script
+    assert "YOUR_GPU_PARTITION" in script
+    assert "hpc/slurm/submit_generation.sh" in script
     assert "\\n+  " not in script
 
 

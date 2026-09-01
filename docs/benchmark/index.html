@@ -20,7 +20,7 @@
         <span class="badge">7 task protocols</span>
         <span class="badge">15 analyses</span>
         <span class="badge">9 matched-mask views</span>
-        <span class="badge">SeaWulf ready</span>
+        <span class="badge">Slurm ready</span>
       </div>
       <nav class="nav">
         <a href="../index.html">Home</a>
@@ -49,7 +49,7 @@
         <b>Implementation status:</b> machine-verifiable protocol, one-line
         generation/training/inference/evaluation/presets, strict storage and
         split checks, anchor configs, per-sample failure records, Linux server
-        instructions, and SeaWulf workflows are checked in.
+        instructions, and portable Slurm workflows are checked in.
       </div>
       <div class="note">
         <b>Scientific release status:</b> the bundled numerical solvers are compact
@@ -150,7 +150,7 @@
         per PDE in the optimizer split). Full contains 560,000 records (80,000
         per PDE, exactly 56,000 training records per PDE). The quoted
         12-A6000 GPU-hour ranges are unmeasured planning assumptions, not
-        SeaWulf/A100 runtime promises; every platform needs a measured pilot.
+        runtime promises for any cluster or GPU model; every platform needs a measured pilot.
       </p>
       <div class="note">
         <b>Executable status:</b> this repository currently provides RBF and
@@ -185,7 +185,7 @@ pdeobs train --task sparse_recovery --model fno \
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/NUMERICAL_VALIDATION.md">numerical-validation gate</a>,
         <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/EXTENDING.md">method extension guide</a>, generate a tailored configuration in the
         <a href="../builder/">interactive Benchmark Builder</a>, or use the
-        <a href="../server/">Linux and SeaWulf quick starts</a>.
+        <a href="../server/">Linux and Slurm quick starts</a>.
       </p>
     </section>
   </main>

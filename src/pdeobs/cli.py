@@ -1,4 +1,4 @@
-"""Command-line interface for generation, training, evaluation, and SeaWulf."""
+"""Command-line interface for generation, training, evaluation, and Slurm HPC."""
 
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     doctor = commands.add_parser("doctor", help="verify runtime, storage, Slurm, and GPU setup")
-    doctor.add_argument("--cluster", choices=("local", "seawulf"), default="local")
+    doctor.add_argument("--cluster", choices=("local", "slurm"), default="local")
     doctor.add_argument("--gpu", action="store_true", help="require a usable PyTorch GPU")
     doctor.add_argument("--offline", action="store_true", help="assert an offline job setup")
     doctor.set_defaults(handler=_cmd_doctor)

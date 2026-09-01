@@ -1,0 +1,40 @@
+# Documentation-only map of the portable hpc/slurm interface.
+# Slurm does not read this file. Supply values through environment variables or
+# normal sbatch options according to local site policy.
+documentation_only: true
+cluster: slurm
+data_root_env: PDEOBS_DATA
+run_root_env: PDEOBS_RUNS
+environment_env: PDEOBS_ENV
+
+routing:
+  cpu_partition_env: PDEOBS_CPU_PARTITION
+  gpu_partition_env: PDEOBS_GPU_PARTITION
+  account_env: PDEOBS_ACCOUNT
+  qos_env: PDEOBS_QOS
+  reservation_env: PDEOBS_RESERVATION
+
+commands:
+  sbatch_env: PDEOBS_SBATCH
+  srun_env: PDEOBS_SRUN
+  squeue_env: PDEOBS_SQUEUE
+  sacct_env: PDEOBS_SACCT
+
+software:
+  module_list_env: PDEOBS_MODULES
+  module_setup_file_env: PDEOBS_MODULE_SETUP
+  environment_manager_env: PDEOBS_ENV_MANAGER
+
+examples:
+  cpu:
+    cpus: 8
+    memory: 32G
+    time: "04:00:00"
+  gpu:
+    gpus: 1
+    cpus: 8
+    memory: 64G
+    time: "08:00:00"
+  arrays:
+    generation_concurrency: 4
+    max_queued_tasks: 100
