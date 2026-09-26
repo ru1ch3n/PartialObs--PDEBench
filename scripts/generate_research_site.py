@@ -8,7 +8,7 @@ If that folder is missing/empty, it falls back to the legacy
 ``scripts/research_db.ndjson`` file.
 
 It writes:
-  - docs/index.html                     (homepage: summary + paper tree)
+  - docs/index.html                     (public PDE-OBS homepage template)
   - docs/research/index.html            (research hub + category browser)
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
@@ -2502,7 +2502,9 @@ def main() -> None:
     )
 
     # Core pages
-    write(DOCS / "index.html", render_home(papers))
+    # Keep the public homepage stable when refreshing the archived literature pages.
+    public_home = REPO_ROOT / "scripts" / "templates" / "pdeobs-public-home.html"
+    write(DOCS / "index.html", public_home.read_text(encoding="utf-8"))
     write(DOCS / "research" / "index.html", render_research_index(papers))
     write(DOCS / "builder" / "index.html", render_builder())
     write(DOCS / "server" / "index.html", render_server())

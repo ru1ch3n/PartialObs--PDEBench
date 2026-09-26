@@ -9,6 +9,8 @@ public package or dataset release has been made.
 
 ### Added
 
+- Current PDE-OBS public project homepage, with the previous homepage archived
+  and links to the separate public code, preprint, data and model release.
 - Public contribution, support, vulnerability-reporting, release, and OpenSSF
   readiness documentation.
 - Dependabot, dependency review, CodeQL, and OpenSSF Scorecard automation.
