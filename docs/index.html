@@ -1,271 +1,77 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#071225" />
-  <title>PartialObs–PDEBench</title>
-  <link rel="stylesheet" href="assets/style.css?v=2026-08-18-design-v4" />
-  <script>window.MathJax={tex:{inlineMath:[['\\(','\\)'],['$','$']]}};</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script><script>document.addEventListener('DOMContentLoaded',()=>{  if(!window.mermaid) return;  /* Enable clickable Mermaid nodes on GitHub Pages. */  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'base',themeVariables:{primaryColor:'#e9eeff',primaryTextColor:'#0f172a',primaryBorderColor:'#3555d1',lineColor:'#6f7d8d',secondaryColor:'#e8faff',tertiaryColor:'#ffffff'}});  mermaid.run({querySelector:'.mermaid'});});</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#214a55">
+  <meta name="description" content="PDE-OBS: Controlled Evaluation Across Observation Patterns. Open code, numerical data, trained checkpoints, and complete prediction-level results for partial-observation PDE reconstruction and forecasting.">
+  <title>PDE-OBS | Controlled Evaluation Across Observation Patterns</title>
+  <link rel="canonical" href="https://ru1ch3n.github.io/PartialObs--PDEBench/">
+  <link rel="stylesheet" href="assets/pdeobs-public-20260926.css">
 </head>
-
-<body class="home">
-  <header class="hero">
-    <div class="container">
-      <div class="hero-top">
-        <div>
-          <h1><span>PartialObs–</span>PDEBench</h1>
-          <p class="subtitle">The home of <b>PDE-OBS: A Controlled Partial-Observation Benchmark for PDE Dynamics</b> plus a supporting partial-observation research map.</p>
-          <div class="hero-actions">  <a class="hero-button primary" href="builder/">Build a benchmark →</a>  <a class="hero-button" href="benchmark/">Read the protocol</a>  <a class="hero-button" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div><div class="meta">  <div><b>Project:</b> <a class="meta-link" href="https://ru1ch3n.github.io/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">ru1ch3n.github.io/PartialObs--PDEBench</a></div>  <div><b>Repo:</b> <a class="meta-link" href="https://github.com/ru1ch3n/PartialObs--PDEBench" target="_blank" rel="noopener noreferrer">GitHub</a></div></div>
-        </div>
-
-        <div class="hero-card">  <p class="field-caption">Generated Poisson field · official 3% mask</p>  <div class="smallcaps">Benchmark status</div>  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>  <p class="muted" style="margin-top:8px;">    Deterministic generation, verified shards, strict splits, baselines,     OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in.  </p>  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>  <p><a href="benchmark/">Benchmark-paper contract</a> ·   <a href="builder/">Build a dataset</a> ·   <a href="server/">Run on a server</a></p></div>
-      </div>
-
-      <dl class="hero-stats" aria-label="Benchmark overview">  <div><dt>7</dt><dd>PDE families</dd></div>  <div><dt>4</dt><dd>Boundary protocols</dd></div>  <div><dt>10</dt><dd>Condition generators</dd></div>  <div><dt>301</dt><dd>Indexed AI4PDE papers</dd></div></dl>
-
-      <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="research/">Research</a><a href="pde-problems/">PDE problems</a><a href="baselines/">Baselines</a><a href="benchmark/">Benchmark</a><a href="builder/">Builder</a><a href="server/">Run</a><a href="contribute/">Contribute</a></nav>
-    </div>
+<body>
+  <a class="skip" href="#overview">Skip to content</a>
+  <header class="topbar">
+    <a class="wordmark" href="#">PDE<span>–</span>OBS<span class="wordmark-dot">.</span></a>
+    <nav aria-label="Primary"><a href="#overview">Overview</a><a href="#results">Results</a><a href="#resources">Resources</a><a class="nav-code" href="https://github.com/ru1ch3n/PDE-OBS">GitHub <span aria-hidden="true">↗</span></a></nav>
   </header>
-
-  <main class="container">
-
-<section id="intro" class="section">
-  <h2>What is this website?</h2>
-  <p>
-    PartialObs–PDEBench focuses on <b>PDE reconstruction and inference when observations are sparse</b>
-    (missing sensors, masked pixels, partial trajectories).
-  </p>
-  <div class="note"><b>Manuscript scope:</b> the repository supports one data/benchmark paper—dataset design, task/split/metric protocols, anchor baselines, difficulty analysis, and one-line tools. New semantic-ID, large world-model, and foundation-model claims are separate projects.</div>
-  <ul>
-    <li><b>Research:</b> browse/search <b>301</b> AI4PDE/AI4SDE papers (<b>12</b> curated pages + index placeholders).</li>
-    <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
-    <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
-    <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication-candidate quality gates.</li>
-    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
-    <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
-  </ul>
-</section>
-
-<section id="tree" class="section">
-  <h2>Paper tree</h2>
-  <p class="muted">A compact, conceptual lineage map (selected famous works).</p>
-
-  <p class="muted" style="margin-top:12px;">ASCII (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="code ascii-tree">AI4PDE / SciML (selected milestones)
-├─ <a href="research/?q=physics">Physics-informed optimization</a>
-│  ├─ <a href="research/paper/?slug=deep-ritz">Deep Ritz (2018)</a>
-│  ├─ <a href="research/paper/?slug=dgm">DGM / Deep Galerkin (2018)</a>
-│  ├─ <a href="research/paper/?slug=deepbsde">DeepBSDE (2018)</a>
-│  └─ <a href="research/paper/?slug=pinn">PINNs (2019)</a>
-│     ├─ <a href="research/paper/?slug=cpinn">cPINNs (2020)</a>
-│     ├─ <a href="research/paper/?slug=sa-pinn">SA-PINNs (2020)</a>
-│     ├─ <a href="research/paper/?slug=xpinn">XPINNs (2021)</a>
-│     ├─ <a href="research/paper/?slug=gpinn">gPINNs (2021)</a>
-│     └─ <a href="research/paper/?slug=fbpinns">FBPINNs (2021)</a>
-├─ <a href="research/?method=Operator%20learning">Operator learning</a>
-│  ├─ <a href="research/paper/?slug=fno">FNO (2020)</a>
-│  ├─ <a href="research/paper/?slug=gkn">GKN (2020)</a>
-│  ├─ <a href="research/paper/?slug=mgno">MGNO (2020)</a>
-│  ├─ <a href="research/paper/?slug=deeponet">DeepONet (2021)</a>
-│  ├─ <a href="research/paper/?slug=pino">PINO (2021)</a>
-│  ├─ <a href="research/paper/?slug=galerkin-transformer">Galerkin Transformer (2021)</a>
-│  ├─ <a href="research/paper/?slug=u-no">U-NO (2022)</a>
-│  ├─ <a href="research/paper/?slug=wno">WNO (2022)</a>
-│  ├─ <a href="research/paper/?slug=cno">CNO (2023)</a>
-│  └─ <a href="research/paper/?slug=u-wno">U-WNO (2024)</a>
-├─ <a href="research/?method=Diffusion">Diffusion / generative PDE inference</a>
-│  ├─ <a href="research/paper/?slug=conditional-diffusion-pde">Conditional diffusion protocols (2024)</a>
-│  ├─ <a href="research/paper/?slug=diffusionpde">DiffusionPDE (2024)</a>
-│  ├─ <a href="research/paper/?slug=fundps">FunDPS (2025)</a>
-│  ├─ <a href="research/paper/?slug=prisma">PRISMA (2025)</a>
-│  └─ <a href="research/paper/?slug=videopde">VideoPDE (2025)</a>
-├─ <a href="research/?method=Graph%20%2F%20mesh">Graph / mesh simulators</a>
-│  ├─ <a href="research/paper/?slug=gns">GNS (ICML 2020)</a>
-│  └─ <a href="research/paper/?slug=meshgraphnets">MeshGraphNets (ICLR 2021)</a>
-└─ <a href="research/?method=Benchmark">Benchmarks and datasets</a>
-   ├─ <a href="research/paper/?slug=pdebench">PDEBench (2022)</a>
-   ├─ <a href="research/paper/?slug=pdearena">PDEArena (2022)</a>
-   ├─ <a href="research/paper/?slug=fourcastnet">FourCastNet (2022)</a>
-   └─ <a href="research/paper/?slug=graphcast">GraphCast (2023)</a></pre>
-  </div>
-
-  <p class="muted" style="margin-top:12px;">Mermaid (clickable)</p>
-  <div class="card" style="margin-top:8px;">
-    <pre class="mermaid">flowchart TD
-  Root["AI4PDE / SciML (selected milestones)"]
-
-  %% Physics-informed optimization (PINN family)
-  Root --> PI["Physics-informed optimization"]
-  PI --> DeepRitz["Deep Ritz (2018)"]
-  PI --> DGM["DGM / Deep Galerkin (2018)"]
-  PI --> DeepBSDE["DeepBSDE (2018)"]
-  PI --> PINN["PINNs (2019)"]
-  PINN --> cPINN["cPINNs (2020)"]
-  PINN --> SAPINN["SA-PINNs (2020)"]
-  PINN --> XPINN["XPINNs (2021)"]
-  PINN --> gPINN["gPINNs (2021)"]
-  PINN --> FBPINN["FBPINNs (2021)"]
-
-  %% Operator learning (neural operators)
-  Root --> OL["Operator learning"]
-  OL --> DeepONet["DeepONet (2021)"]
-  OL --> FNO["FNO (2020)"]
-  FNO --> PINO["PINO (2021)"]
-  FNO --> GalerkinT["Galerkin Transformer (2021)"]
-  FNO --> UNO["U-NO (2022)"]
-  FNO --> WNO["WNO (2022)"]
-  WNO --> UWNO["U-WNO (2024)"]
-  FNO --> CNO["CNO (2023)"]
-  OL --> GKN["GKN (2020)"]
-  OL --> MGNO["MGNO (2020)"]
-
-  %% Diffusion / generative inference
-  Root --> DiffGen["Diffusion / generative PDE inference"]
-  DiffGen --> CondDiff["Conditional diffusion protocols (2024)"]
-  CondDiff --> DiffPDE["DiffusionPDE (2024)"]
-  DiffPDE --> FunDPS["FunDPS (2025)"]
-  FunDPS --> PRISMA["PRISMA (2025)"]
-  DiffPDE --> VideoPDE["VideoPDE (2025)"]
-
-  %% Graph simulators
-  Root --> GraphSim["Graph / mesh simulators"]
-  GraphSim --> GNS["GNS (ICML 2020)"]
-  GraphSim --> MGN["MeshGraphNets (ICLR 2021)"]
-
-  %% Benchmarks / datasets
-  Root --> Bench["Benchmarks and datasets"]
-  Bench --> PDEBench["PDEBench (2022)"]
-  Bench --> PDEArena["PDEArena (2022)"]
-  Bench --> FourCastNet["FourCastNet (2022)"]
-  FourCastNet --> GraphCast["GraphCast (2023)"]
-
-  %% Clickable links (homepage)
-  %% - Paper nodes go to curated pages.
-  %% - Category nodes go to the Research tab with an initial filter.
-  click Root "research/" "Open the research index" _self
-
-  click PI "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click DeepRitz "research/paper/?slug=deep-ritz" "Deep Ritz (2018)" _self
-  click DGM "research/paper/?slug=dgm" "Deep Galerkin Method (2018)" _self
-  click DeepBSDE "research/paper/?slug=deepbsde" "DeepBSDE (2018)" _self
-  click PINN "research/paper/?slug=pinn" "PINNs (2019)" _self
-  click cPINN "research/paper/?slug=cpinn" "cPINNs (2020)" _self
-  click SAPINN "research/paper/?slug=sa-pinn" "SA-PINNs (2020)" _self
-  click XPINN "research/paper/?slug=xpinn" "XPINNs (2021)" _self
-  click gPINN "research/paper/?slug=gpinn" "gPINNs (2021)" _self
-  click FBPINN "research/paper/?slug=fbpinns" "FBPINNs (2021)" _self
-
-  click OL "research/?method=Operator%20learning" "Filter: Operator learning" _self
-  click DeepONet "research/paper/?slug=deeponet" "DeepONet (2021)" _self
-  click FNO "research/paper/?slug=fno" "Fourier Neural Operator (2020)" _self
-  click PINO "research/paper/?slug=pino" "Physics-Informed Neural Operator (2021)" _self
-  click GalerkinT "research/paper/?slug=galerkin-transformer" "Galerkin Transformer (2021)" _self
-  click UNO "research/paper/?slug=u-no" "U-NO (2022)" _self
-  click WNO "research/paper/?slug=wno" "WNO (2022)" _self
-  click UWNO "research/paper/?slug=u-wno" "U-WNO (2024)" _self
-  click CNO "research/paper/?slug=cno" "CNO (2023)" _self
-  click GKN "research/paper/?slug=gkn" "Graph Kernel Network (2020)" _self
-  click MGNO "research/paper/?slug=mgno" "MGNO (2020)" _self
-
-  click DiffGen "research/?method=Diffusion" "Filter: Diffusion" _self
-  click DiffPDE "research/paper/?slug=diffusionpde" "DiffusionPDE (2024)" _self
-  click FunDPS "research/paper/?slug=fundps" "FunDPS (2025)" _self
-  click PRISMA "research/paper/?slug=prisma" "PRISMA (2025)" _self
-  click VideoPDE "research/paper/?slug=videopde" "VideoPDE (2025)" _self
-
-  click GraphSim "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
-  click GNS "research/paper/?slug=gns" "GNS (ICML 2020)" _self
-  click MGN "research/paper/?slug=meshgraphnets" "MeshGraphNets (ICLR 2021)" _self
-
-  click Bench "benchmark/" "Benchmark tab" _self
-  click PDEBench "research/paper/?slug=pdebench" "PDEBench (2022)" _self
-  click PDEArena "research/paper/?slug=pdearena" "PDEArena (2022)" _self
-  click FourCastNet "research/paper/?slug=fourcastnet" "FourCastNet (2022)" _self
-  click GraphCast "research/paper/?slug=graphcast" "GraphCast (2023)" _self
-
-  click CondDiff "research/paper/?slug=conditional-diffusion-pde" "Open paper page"
-
-  %% Theme tweaks
-  classDef cat fill:#e9eeff,stroke:#3555d1,color:#0f172a;
-  classDef node fill:#ffffff,stroke:#c9d4e4,color:#0f172a;
-  class Root,PI,OL,DiffGen,GraphSim,Bench cat;
-  class DeepRitz,DGM,DeepBSDE,PINN,cPINN,SAPINN,XPINN,gPINN,FBPINN,DeepONet,FNO,PINO,GalerkinT,UNO,WNO,UWNO,CNO,GKN,MGNO,CondDiff,DiffPDE,FunDPS,PRISMA,VideoPDE,GNS,MGN,PDEBench,PDEArena,FourCastNet,GraphCast node;</pre>
-  </div>
-</section>
-
-
-<section id="taxonomy" class="section">
-  <h2>AI4PDE + AI4SDE map</h2>
-  <p class="muted">A high-level taxonomy you can extend as new method families emerge.</p>
-  <div class="card" style="margin-top:12px;">
-    <pre class="mermaid">flowchart TD
-  R["AI4PDE + AI4SDE: a taxonomy (high-level)"]
-
-  R --> Phys["Physics-constrained learning"]
-  Phys --> PINNfam["PINN-style residual minimization"]
-  Phys --> Hybrid["Hybrid: data + physics losses"]
-
-  R --> Op["Operator learning"]
-  Op --> NO["Neural operators (FNO/DeepONet/...)"]
-  Op --> ROM["Learned ROM / reduced models"]
-
-  R --> Graph["Graph / mesh simulators"]
-  Graph --> MP["Message passing / GNN solvers"]
-  Graph --> Mesh["Mesh-based neural fields"]
-
-  R --> Gen["Generative / probabilistic modeling"]
-  Gen --> Score["Score-based / diffusion models"]
-  Gen --> Bridge["Diffusion/SDE bridges (conditioning)"]
-  Gen --> UQ["Uncertainty quantification"]
-
-  R --> Theory["Theory &amp; guarantees"]
-  Theory --> Approx["Approximation / expressivity"]
-  Theory --> Stability["Stability / generalization"]
-
-  R --> Bench["Benchmarks"]
-
-  %% Clickable links (homepage)
-  click R "research/" "Open the research index" _self
-  click Phys "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click PINNfam "research/?method=PINN%20%2F%20physics-constrained" "Filter: PINN / physics-constrained" _self
-  click Hybrid "research/?q=hybrid" "Search: hybrid" _self
-
-  click Op "research/?method=Operator%20learning" "Filter: Operator learning" _self
-  click NO "research/?q=neural%20operator" "Search: neural operator" _self
-  click ROM "research/?q=reduced%20order" "Search: reduced order" _self
-
-  click Graph "research/?method=Graph%20%2F%20mesh" "Filter: Graph / mesh" _self
-  click MP "research/?q=message%20passing" "Search: message passing" _self
-  click Mesh "research/?q=mesh" "Search: mesh" _self
-
-  click Gen "research/?method=Diffusion" "Filter: Diffusion" _self
-  click Score "research/?method=Diffusion" "Filter: Diffusion" _self
-  click Bridge "research/?q=bridge" "Search: bridge" _self
-  click UQ "research/?q=uncertainty" "Search: uncertainty" _self
-
-  click Theory "research/?q=theory" "Search: theory" _self
-  click Approx "research/?q=approximation" "Search: approximation" _self
-  click Stability "research/?q=stability" "Search: stability" _self
-
-  click Bench "benchmark/" "Benchmark tab" _self</pre>
-  </div>
-  <details style="margin-top:12px;">
-    <summary class="muted">Show ASCII fallback</summary>
-    <pre class="code"><code>AI4PDE + AI4SDE (taxonomy)
-├─ Physics-informed optimization (PINN family)
-├─ Operator learning (neural operators)
-├─ Graph / mesh simulators
-├─ Generative inference (diffusion / SDE bridges)
-└─ Benchmarks and datasets</code></pre>
-  </details>
-</section>
-
-
-    <footer class="footer">
-      <div class="muted">Generated deterministically from repository sources.</div>
-    </footer>
+  <main>
+    <section class="hero wrap" aria-labelledby="title">
+      <p class="eyebrow">Open benchmark · Public preprint · September 2026</p>
+      <h1 id="title"><span>PDE-OBS</span><br>Controlled Evaluation Across<br class="wide-only"> Observation Patterns</h1>
+      <p class="standfirst">The same physical field. Different observations.<br>A common protocol for measuring what changes.</p>
+      <p class="authors">Ruichen Xu<sup>1,*</sup>, Siyao Wang<sup>2</sup>, Fang Wan<sup>1</sup>, Jiacheng Qiu<sup>1</sup>, Wenhan Gao<sup>1</sup>,<br class="wide-only"> Jiaxing Zhang<sup>3</sup>, Linsey Pang<sup>4</sup>, Ravid Shwartz-Ziv<sup>5</sup>, Yann LeCun<sup>5</sup>, Yuefan Deng<sup>1,*</sup></p>
+      <p class="affiliations"><span><sup>1</sup> Stony Brook University</span><span><sup>2</sup> University of California, Davis</span><span><sup>3</sup> TikTok</span><span><sup>4</sup> PayPal</span><span><sup>5</sup> New York University</span></p>
+      <p class="correspondence">* Corresponding authors: Ruichen Xu and Yuefan Deng</p>
+      <div class="actions">
+        <a class="button primary" href="https://raw.githubusercontent.com/ru1ch3n/PDE-OBS/main/paper/PDE_OBS_preprint.pdf">Read the paper <span aria-hidden="true">↗</span></a>
+        <a class="button" href="https://github.com/ru1ch3n/PDE-OBS">Code <span aria-hidden="true">↗</span></a>
+        <a class="button" href="https://huggingface.co/datasets/PDE-OBS/pdeobs-data">Data <span aria-hidden="true">↗</span></a>
+        <a class="button" href="https://huggingface.co/PDE-OBS/pdeobs-models">Models <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="release-note">Public preprint available below. arXiv submission is being prepared; no arXiv identifier has been assigned.</p>
+    </section>
+    <section class="scope-band" aria-label="Evaluated benchmark scope"><div class="wrap scope-grid">
+      <div><strong>7</strong><span>PDE families</span></div><div><strong>7</strong><span>adapted methods</span></div><div><strong>9 × 9</strong><span>train / test patterns</span></div><div><strong>441</strong><span>retained models</span></div><div><strong>3,969</strong><span>evaluation blocks</span></div>
+    </div></section>
+    <section id="overview" class="wrap section">
+      <div class="section-intro"><p class="eyebrow">01 / The benchmark</p><h2>Separate the field<br>from how it is observed.</h2></div>
+      <div class="intro-copy"><p>PDE-OBS evaluates reconstruction and short-horizon forecasting when measurement layouts and observation densities change. The physical record, prediction target, and train/test split stay fixed while the observation operator varies.</p><p>The released corpus contains <strong>560,000</strong> numerical fields and trajectories. The paper evaluates a <strong>14,000-record subset</strong>: 1,800 training and 200 test records per PDE. These are different populations, not interchangeable sample counts.</p></div>
+      <figure class="pipeline-figure"><img src="assets/pdeobs-public-20260926/pipeline.png" alt="PDE-OBS workflow: numerical records, observation construction, task inputs, models and evaluation." width="1650" loading="lazy"><figcaption>One numerical record supports multiple observation patterns. Recovery predicts a complete stationary solution field; forecasting starts from partial frame 0 and autoregressively predicts frames 1–3.</figcaption></figure>
+      <div class="protocol-pairs"><div><p class="eyebrow">Stationary recovery</p><p>Darcy · Poisson · Helmholtz</p><span>Partial solution → complete solution field</span></div><div><p class="eyebrow">Short-horizon forecasting</p><p>Heat · Reaction–diffusion · Burgers · Navier–Stokes</p><span>Partial initial field → three future frames; Navier–Stokes target is vorticity</span></div></div>
+    </section>
+    <section id="results" class="result-section"><div class="wrap">
+      <p class="eyebrow">02 / Complete results</p><h2>Observation transfer is part of the evaluation.<br>Not a footnote.</h2>
+      <div class="result-layout"><div class="result-copy">
+        <div class="finding"><span class="finding-number">49 / 49</span><h3>Cross-pattern error exceeds matched-pattern error.</h3><p>Every PDE–method pair has C &gt; D. D averages the nine matched cells; C averages the 72 off-diagonal cells.</p></div>
+        <div class="finding"><span class="finding-number">10.46×</span><h3>Median C/D across the complete grid.</h3><p>Paired test-identity bootstrap interval: [10.07, 10.71]. In the fixed 13-pair, 117-model configuration-matched subset: 10.74× [10.44, 11.12].</p></div>
+        <div class="finding"><h3>More observations do not guarantee a smaller error.</h3><p>Layout and density responses depend on the trained model. Heterogeneous training histories make this a descriptive benchmark, not a controlled architecture ranking.</p></div>
+        <p class="method-note">Each cell contains 200 test records. Cell-level mean ± sample SD, full-precision errors, training histories and all adverse finite outcomes are retained. Bootstrap intervals describe test-identity uncertainty, not training-seed uncertainty.</p>
+        <a class="text-link" href="https://github.com/ru1ch3n/PDE-OBS/tree/main/results/prediction_verification_20260924">Explore the complete result files <span aria-hidden="true">↗</span></a>
+      </div><figure class="overview-figure"><a href="assets/pdeobs-public-20260926/all-results.png" aria-label="Open the full-resolution 3,969-cell result overview"><img src="assets/pdeobs-public-20260926/all-results.png" alt="Seven by seven PDE–method overview; every block shows all nine training by nine testing patterns on a shared logarithmic error scale." width="1400" loading="lazy"></a><figcaption>All 3,969 cells on one absolute log error scale; darker is worse. Rows within each block are training patterns, columns are test patterns: R50, H, V, CL, BL, LI, BD, R65, R80. Outlines mark matched patterns; dots mark the fixed configuration-matched subset, not winners. Click to enlarge.</figcaption></figure></div>
+    </div></section>
+    <section class="wrap section mixed-section">
+      <div class="section-intro"><p class="eyebrow">03 / A separate training control</p><h2>What if training sees<br>multiple patterns?</h2></div>
+      <div class="intro-copy"><p>Five completed mixed-pattern models reduce large single-pattern transfer errors. Across their 45 reference-view blocks, MIX is below the median transferred specialist in <strong>45/45</strong> cases and below the best transferred specialist in <strong>34/45</strong>.</p><p>This does not establish universal superiority to destination-trained references or isolate heterogeneous training budgets. The Poisson recipe-matched subset is reported separately.</p></div>
+      <figure class="mixed-figure"><img src="assets/pdeobs-public-20260926/mixed-pattern.png" alt="Five mixed-pattern models compared with destination-trained references and single-pattern transfer results." width="1650" loading="lazy"><figcaption>Strict rescoring of retained predictions. These five models are additional controls, not replacements for the 441-model grid.</figcaption></figure>
+      <a class="text-link" href="https://github.com/ru1ch3n/PDE-OBS/tree/main/results/revision_v2">Read the controls, bootstrap and diagnostic evidence <span aria-hidden="true">↗</span></a>
+    </section>
+    <section id="resources" class="resources-section"><div class="wrap">
+      <p class="eyebrow">04 / Open resources</p><h2>Inspect the evidence.<br>Build on the benchmark.</h2>
+      <div class="resource-grid">
+        <a class="resource" href="https://github.com/ru1ch3n/PDE-OBS"><span class="resource-index">01</span><h3>Code &amp; documentation <span aria-hidden="true">↗</span></h3><p>Generation, observation operators, model interfaces, frozen protocols, tests and strict scoring.</p><span class="resource-meta">Python 3.10+ · MIT code license</span></a>
+        <a class="resource" href="https://huggingface.co/datasets/PDE-OBS/pdeobs-data"><span class="resource-index">02</span><h3>Numerical data <span aria-hidden="true">↗</span></h3><p>560,000 records across 7 PDEs, 4 boundary protocols and 10 constructions. Separate manifests identify the evaluated slice and full corpus.</p><span class="resource-meta">Hugging Face · HDF5 shards + checksums</span></a>
+        <a class="resource" href="https://huggingface.co/PDE-OBS/pdeobs-models"><span class="resource-index">03</span><h3>Trained checkpoints <span aria-hidden="true">↗</span></h3><p>441 released weights-only checkpoints with training metadata and digest bindings. Weights-only releases are for inference, not exact training continuation.</p><span class="resource-meta">Hugging Face · separate artifact terms</span></a>
+      </div>
+      <div class="getting-started"><div><h3>Start with the interface.</h3><p>Installation and help do not start training or download the corpus. Follow the documented, separately budgeted workflows when you are ready.</p><a class="text-link" href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">Installation guide <span aria-hidden="true">↗</span></a></div><pre><code>git clone https://github.com/ru1ch3n/PDE-OBS.git
+cd PDE-OBS
+python -m venv .venv
+# Activate the environment for your shell.
+python -m pip install .
+pdeobs --help</code></pre></div>
+      <div class="limits"><strong>What the evidence establishes.</strong> Prediction validity, score reproducibility, predictive quality and public accessibility are separate checks. Production PDE residuals establish discrete consistency, not independent reference-solution accuracy or grid convergence. The paper details the selected fields, boundary protocols, noiseless observations, short horizons and heterogeneous training histories.</div>
+    </div></section>
   </main>
+  <footer class="wrap footer"><div><a class="wordmark" href="#">PDE<span>–</span>OBS<span class="wordmark-dot">.</span></a><p>Controlled Evaluation Across Observation Patterns<br>Public research release · 26 September 2026</p></div><div><a href="https://github.com/ru1ch3n/PDE-OBS">Public repository ↗</a><br><a href="research/">Earlier literature index ↗</a><br><a href="index-202608-archive.html">Archived project homepage ↗</a><p class="footer-note">Earlier pages are retained as an archive;<br>the paper and public repository define the current benchmark.</p></div></footer>
 </body>
 </html>
