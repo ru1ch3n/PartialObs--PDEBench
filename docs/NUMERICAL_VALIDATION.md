@@ -43,7 +43,7 @@ applied later.
 For example, the low/medium periodic and free-slip Navier--Stokes
 multi-frequency strata use denser transient audit grids after the original
 grid missed the frozen saved-frame residual gate. Same-seed seven-sample
-SeaWulf refinements reduced the periodic maxima to `0.0380`/`0.0299`; the
+reference Slurm refinements reduced the periodic maxima to `0.0380`/`0.0299`; the
 free-slip maxima are `0.0463`/`0.0280`. The high regimes and other
 topology-matched solvers remain unchanged.
 
@@ -62,7 +62,7 @@ Primary references:
 No upstream source file is vendored. See `THIRD_PARTY_NOTICES.md` for license
 and attribution boundaries.
 
-## Two-stage SeaWulf gate
+## Two-stage Slurm validation gate
 
 1. `configs/dataset/numerics_demo.yaml` exercises all seven PDEs on a small
    periodic smoke matrix.
@@ -75,7 +75,7 @@ boundary losses, divergence where applicable, missing/invalid quality counts,
 and worst sample IDs. The true `full=2000` campaign remains blocked until the
 report and refinement evidence are reviewed.
 
-The complete SeaWulf campaign at commit `c70c726e13b` has now passed this
+The complete reference Slurm campaign at commit `c70c726e13b` has now passed this
 factor gate: 840/840 shards, 5,600/5,600 samples and quality records, all seven
 PDE families, zero missing/invalid records, and zero non-empty failure logs.
 The largest normalized losses were Burgers `0.04900286`, Navier--Stokes
@@ -85,7 +85,7 @@ the frozen `0.05` limit. See the checked-in
 worst sample IDs, and audit hashes. This is a passed full-factor numerical
 quality preflight, not independent publication validation.
 
-The earlier SeaWulf one-sample-per-stratum preflight covered all 840
+The earlier one-sample-per-stratum Slurm preflight covered all 840
 PDE/boundary/setting/regime combinations at 128x128. After targeted saved-frame
 refinement, the observed worst normalized PDE loss was below `0.05`; exact
 first-transition replay remained about `1e-8`, bounded-flow divergence about

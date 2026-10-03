@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#071225" />
   <title>Benchmark Builder - PDE-OBS</title>
   <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-design-v4" />
-  <script defer src="../assets/benchmark-builder.js?v=2026-08-16-observation-v3"></script>
+  <script defer src="../assets/benchmark-builder.js?v=2026-08-31-slurm-v1"></script>
 </head>
 
 <body>
@@ -19,7 +19,7 @@
           <div class="badges">
 <span class="badge">7 PDE losses</span>
 <span class="badge">Local + Linux</span>
-<span class="badge">SeaWulf Slurm</span>
+<span class="badge">Portable Slurm</span>
 <span class="badge">Deep-linkable choices</span>
 </div>
         </div>
@@ -67,7 +67,7 @@
         <label>Run root<input id="builder-run-root" class="input" value="runs" maxlength="240" /></label>
         <label>Local workers<input id="builder-workers" class="input" type="number" min="1" max="128" step="1" value="4" /></label>
         <label>Samples per shard<input id="builder-shard-size" class="input" type="number" min="1" max="2000" step="1" value="700" /></label>
-        <label>SeaWulf group<input id="builder-group" class="input" value="YOUR_GROUP" maxlength="80" /></label>
+        <label>Slurm account<input id="builder-account" class="input" value="YOUR_ACCOUNT" maxlength="80" /></label>
       </div>
     </details>
     <div class="builder-actions">
@@ -152,7 +152,7 @@
     <button class="btn" id="builder-tab-setup" type="button" role="tab" aria-selected="true" aria-controls="builder-code-panel" data-builder-tab="setup">Setup</button>
     <button class="btn" id="builder-tab-yaml" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="yaml">Dataset YAML</button>
     <button class="btn" id="builder-tab-run" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="run">Generate + quality</button>
-    <button class="btn" id="builder-tab-seawulf" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="seawulf">SeaWulf chain</button>
+    <button class="btn" id="builder-tab-slurm" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="slurm">Slurm chain</button>
     <button class="btn" id="builder-tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="campaign">Campaign plan (not executable)</button>
   </div>
   <div id="builder-code-panel" role="tabpanel" tabindex="0" aria-labelledby="builder-tab-setup">

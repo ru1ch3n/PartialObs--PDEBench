@@ -14,7 +14,7 @@ It writes:
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
   - docs/builder/index.html             (interactive benchmark command builder)
-  - docs/server/index.html              (Linux + SeaWulf run guide)
+  - docs/server/index.html              (Linux + portable Slurm run guide)
   - docs/contribute/index.html          (how to add/curate papers)
 
 This repo uses GitHub Pages with /docs as the site root.
@@ -1238,7 +1238,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         '  <p style="margin:8px 0 0;"><b>Benchmark-paper tooling: implemented</b></p>'
         '  <p class="muted" style="margin-top:8px;">'
         "    Deterministic generation, verified shards, strict splits, baselines, "
-        "    OOD evaluation, reports, and Linux/SeaWulf runbooks are checked in."
+        "    OOD evaluation, reports, and Linux/Slurm runbooks are checked in."
         "  </p>"
         '  <p class="muted"><b>Paper-data release:</b> pending numerical validation.</p>'
         '  <p><a href="benchmark/">Benchmark-paper contract</a> · '
@@ -1260,7 +1260,7 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
     <li><b>PDE problems:</b> which PDEs appear in the literature + which papers use them.</li>
     <li><b>Baselines:</b> a cross-paper index of commonly compared methods.</li>
     <li><b>Benchmark:</b> machine-checked 7×4×10 design, seven task protocols, seven split views, anchor matrix, per-sample analysis records, and publication-candidate quality gates.</li>
-    <li><b>Run:</b> copy-ready Linux server and SeaWulf Slurm examples that start from this Git repository.</li>
+    <li><b>Run:</b> copy-ready Linux server and portable Slurm examples that start from this Git repository.</li>
     <li><b>Contribute:</b> how to add/curate papers via JSON.</li>
   </ul>
 </section>
@@ -1317,10 +1317,10 @@ def render_home(papers: List[Dict[str, Any]]) -> str:
         hero_card_html=hero_card,
         hero_stats_html=(
             '<dl class="hero-stats" aria-label="Benchmark overview">'
-            '  <div><dt>7</dt><dd>PDE families</dd></div>'
-            '  <div><dt>4</dt><dd>Boundary protocols</dd></div>'
-            '  <div><dt>10</dt><dd>Condition generators</dd></div>'
-            f'  <div><dt>{n_total}</dt><dd>Indexed AI4PDE papers</dd></div>'
+            "  <div><dt>7</dt><dd>PDE families</dd></div>"
+            "  <div><dt>4</dt><dd>Boundary protocols</dd></div>"
+            "  <div><dt>10</dt><dd>Condition generators</dd></div>"
+            f"  <div><dt>{n_total}</dt><dd>Indexed AI4PDE papers</dd></div>"
             "</dl>"
         ),
         body_class="home",
@@ -2080,7 +2080,7 @@ def benchmark_builder_options() -> Dict[str, Any]:
         "environments": [
             {"value": "local", "label": "Linux/macOS/local Bash"},
             {"value": "server", "label": "Linux server"},
-            {"value": "seawulf", "label": "SeaWulf (Slurm)"},
+            {"value": "slurm", "label": "Slurm HPC"},
         ],
         "quality_profiles": [
             {
@@ -2146,7 +2146,7 @@ def render_builder() -> str:
         <label>Run root<input id="builder-run-root" class="input" value="runs" maxlength="240" /></label>
         <label>Local workers<input id="builder-workers" class="input" type="number" min="1" max="128" step="1" value="4" /></label>
         <label>Samples per shard<input id="builder-shard-size" class="input" type="number" min="1" max="2000" step="1" value="700" /></label>
-        <label>SeaWulf group<input id="builder-group" class="input" value="YOUR_GROUP" maxlength="80" /></label>
+        <label>Slurm account<input id="builder-account" class="input" value="YOUR_ACCOUNT" maxlength="80" /></label>
       </div>
     </details>
     <div class="builder-actions">
@@ -2231,7 +2231,7 @@ def render_builder() -> str:
     <button class="btn" id="builder-tab-setup" type="button" role="tab" aria-selected="true" aria-controls="builder-code-panel" data-builder-tab="setup">Setup</button>
     <button class="btn" id="builder-tab-yaml" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="yaml">Dataset YAML</button>
     <button class="btn" id="builder-tab-run" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="run">Generate + quality</button>
-    <button class="btn" id="builder-tab-seawulf" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="seawulf">SeaWulf chain</button>
+    <button class="btn" id="builder-tab-slurm" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="slurm">Slurm chain</button>
     <button class="btn" id="builder-tab-campaign" type="button" role="tab" aria-selected="false" aria-controls="builder-code-panel" data-builder-tab="campaign">Campaign plan (not executable)</button>
   </div>
   <div id="builder-code-panel" role="tabpanel" tabindex="0" aria-labelledby="builder-tab-setup">
@@ -2267,24 +2267,21 @@ def render_builder() -> str:
             "quality report covering every selected PDE family. 选择配置后自动生成数据与质量检查代码。"
         ),
         hero_meta_html=badges(
-            ["7 PDE losses", "Local + Linux", "SeaWulf Slurm", "Deep-linkable choices"]
+            ["7 PDE losses", "Local + Linux", "Portable Slurm", "Deep-linkable choices"]
         ),
         extra_head=(
-            '<script defer src="../assets/benchmark-builder.js?'
-            'v=2026-08-16-observation-v3"></script>'
+            '<script defer src="../assets/benchmark-builder.js?v=2026-08-31-slurm-v1"></script>'
         ),
         body_html=body,
     )
 
 
 def render_server() -> str:
-    """Render the public Linux-server and SeaWulf quick-start page."""
+    """Render the public Linux-server and portable Slurm quick-start page."""
 
     root = "../"
     linux_guide = "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/docs/SERVER.md"
-    seawulf_guide = (
-        "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/hpc/seawulf/README.md"
-    )
+    slurm_guide = "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/hpc/slurm/README.md"
     observation_training_guide = (
         "https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/"
         "docs/OBSERVATION_TRAINING_PROTOCOL.md"
@@ -2292,7 +2289,7 @@ def render_server() -> str:
     body = f"""
 <section class="section">
   <h2>Choose the machine</h2>
-  <p>Need a custom factor slice? Use the <a href="../builder/">Benchmark Builder</a> first to generate matching YAML, quality gates, and local or SeaWulf commands.</p>
+  <p>Need a custom factor slice? Use the <a href="../builder/">Benchmark Builder</a> first to generate matching YAML, quality gates, and local or Slurm commands.</p>
   <p>Planning the paper comparison? Read the <a href="{observation_training_guide}">matched-mask observation-training protocol</a> before submitting GPU jobs; the random 3% checkpoint belongs to a separate transfer/OOD table.</p>
   <div class="grid2">
     <div class="card">
@@ -2301,9 +2298,9 @@ def render_server() -> str:
       <p><a href="{linux_guide}">Open the complete Linux server guide</a></p>
     </div>
     <div class="card">
-      <h3>SeaWulf cluster</h3>
-      <p>Pin one Git commit, build inside an allocation, and chain generation, validation, training, and evaluation with Slurm dependencies.</p>
-      <p><a href="{seawulf_guide}">Open the complete SeaWulf guide</a></p>
+      <h3>Managed Slurm cluster</h3>
+      <p>Pin one Git commit, supply the local account and partitions, build inside an allocation, and chain generation, validation, training, and evaluation with Slurm dependencies.</p>
+      <p><a href="{slurm_guide}">Open the portable Slurm guide</a></p>
     </div>
   </div>
 </section>
@@ -2337,50 +2334,52 @@ pdeobs train --config configs/experiment/recovery_unet_smoke.yaml \\
   <p class="muted">Use <code>pdeobs doctor --gpu</code> when CUDA is expected. The full guide also covers the strict 34-sample signal workflow, evaluation, resume, and safe Git updates.</p>
 </section>
 
-<section id="seawulf" class="section">
-  <h2>SeaWulf: dependency-chained smoke example</h2>
-  <p>On SeaWulf, do not build or run long work on the login node. This example pins the environment to the checked-out commit and stops downstream work automatically if validation fails.</p>
+<section id="slurm" class="section">
+  <h2>Slurm HPC: dependency-chained smoke example</h2>
+  <p>Do not build or run long work on a login node. This portable example pins the environment to the checked-out commit and stops downstream work automatically if validation fails.</p>
   <div class="card">
-<pre><code>ssh YOUR_NETID@milan.seawulf.stonybrook.edu
-module load slurm
+<pre><code># Connect to the login host documented by your HPC site, then:
 git clone https://github.com/ru1ch3n/PartialObs--PDEBench.git
 cd PartialObs--PDEBench
 git checkout YOUR_RELEASE_TAG_OR_COMMIT
 
-export PDEOBS_GROUP=YOUR_GROUP
+export PDEOBS_ACCOUNT=YOUR_ACCOUNT
+export PDEOBS_CPU_PARTITION=YOUR_CPU_PARTITION
+export PDEOBS_GPU_PARTITION=YOUR_GPU_PARTITION
+export PDEOBS_BASE="${{SCRATCH:-$PWD}}/pdeobs"
 export PDEOBS_COMMIT="$(git rev-parse --short=12 HEAD)"
-export PDEOBS_ENV="/gpfs/projects/$PDEOBS_GROUP/envs/pdeobs-$PDEOBS_COMMIT"
-export PDEOBS_DATA="/gpfs/scratch/$USER/pdeobs/data"
-export PDEOBS_RUNS="/gpfs/scratch/$USER/pdeobs/runs"
+export PDEOBS_ENV="$PDEOBS_BASE/envs/pdeobs-$PDEOBS_COMMIT"
+export PDEOBS_DATA="$PDEOBS_BASE/data"
+export PDEOBS_RUNS="$PDEOBS_BASE/runs"
 mkdir -p logs "$PDEOBS_DATA/plans" "$PDEOBS_RUNS"
 
-# Build only after entering a compute allocation.
-srun --partition=short-40core-shared --nodes=1 --ntasks=1 \\
-  --cpus-per-task=4 --mem=16G --time=02:00:00 --pty bash -l
-bash hpc/seawulf/bootstrap.sh
-exit
+# Enter a short compute allocation using the site-approved salloc/srun command.
+# From inside that allocation:
+bash hpc/slurm/bootstrap.sh
 
 "$PDEOBS_ENV/bin/python" -m pdeobs plan \\
-  --config configs/dataset/smoke.yaml --tier tiny \\
+  --config configs/dataset/smoke.yaml \\
   --output "$PDEOBS_DATA/plans/smoke.jsonl"
 
-generation_job="$(sbatch --parsable --array=0-0 \\
-  hpc/seawulf/generate_array.sbatch configs/dataset/smoke.yaml \\
+site_args=(--account="$PDEOBS_ACCOUNT" --partition="$PDEOBS_CPU_PARTITION")
+generation_job="$(sbatch --parsable "${{site_args[@]}}" --array=0-0 \\
+  hpc/slurm/generate_array.sbatch configs/dataset/smoke.yaml \\
   "$PDEOBS_DATA/smoke" "$PDEOBS_DATA/plans/smoke.jsonl")"
 generation_job="${{generation_job%%;*}}"
 
-validation_job="$(sbatch --parsable --dependency="afterok:$generation_job" \\
-  hpc/seawulf/aggregate_cpu.sbatch "$PDEOBS_DATA/smoke" \\
+validation_job="$(sbatch --parsable "${{site_args[@]}}" --dependency="afterok:$generation_job" \\
+  hpc/slurm/aggregate_cpu.sbatch "$PDEOBS_DATA/smoke" \\
   "$PDEOBS_DATA/smoke/summary.json" "$PDEOBS_DATA/plans/smoke.jsonl")"
 validation_job="${{validation_job%%;*}}"
 
-training_job="$(sbatch --parsable --dependency="afterok:$validation_job" \\
-  hpc/seawulf/train_gpu.sbatch configs/experiment/recovery_unet_smoke.yaml \\
+training_job="$(sbatch --parsable --account="$PDEOBS_ACCOUNT" \\
+  --partition="$PDEOBS_GPU_PARTITION" --dependency="afterok:$validation_job" \\
+  hpc/slurm/train_gpu.sbatch configs/experiment/recovery_unet_smoke.yaml \\
   --output "$PDEOBS_RUNS/smoke-train")"
 training_job="${{training_job%%;*}}"
 squeue -j "$generation_job,$validation_job,$training_job"</code></pre>
   </div>
-  <div class="note"><b>Storage:</b> SeaWulf scratch is temporary and not backed up. Copy valuable validated outputs to an independent archive.</div>
+  <div class="note"><b>Storage:</b> treat scratch as temporary unless the site guarantees retention. Copy valuable validated outputs to an independent archive.</div>
 </section>
 
 <section class="section">
@@ -2399,10 +2398,10 @@ squeue -j "$generation_job,$validation_job,$training_job"</code></pre>
         current="run",
         hero_h1="Run PDE-OBS from Git",
         hero_subtitle_html=(
-            "Copy-ready paths for a single Linux server and the SeaWulf Slurm cluster."
+            "Copy-ready paths for a single Linux server and a configurable Slurm cluster."
         ),
         hero_meta_html=badges(
-            ["Linux CPU/GPU", "SeaWulf Slurm", "Verified smoke first", "Exact Git revision"]
+            ["Linux CPU/GPU", "Portable Slurm", "Verified smoke first", "Exact Git revision"]
         ),
         body_html=body,
     )

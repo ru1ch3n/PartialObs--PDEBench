@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=pdeobs-generate
-#SBATCH --partition=short-40core-shared
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -11,7 +10,7 @@
 #SBATCH --error=logs/%x_%A_%a.err
 
 set -Eeuo pipefail
-source "${SLURM_SUBMIT_DIR}/hpc/seawulf/common.sh"
+source "${SLURM_SUBMIT_DIR}/hpc/slurm/common.sh"
 
 config_path="${1:?Usage: generate_array.sbatch CONFIG OUTPUT [PLAN]}"
 output_root="${2:?Usage: generate_array.sbatch CONFIG OUTPUT [PLAN]}"
@@ -41,4 +40,4 @@ if [[ -n "$plan_path" ]]; then
   args+=(--plan "$plan_path")
 fi
 
-srun "$PDEOBS_ENV/bin/python" -m pdeobs "${args[@]}"
+"${PDEOBS_SRUN:-srun}" "$PDEOBS_ENV/bin/python" -m pdeobs "${args[@]}"

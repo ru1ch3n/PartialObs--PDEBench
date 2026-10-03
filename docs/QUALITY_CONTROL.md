@@ -160,7 +160,7 @@ the single command-line maximum is mainly useful for conservative smoke gates.
 The command above cannot establish publication-candidate readiness in the
 current package because evidence hashes are unverified attestations. The web
 Builder therefore blocks publication-mode generation instead of submitting a
-known-failing local or SeaWulf campaign.
+known-failing local or Slurm campaign.
 Keep the JSON report and its CSV projection beside the generation plan,
 resolved configuration, shard manifests, checksums, code revision, and solver
 validation report.

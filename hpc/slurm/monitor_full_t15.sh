@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 : "${PDEOBS_DATA:?Source the scratch env.sh first.}"
 : "${PDEOBS_ENV:?Source the scratch env.sh first.}"
-module load slurm
+squeue_command="${PDEOBS_SQUEUE:-squeue}"
+sacct_command="${PDEOBS_SACCT:-sacct}"
 
 campaign="${1:-}"
 if [[ -z "$campaign" ]]; then
@@ -28,10 +29,18 @@ echo "Campaign: $(value campaign)"
 echo "Commit:   $(value commit)"
 echo "Output:   $output"
 echo "Jobs:     generation=$generation_job aggregate=$aggregate_job"
-squeue -j "$generation_job,$aggregate_job" || true
+if command -v "$squeue_command" >/dev/null 2>&1; then
+  "$squeue_command" -j "$generation_job,$aggregate_job" || true
+else
+  echo "squeue is unavailable; set PDEOBS_SQUEUE to its absolute path." >&2
+fi
 echo
-sacct -X -j "$generation_job,$aggregate_job" \
-  --format=JobIDRaw,State,Elapsed,TotalCPU,AllocCPUS,MaxRSS,ExitCode || true
+if command -v "$sacct_command" >/dev/null 2>&1; then
+  "$sacct_command" -X -j "$generation_job,$aggregate_job" \
+    --format=JobIDRaw,State,Elapsed,TotalCPU,AllocCPUS,MaxRSS,ExitCode || true
+else
+  echo "sacct is unavailable; set PDEOBS_SACCT to its absolute path." >&2
+fi
 
 read -r complete_shards complete_samples < <(
   "$PDEOBS_ENV/bin/python" - "$output" <<'PY'

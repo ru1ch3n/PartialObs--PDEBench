@@ -40,8 +40,8 @@ uv run --no-sync pytest --cov=pdeobs
 uv run --no-sync python -m pip_audit --local --skip-editable
 ```
 
-Shell launchers must also pass `bash -n hpc/seawulf/*.sh
-hpc/seawulf/*.sbatch` on a POSIX system.
+Shell launchers must also pass `bash -n hpc/slurm/*.sh
+hpc/slurm/*.sbatch` on a POSIX system.
 
 When dependencies change, regenerate `uv.lock` with the repository's pinned CI
 version of uv and regenerate `.clusterfuzzlite/requirements.txt` from
