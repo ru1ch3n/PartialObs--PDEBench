@@ -346,7 +346,7 @@ def guide():
 def build(literature):
     # Keep the existing literature URL while giving its index the platform shell.
     literature = literature.split('<main class="container">', 1)[1].split("<footer", 1)[0]
-    literature = literature.split("</aside>", 1)[1]
+    literature = literature.split("</aside>", 1)[1].strip()
     literature = literature.replace("Research index", "Literature index").replace(
         "use the <b>Contribute</b> tab",
         'use the <a href="../contribute/literature.html">literature record editor</a>',

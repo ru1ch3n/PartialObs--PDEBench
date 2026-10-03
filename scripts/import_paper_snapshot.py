@@ -72,7 +72,9 @@ def main():
     assert len(result["records"]) == 441
     assert sum(len(r["blocks"]) for r in result["records"].values()) == 3969
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, separators=(",", ":")) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(result, separators=(",", ":")) + "\n", encoding="utf-8", newline="\n"
+    )
     print(f"Imported {len(result['records'])} models from {commit}; source unchanged.")
 
 

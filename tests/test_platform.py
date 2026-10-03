@@ -20,7 +20,7 @@ def test_snapshot_preserves_complete_reference_and_provenance() -> None:
     snapshot = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
     manifest = json.loads((SNAPSHOT.parent / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["sha256"] == hashlib.sha256(SNAPSHOT.read_bytes()).hexdigest()
-    assert manifest["sha256"] == "150e6e634caa7b2bc46437833fac6d9160ea6cf03f179f0d5aa5d122a7778448"
+    assert manifest["sha256"] == "f2df284afb835bb169a1bef68bd61448b3b111e30d42ceb7db5a8feb9c369cc8"
     assert snapshot["source_commit"] == "ab62fa7504627c124c187e1822b27b95e79c9a76"
     assert snapshot["source_commit"] in snapshot["source_url"]
     assert len(snapshot["source_sha256"]) == 64
