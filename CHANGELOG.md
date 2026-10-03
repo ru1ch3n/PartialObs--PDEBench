@@ -9,8 +9,15 @@ public package or dataset release has been made.
 
 ### Added
 
-- Bidirectional links between the website and canonical public PDE-OBS code,
-  release notices on earlier pages, and an approval-based contribution workflow.
+- Rebuild the website as an evaluation and research platform: frozen paper
+  snapshot, 3,969 filterable result blocks, exact CSV/JSON exports with provenance,
+  seven transparent method cards, three proposed studies, releases and issue forms.
+- Central website metadata cites arXiv:2609.36521v2. Paper/code project contents
+  and settings remain independent of website publication.
+- Source-audit verification scope, compute/coverage limitations and study-specific
+  credit policy; preserve literature and historical tool URLs as secondary resources.
+- Website mandatory PR approval and orphan signoff check removed at the owner's
+  request; automated tests, dependency review, code analysis and fuzzing retained.
 - Homepage link, image, stylesheet and archive-navigation regression checks.
 - Current PDE-OBS public project homepage, with the previous homepage archived
   and links to the separate public code, preprint, data and model release.

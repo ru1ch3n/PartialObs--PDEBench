@@ -13,14 +13,35 @@ Choose the repository that owns the change:
   [ru1ch3n/PDE-OBS](https://github.com/ru1ch3n/PDE-OBS).
 - Project homepage, literature index and archived tools: this repository.
   The website stays at its existing GitHub Pages URL and is published from
-  `main:/docs` only after the corresponding PR is approved and merged.
-- Website changes link to existing public resources; they do not copy, synchronize
-  or modify the public code repository. Confirm new destinations exist before
-  adding links to the homepage.
+  `main:/docs`. Mandatory PR approval is disabled; required automated checks
+  remain enabled. A website merge does not grant scientific verification status.
+- Website changes link to existing public resources and may transcribe public
+  result metadata into explicitly pinned snapshots. They never modify the public
+  code repository. Confirm destinations exist before adding links.
 
-The homepage source is `scripts/templates/pdeobs-public-home.html`; regenerate
-`docs/index.html` with `python scripts/generate_research_site.py`. Earlier pages
-carry a notice linking to the current public release. Preserve that distinction.
+The platform source is `scripts/build_platform.py`, with metadata in
+`data/platform.json` and styles/interactions in `docs/assets/platform*` and
+`docs/assets/results.js`. Run `python scripts/generate_research_site.py` to
+regenerate all pages offline. Paper citation metadata follows arXiv v2 only in
+this website; the canonical public project is not edited by the website build.
+
+The frozen snapshot `docs/assets/snapshots/paper-20260925-v1.json` is a
+full-precision transcription of a pinned public result index. Do not overwrite
+it. Corrections and additions require a new version and release note. The
+optional `scripts/import_paper_snapshot.py` reads an explicitly provided local
+public source checkout and refuses to overwrite a destination; it never runs
+experiments or modifies the source. Normal builds do not access that checkout.
+Keep data/split, protocol, evaluator, software, checkpoint and result identities
+separate. Preserve earlier tools and literature URLs as historical resources.
+
+Use the Submit a Method, Reproduce a Result and Join a Study issue forms for
+scientific contributions. Record training and inference permissions separately,
+pretraining provenance (including unknowns), actual budgets, missing coverage
+and precise verification scope. Check configuration, rescoring, inference and
+training claims separately; never label a source import as a fresh rerun.
+Accepted work is credited in release records. Authorship is study-specific and
+requires substantive contributions, manuscript participation and accountability;
+participation, compute donation or a PR does not guarantee authorship.
 
 - Search the [issue tracker](https://github.com/ru1ch3n/PartialObs--PDEBench/issues)
   for related work.

@@ -1,0 +1,43 @@
+name: Join a Study
+description: Help define an independent research question or contribute to a proposed study.
+title: "[Study] "
+body:
+  - type: dropdown
+    id: study
+    attributes:
+      label: Research direction
+      options:
+        - Dynamic Observations and Forecasting
+        - Pretraining and Observation Transfer
+        - Information- and Compute-Matched Solver Evaluation
+        - A new independent question
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question and independence
+      description: What new question should be answered, and why cannot the reference paper answer it?
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Minimal study design
+      description: Controls, permissions, budget, success/failure criteria and evidence that could falsify the hypothesis.
+    validations:
+      required: true
+  - type: textarea
+    id: contribution
+    attributes:
+      label: Proposed contribution and availability
+      description: Study design, software, experiments, analysis or writing; required resources and suggested responsibilities. Do not include private credentials or contact details.
+    validations:
+      required: true
+  - type: checkboxes
+    id: credit
+    attributes:
+      label: Credit and authorship
+      options:
+        - label: I understand that paper authorship is determined separately per study; participation, compute or a pull request does not guarantee authorship.
+          required: true

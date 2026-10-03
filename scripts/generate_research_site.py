@@ -8,14 +8,14 @@ If that folder is missing/empty, it falls back to the legacy
 ``scripts/research_db.ndjson`` file.
 
 It writes:
-  - docs/index.html                     (public PDE-OBS homepage template)
+  - docs/index.html and platform pages (versioned evaluation platform)
   - docs/research/index.html            (research hub + category browser)
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
   - docs/builder/index.html             (interactive benchmark command builder)
   - docs/server/index.html              (Linux + portable Slurm run guide)
-  - docs/contribute/index.html          (how to add/curate papers)
+  - docs/contribute/literature.html     (how to add/curate papers)
 
 This repo uses GitHub Pages with /docs as the site root.
 """
@@ -2508,13 +2508,10 @@ def main() -> None:
     )
 
     # Core pages
-    # Keep the public homepage stable when refreshing the archived literature pages.
-    public_home = REPO_ROOT / "scripts" / "templates" / "pdeobs-public-home.html"
-    write(DOCS / "index.html", public_home.read_text(encoding="utf-8"))
     write(DOCS / "research" / "index.html", render_research_index(papers))
     write(DOCS / "builder" / "index.html", render_builder())
     write(DOCS / "server" / "index.html", render_server())
-    write(DOCS / "contribute" / "index.html", render_contribute(papers))
+    write(DOCS / "contribute" / "literature.html", render_contribute(papers))
 
     # Single generic placeholder page for non-curated papers
     write(DOCS / "research" / "paper" / "index.html", render_paper_placeholder())
@@ -2534,6 +2531,10 @@ def main() -> None:
     # PDE problems and baselines index pages
     write(DOCS / "pde-problems" / "index.html", render_pde_problems(papers))
     write(DOCS / "baselines" / "index.html", render_baselines(papers))
+
+    from build_platform import build
+
+    build(render_research_index(papers))
 
     print(
         f"Generated: {len(curated)} curated paper pages + {len(papers)} index entries (papers_db.json)."

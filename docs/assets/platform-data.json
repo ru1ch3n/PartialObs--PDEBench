@@ -1,0 +1,195 @@
+{
+  "version": "2026-10-03",
+  "paper": {
+    "title": "PDE-OBS: Controlled Evaluation Across Observation Patterns",
+    "authors": [
+      "Ruichen Xu",
+      "Siyao Wang",
+      "Fang Wan",
+      "Jiacheng Qiu",
+      "Wenhan Gao",
+      "Jiaxing Zhang",
+      "Linsey Pang",
+      "Ravid Shwartz-Ziv",
+      "Yann LeCun",
+      "Yuefan Deng"
+    ],
+    "url": "https://arxiv.org/abs/2609.36521v2",
+    "doi": "10.48550/arXiv.2609.36521",
+    "updated": "2026-09-30"
+  },
+  "snapshot": "paper-20260925-v1",
+  "pdes": {
+    "darcy": "Darcy",
+    "poisson": "Poisson",
+    "helmholtz": "Helmholtz",
+    "heat": "Heat",
+    "reaction_diffusion": "Reaction–diffusion",
+    "burgers": "Burgers",
+    "navier_stokes": "Navier–Stokes"
+  },
+  "views": [
+    {
+      "id": "random_50pct",
+      "short": "R50",
+      "label": "Random 50%"
+    },
+    {
+      "id": "horizontal_lines_50pct",
+      "short": "H",
+      "label": "Horizontal lines 50%"
+    },
+    {
+      "id": "vertical_lines_50pct",
+      "short": "V",
+      "label": "Vertical lines 50%"
+    },
+    {
+      "id": "clustered_50pct",
+      "short": "CL",
+      "label": "Clustered 50%"
+    },
+    {
+      "id": "block_observed_50pct",
+      "short": "BL",
+      "label": "Block observed 50%"
+    },
+    {
+      "id": "line_sensors_50pct",
+      "short": "LI",
+      "label": "Line sensors 50%"
+    },
+    {
+      "id": "boundary_band_50pct",
+      "short": "BD",
+      "label": "Boundary band 50%"
+    },
+    {
+      "id": "random_65pct",
+      "short": "R65",
+      "label": "Random 65%"
+    },
+    {
+      "id": "random_80pct",
+      "short": "R80",
+      "label": "Random 80%"
+    }
+  ],
+  "methods": [
+    {
+      "id": "ufno_2d",
+      "name": "U-FNO-2D",
+      "kind": "Adapted implementation",
+      "paper": "https://arxiv.org/abs/2109.03697",
+      "upstream": "https://github.com/gegewen/ufno",
+      "revision": "8315fd7b5bd75282b7efe42ee6b8de86543d13cc",
+      "note": "Independent 2D mask-conditioned adaptation of a 3D operator family; six operator blocks. These results describe the PDE-OBS adapter."
+    },
+    {
+      "id": "fno",
+      "name": "FNO",
+      "kind": "Adapted implementation",
+      "paper": "https://arxiv.org/abs/2010.08895",
+      "upstream": "https://github.com/zongyi-li/fourier_neural_operator",
+      "revision": "00b7d86f8d74ff0af55da53eb585fe26df9c71f0",
+      "note": "Compact mask-channel Fourier neural operator. Configuration and masked inputs differ from the upstream experiments."
+    },
+    {
+      "id": "cno",
+      "name": "CNO-inspired CNN",
+      "kind": "Inspired implementation",
+      "paper": "https://arxiv.org/abs/2302.01178",
+      "upstream": "https://github.com/camlab-ethz/ConvolutionalNeuralOperator",
+      "revision": "6e765198aa02b56352e0a3437104b9d9e337176e",
+      "note": "Uses fixed binomial low-pass filtering. This is not the complete continuous–discrete CNO architecture or an exact upstream implementation."
+    },
+    {
+      "id": "deeponet",
+      "name": "DeepONet",
+      "kind": "Adapted implementation",
+      "paper": "https://www.nature.com/articles/s42256-021-00302-5",
+      "upstream": "https://github.com/lululxvi/deeponet",
+      "revision": "8d62345afd39e1df9c2c8c8d0e7c41882b06a9bf",
+      "note": "Independent branch–trunk implementation with an ordered, mask-aware convolutional branch. The sensing representation is adapted for this benchmark."
+    },
+    {
+      "id": "gnot",
+      "name": "GNOT",
+      "kind": "Adapted implementation",
+      "paper": "https://proceedings.mlr.press/v202/hao23c.html",
+      "upstream": "https://github.com/thu-ml/GNOT",
+      "revision": "5ee2e6925a43f9a340a6016bad4da2c82a452cbe",
+      "note": "Independent adaptation with physical-space relative-L2 scoring, without the official unit-normalization setup. No upstream code is copied."
+    },
+    {
+      "id": "transolver",
+      "name": "Transolver",
+      "kind": "Adapted implementation",
+      "paper": "https://arxiv.org/abs/2402.02366",
+      "upstream": "https://github.com/thuml/Transolver",
+      "revision": "75e0f67643806a81cd1d3f6adc88dd8c02416fe7",
+      "note": "Independent structured-grid, masked-observation variant. Inspected upstream revision is an architecture reference, not the evaluated code identity."
+    },
+    {
+      "id": "pino",
+      "name": "PINO",
+      "kind": "Adapted implementation",
+      "paper": "https://arxiv.org/abs/2111.03794",
+      "upstream": "https://github.com/neuraloperator/physics_informed",
+      "revision": "3b6bc307c63c64057d0496753bf1af5f44ac5108",
+      "note": "FNO backbone with trainer-side physics residuals and a 5:1 data/residual weight. Coefficients and source terms are extra training information; compare permissions explicitly."
+    }
+  ],
+  "studies": [
+    {
+      "id": "dynamic-observations",
+      "number": "01",
+      "title": "Dynamic Observations and Forecasting",
+      "status": "Proposed · first priority",
+      "question": "Can models maintain reliable forecasts when sensors update intermittently, asynchronously, or fail?",
+      "difference": "The reference study observes the initial state and predicts three stored states. This study would vary observation timing and longer-term error propagation.",
+      "evidence": "Compare initial-only, periodic and irregular updates at the same total observation budget. Measure long-horizon error and instability; test whether timing improves performance beyond added data.",
+      "roles": "Protocol design · sensor schedules · rollout analysis"
+    },
+    {
+      "id": "pretraining-transfer",
+      "number": "02",
+      "title": "Pretraining and Observation Transfer",
+      "status": "Proposed",
+      "question": "Do pretraining gains come from more data, larger models, or more diverse observations?",
+      "difference": "The reference snapshot does not isolate pretraining, architecture scale and adaptation-budget effects.",
+      "evidence": "Use matched scratch/pretrained architectures and adaptation budgets, vary target data and observation diversity, and reserve unseen combinations. Disclose data overlap as unknown until established.",
+      "roles": "Checkpoint provenance · controlled adaptation · transfer analysis"
+    },
+    {
+      "id": "matched-solvers",
+      "number": "03",
+      "title": "Information- and Compute-Matched Solver Evaluation",
+      "status": "Proposed",
+      "question": "Where do classical, learned and generative methods help under the same information and resource budgets?",
+      "difference": "Current training histories and permissions are heterogeneous, and comparable latency and memory measurements are unavailable.",
+      "evidence": "Match observations, physical priors and conditioning inputs. Report training and adaptation cost, inference latency, memory and error across explicit budgets.",
+      "roles": "Classical baselines · permission audits · compute measurement"
+    }
+  ],
+  "releases": [
+    {
+      "date": "2026-10-03",
+      "kind": "Website release",
+      "title": "A new home for evaluation and collaboration",
+      "description": "Versioned paper results, transparent method cards, filtering and export, proposed research studies, and structured contribution routes. This is a website update; no new experiments or community scores are claimed."
+    },
+    {
+      "date": "2026-09-30",
+      "kind": "Paper v2",
+      "title": "Public preprint updated",
+      "description": "PDE-OBS: Controlled Evaluation Across Observation Patterns. The website cites the versioned arXiv record; the original project is unchanged."
+    },
+    {
+      "date": "2026-09-25",
+      "kind": "Result schema · frozen",
+      "title": "Prediction-level paper snapshot",
+      "description": "Source schema 20260925-v1: 441 retained checkpoints, 3,969 evaluation blocks, 200 held-out physical records per block. Imported from a pinned public commit, with the source audit scope preserved."
+    }
+  ]
+}
