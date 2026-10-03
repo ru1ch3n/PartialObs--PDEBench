@@ -33,14 +33,14 @@ trajectory_steps_by_case:
   # High-frequency vorticity needs denser saved frames for the continuous
   # equation-balance audit.  Exact first-transition replay remains separate.
   navier_stokes/periodic/multi_frequency_fourier: 88
-  # Same-seed seven-sample SeaWulf refinement reduced the periodic low/medium
+  # Same-seed seven-sample Slurm refinement reduced the periodic low/medium
   # maxima from 0.1526/0.0562 at T=65 to 0.0380/0.0299 respectively.
   navier_stokes/periodic/multi_frequency_fourier/low: 262
   navier_stokes/periodic/multi_frequency_fourier/medium: 146
   navier_stokes/neumann/multi_frequency_fourier: 88
   # The low/medium free-slip multi-frequency cases narrowly exceeded the
   # frozen 0.05 saved-frame residual gate at T=65 (0.0588 and 0.0546), while
-  # replay, divergence, and boundary checks passed. A same-seed SeaWulf
+  # replay, divergence, and boundary checks passed. A same-seed Slurm
   # refinement reached 0.0179 at T=257 for low; medium passed at T=129.
   navier_stokes/neumann/multi_frequency_fourier/low: 262
   navier_stokes/neumann/multi_frequency_fourier/medium: 146

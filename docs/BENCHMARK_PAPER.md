@@ -189,8 +189,8 @@ The provisional 12-A6000/10-day figures are unmeasured planning assumptions.
 The theoretical capacity is 2,880 GPU-hours and 75-80% utilization gives
 2,160-2,304 GPU-hours. The supplied scenarios estimate 4,200-4,600 hours for
 full with one PINN/PINO seed, 7,000-7,400 for full with three, and 1,800-2,300
-for medium with three. These are not benchmark measurements or SeaWulf/A100
-promises; a measured pilot is mandatory. The recommended plan is the complete
+for medium with three. These are not benchmark measurements or capacity
+promises for any Slurm site; a measured pilot is mandatory. The recommended plan is the complete
 ten-slot/nine-mask comparison on medium, followed by a reduced full-tier anchor
 table. See [OBSERVATION_TRAINING_PROTOCOL.md](OBSERVATION_TRAINING_PROTOCOL.md)
 for the corrected arithmetic, hybrid full preset, schedule, and quality gates.

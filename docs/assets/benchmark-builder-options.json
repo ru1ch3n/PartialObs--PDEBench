@@ -837,7 +837,7 @@
         ]
       },
       "pilot_required": true,
-      "warning": "These are unmeasured planning estimates, not benchmark results. Dataset-size quartering is not a validated scaling law for PINNs, diffusion sampling, or fixed-cost prior training. SeaWulf uses a shared A100 queue, so this dedicated-A6000 scenario is not a SeaWulf capacity promise."
+      "warning": "These are unmeasured planning estimates, not benchmark results. Dataset-size quartering is not a validated scaling law for PINNs, diffusion sampling, or fixed-cost prior training. Queue sharing, accelerator type, and site policy vary, so this dedicated-GPU scenario is not a capacity promise for any Slurm system."
     },
     "scientific_caveats": [
       "All current Navier-Stokes validation routes store one-channel vorticity, but periodic, rectangular, and obstacle cases use different registered velocity-reconstruction and geometry operators; a cross-boundary checkpoint must retain that topology metadata.",
@@ -1237,8 +1237,8 @@
       "label": "Linux server"
     },
     {
-      "value": "seawulf",
-      "label": "SeaWulf (Slurm)"
+      "value": "slurm",
+      "label": "Slurm HPC"
     }
   ],
   "quality_profiles": [

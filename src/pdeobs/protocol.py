@@ -322,9 +322,9 @@ def observation_training_contract() -> dict[str, Any]:
                 "warning": (
                     "These are unmeasured planning estimates, not benchmark results. "
                     "Dataset-size quartering is not a validated scaling law for PINNs, "
-                    "diffusion sampling, or fixed-cost prior training. SeaWulf uses a "
-                    "shared A100 queue, so this dedicated-A6000 scenario is not a SeaWulf "
-                    "capacity promise."
+                    "diffusion sampling, or fixed-cost prior training. Queue sharing, "
+                    "accelerator type, and site policy vary, so this dedicated-GPU scenario "
+                    "is not a capacity promise for any Slurm system."
                 ),
             },
             "scientific_caveats": [
