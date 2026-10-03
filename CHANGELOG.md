@@ -24,6 +24,8 @@ public package or dataset release has been made.
 
 ### Security
 
+- Update the hash-locked CI dependency urllib3 from 2.7.0 to 2.8.0 to address
+  PYSEC-2026-4175, PYSEC-2026-4176 and PYSEC-2026-4177 reported by dependency audit.
 - Reject insecure HTTP release manifests and artifact URLs, including HTTPS
   redirects that downgrade to HTTP.
 - Raise the supported PyTorch and pytest dependency floors beyond versions
