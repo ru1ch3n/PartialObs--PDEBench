@@ -9,6 +9,9 @@ public package or dataset release has been made.
 
 ### Added
 
+- Bidirectional links between the website and canonical public PDE-OBS code,
+  release notices on earlier pages, and an approval-based contribution workflow.
+- Homepage link, image, stylesheet and archive-navigation regression checks.
 - Current PDE-OBS public project homepage, with the previous homepage archived
   and links to the separate public code, preprint, data and model release.
 - Public contribution, support, vulnerability-reporting, release, and OpenSSF

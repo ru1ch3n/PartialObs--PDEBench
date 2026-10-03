@@ -925,6 +925,13 @@ def page(
   </header>
 
   <main class=\"container\">
+    <aside class=\"note\" aria-label=\"Current PDE-OBS release\">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href=\"{root}index.html\">PDE-OBS project homepage</a>,
+      <a href=\"https://github.com/ru1ch3n/PDE-OBS\">public code repository</a>, or
+      <a href=\"https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md\">current installation guide</a>.
+    </aside>
     {body_html}
 
     <footer class=\"footer\">

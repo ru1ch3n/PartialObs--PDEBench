@@ -7,6 +7,21 @@ Participation is governed by the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Before proposing a change
 
+Choose the repository that owns the change:
+
+- Current benchmark code, protocols, paper and results:
+  [ru1ch3n/PDE-OBS](https://github.com/ru1ch3n/PDE-OBS).
+- Project homepage, literature index and archived tools: this repository.
+  The website stays at its existing GitHub Pages URL and is published from
+  `main:/docs` only after the corresponding PR is approved and merged.
+- Website changes link to existing public resources; they do not copy, synchronize
+  or modify the public code repository. Confirm new destinations exist before
+  adding links to the homepage.
+
+The homepage source is `scripts/templates/pdeobs-public-home.html`; regenerate
+`docs/index.html` with `python scripts/generate_research_site.py`. Earlier pages
+carry a notice linking to the current public release. Preserve that distinction.
+
 - Search the [issue tracker](https://github.com/ru1ch3n/PartialObs--PDEBench/issues)
   for related work.
 - Open a bug report for a reproducible defect or a feature request for a
@@ -70,6 +85,11 @@ reason for the change.
    and compatibility or security implications.
 5. Address CI findings and review comments. Do not merge with failing required
    checks.
+6. Obtain at least one independent approving review of the latest changes and
+   resolve review conversations. New commits invalidate stale approvals.
+   Administrators are subject to these protections; direct pushes, force pushes
+   and deleting `main` are disabled. Do not use automatic cross-repository pushes
+   to bypass review. A bot may propose a PR, but must not publish unreviewed changes.
 
 Release notes are maintained in [`CHANGELOG.md`](CHANGELOG.md). User-visible
 changes should add an entry under **Unreleased**.

@@ -33,6 +33,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>This work studies how to condition diffusion models to generate PDE simulations, e.g., given initial/boundary conditions or coarse states. It compares conditioning strategies (input concatenation, cross-attention, guidance variants) and reports which choices work best for PDE data.</p></section>
 <section id="problem"><h2>Problem</h2><p>Diffusion models are flexible generative priors, but PDE simulation requires strong conditioning: the output must be consistent with initial/boundary conditions and often with partial observations. The paper targets the practical question: which conditioning mechanisms are effective and stable for PDE simulations?</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

@@ -29,6 +29,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section class="section">  <h2>Method classes</h2>  <p>High-level taxonomy used across this website. Each row links to the Research table with a class filter.</p></section><div class="tablewrap"><table><thead><tr><th>Method class</th><th># papers</th><th>Core objective (template)</th><th></th></tr></thead><tbody><tr><td><b>PINN / physics-constrained</b></td><td>143</td><td><div class="equation">\[u_\theta = \mathrm{NN}_\theta(x,t)\\qquad \mathcal{N}[u]=0\ \text{(PDE residual)}\]
 \[\min_\theta\ \underbrace{\|u_\theta- u_{data}\|^2}_{\mathcal{L}_{data}} + \lambda\underbrace{\|\mathcal{N}[u_\theta]\|^2}_{\mathcal{L}_{PDE}} + \mu\underbrace{\|\mathcal{B}[u_\theta]\|^2}_{\mathcal{L}_{BC/IC}}\]</div></td><td><a href="../research/?method=PINN%20/%20physics-constrained">View papers</a></td></tr>
 <tr><td><b>Operator learning</b></td><td>81</td><td><div class="equation">\[G_\theta: a(\cdot)\mapsto u(\cdot)\ \ \text{(solution operator)}\]
