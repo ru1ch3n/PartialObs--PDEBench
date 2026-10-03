@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+from urllib.parse import urlsplit
+
+from bs4 import BeautifulSoup
 
 from pdeobs.methods import available_methods
 from pdeobs.protocol import benchmark_contract
@@ -8,17 +11,32 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
 
-def test_generated_pages_include_run_and_builder_navigation() -> None:
+def test_generated_pages_have_platform_or_archive_navigation() -> None:
     pages = sorted(DOCS.rglob("index.html"))
     assert pages
 
     missing = []
     for page in pages:
-        html = page.read_text(encoding="utf-8")
-        if '<nav class="nav">' not in html or ">Builder</a>" not in html or ">Run</a>" not in html:
+        soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
+        navigation = soup.select_one("nav.nav")
+        labels = {link.get_text() for link in navigation.select("a")} if navigation else set()
+        required = (
+            {
+                "Benchmark",
+                "Results",
+                "Methods",
+                "Research Studies",
+                "Releases",
+                "Contribute",
+                "Docs",
+            }
+            if "platform" in soup.body.get("class", [])
+            else {"Builder", "Run"}
+        )
+        if not required.issubset(labels):
             missing.append(str(page.relative_to(ROOT)))
 
-    assert not missing, f"Builder/Run navigation missing from: {missing}"
+    assert not missing, f"Required navigation missing from: {missing}"
 
 
 def test_server_page_contains_both_supported_workflows() -> None:
@@ -217,8 +235,8 @@ def test_site_generator_has_no_wall_clock_output_drift() -> None:
     assert "Generated deterministically from repository sources." in source
 
 
-def test_public_benchmark_page_uses_the_benchmark_only_scope() -> None:
-    html = (DOCS / "benchmark" / "index.html").read_text(encoding="utf-8")
+def test_archived_benchmark_plan_preserves_the_earlier_scope() -> None:
+    html = (DOCS / "benchmark" / "archive.html").read_text(encoding="utf-8")
 
     assert "PDE-OBS benchmark paper" in html
     assert "only manuscript in scope" in html
@@ -233,19 +251,54 @@ def test_public_benchmark_page_uses_the_benchmark_only_scope() -> None:
     assert "OBSERVATION_TRAINING_PROTOCOL.md" in html
 
 
-def test_generated_pages_cache_bust_the_shared_stylesheet() -> None:
+def test_generated_pages_cache_bust_their_stylesheets() -> None:
     pages = sorted(DOCS.rglob("index.html"))
-    missing = [
-        str(page.relative_to(ROOT))
-        for page in pages
-        if "assets/style.css?v=" not in page.read_text(encoding="utf-8")
-    ]
+    assert pages
+    for page in pages:
+        soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
+        stylesheets = soup.select('link[rel="stylesheet"]')
+        assert stylesheets, f"Stylesheet missing from {page}"
+        for link in stylesheets:
+            url = urlsplit(link["href"])
+            assert "v=" in url.query, f"Stylesheet cache buster missing from {page}"
+            assert (page.parent / url.path).is_file(), f"Missing stylesheet: {link['href']}"
 
-    assert not missing, f"Stylesheet cache buster missing from: {missing}"
 
-
-def test_homepage_inline_mermaid_script_is_not_truncated_by_a_line_comment() -> None:
-    html = (DOCS / "index.html").read_text(encoding="utf-8")
+def test_archived_homepage_mermaid_script_is_not_truncated_by_a_line_comment() -> None:
+    html = (DOCS / "index-202608-archive.html").read_text(encoding="utf-8")
 
     assert "/* Enable clickable Mermaid nodes on GitHub Pages. */" in html
     assert "// Enable clickable nodes" not in html
+
+
+def test_public_homepage_links_current_release_and_preserves_archive_navigation() -> None:
+    soup = BeautifulSoup((DOCS / "index.html").read_text(encoding="utf-8"), "html.parser")
+    links = {link["href"] for link in soup.select("a[href]")}
+    assert {
+        "https://github.com/ru1ch3n/PDE-OBS",
+        "https://arxiv.org/abs/2609.36521v2",
+        "https://huggingface.co/datasets/ru1ch3n/PDE-OBS",
+        "https://huggingface.co/ru1ch3n/PDE-OBS",
+        "./results/",
+        "./guide/",
+        "./contribute/",
+        "./research/",
+    }.issubset(links)
+    assert len(soup.select(".matrix td a")) == 81
+    assert "560,000" in soup.get_text()
+    assert "14,000" in soup.get_text()
+    assert "SCHEMATIC" in soup.get_text()
+
+
+def test_earlier_pages_point_to_the_current_public_project() -> None:
+    pages = [page for page in DOCS.rglob("index.html") if page != DOCS / "index.html"]
+    for page in pages:
+        soup = BeautifulSoup(page.read_text(encoding="utf-8"), "html.parser")
+        if "platform" in soup.body.get("class", []):
+            continue
+        notice = soup.find("aside", attrs={"aria-label": "Current PDE-OBS release"})
+        assert notice is not None, f"Missing release notice: {page}"
+        links = {link["href"] for link in notice.select("a[href]")}
+        assert "https://github.com/ru1ch3n/PDE-OBS" in links
+        homepage = next(href for href in links if href.endswith("index.html"))
+        assert (page.parent / homepage).resolve() == (DOCS / "index.html").resolve()

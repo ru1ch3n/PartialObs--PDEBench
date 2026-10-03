@@ -1,0 +1,10 @@
+{
+  "snapshot": "paper-20260925-v1",
+  "file": "paper-20260925-v1.json",
+  "sha256": "f2df284afb835bb169a1bef68bd61448b3b111e30d42ceb7db5a8feb9c369cc8",
+  "source_commit": "ab62fa7504627c124c187e1822b27b95e79c9a76",
+  "source_url": "https://github.com/ru1ch3n/PDE-OBS/blob/ab62fa7504627c124c187e1822b27b95e79c9a76/results/prediction_verification_20260924/index.json",
+  "source_sha256": "5ae567e151c71fda46aa0cf3c6c08861f7d3ed01096fb2e89a9bf22e817b09d1",
+  "models": 441,
+  "blocks": 3969
+}

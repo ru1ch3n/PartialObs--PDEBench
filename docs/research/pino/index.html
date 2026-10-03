@@ -32,6 +32,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>Physics-Informed Neural Operators (PINO) regularize operator learning with PDE residual constraints. Compared to pure data-driven neural operators, PINO aims to reduce data requirements and improve robustness/extrapolation by enforcing physics either during training or through additional residual terms.</p></section>
 <section id="problem"><h2>Problem</h2><p>Neural operators learn mappings between function spaces (e.g., coefficients → solutions), but may require large datasets and can generalize poorly out of distribution. PINO addresses this by integrating PDE knowledge: the learned operator should produce outputs that satisfy the governing equation.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

@@ -1,3 +1,12 @@
+> **Current PDE-OBS public release:** use [ru1ch3n/PDE-OBS](https://github.com/ru1ch3n/PDE-OBS)
+> for current code, installation, protocols, paper and results. This repository
+> maintains the [project website](https://ru1ch3n.github.io/PartialObs--PDEBench/),
+> literature index and earlier tooling. The instructions and scientific status
+> below describe that earlier implementation. The website is now an open evaluation
+> and research platform with a frozen paper snapshot, result explorer, method cards
+> and study proposals. Required automated checks remain enabled; mandatory PR
+> approval is disabled. See [Contributing](CONTRIBUTING.md).
+
 <p align="center">
   <img src="docs/assets/readme-banner.svg" alt="PDE-OBS — Partial Observation PDE Benchmark" width="100%" />
 </p>

@@ -32,6 +32,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>U-Net is a symmetric encoder–decoder convolutional network with skip connections that fuse high-resolution features from the encoder into the decoder. While originally proposed for biomedical segmentation, it is widely used as a baseline for dense prediction on grids (including PDE surrogate modeling and masked field reconstruction).</p></section>
 <section id="problem"><h2>Problem</h2><p>Provide a fast, high-quality mapping from input images/tensors to output images/tensors when locality and multi-scale context matter. In AI4PDE, U-Net is a common baseline for grid-based surrogates and inpainting.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

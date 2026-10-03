@@ -33,6 +33,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>VideoPDE casts a spatiotemporal PDE solution u(x,t) as a video tensor and applies conditional diffusion (inpainting/forecasting) to reconstruct missing observations. The framing naturally supports irregular spatiotemporal masks and emphasizes coherent long-horizon generation.</p></section>
 <section id="problem"><h2>Problem</h2><p>Many PDE inference settings provide only partial observations over space/time (missing sensors, masked pixels, intermittent trajectories). Classical operator learners struggle when supervision is sparse or the task changes (new masks). VideoPDE uses a diffusion prior over trajectories to reconstruct/forecast in a mask-conditional way.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

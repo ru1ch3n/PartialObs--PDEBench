@@ -1,0 +1,47 @@
+name: Submit a Method
+description: Propose a reproducible PDE-OBS adapter and evaluation package.
+title: "[Method] "
+body:
+  - type: markdown
+    attributes:
+      value: "Submit public evidence links here. Large data and checkpoints belong in an artifact store. A submitted method is not automatically a verified result."
+  - type: textarea
+    id: method
+    attributes:
+      label: Method and implementation identity
+      description: Paper, official code, license, inspected upstream revision, evaluated code commit; official, adapted or inspired implementation and differences.
+    validations:
+      required: true
+  - type: textarea
+    id: coverage
+    attributes:
+      label: Task and coverage
+      description: PDEs, train/test observations, dataset and split identity, protocol and evaluator versions; completed and missing conditions.
+    validations:
+      required: true
+  - type: textarea
+    id: permissions
+    attributes:
+      label: Information permissions and pretraining
+      description: Separate training and inference inputs, target supervision, physics metadata, pretraining data and potential overlap. Mark unknowns explicitly.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Artifacts and reproduction evidence
+      description: Adapter, environment, configs, seeds, checkpoint SHA-256, result files and exact commands. State whether scoring, inference or training was rerun.
+    validations:
+      required: true
+  - type: textarea
+    id: budget
+    attributes:
+      label: Compute budget and limitations
+      description: Actual epochs, hardware, training/adaptation time, inference latency, peak memory, measurement method; use unavailable rather than estimates when unmeasured.
+    validations:
+      required: true
+  - type: textarea
+    id: credit
+    attributes:
+      label: Contributor credit
+      description: Public contributor names and roles to credit for accepted work. Participation does not guarantee paper authorship.

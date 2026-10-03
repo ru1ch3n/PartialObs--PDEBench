@@ -34,6 +34,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>FunDPS adapts diffusion posterior sampling to PDE solution *fields*: sample from a learned diffusion prior while enforcing observations and (optionally) physics constraints through guidance terms. The key idea is to treat the unknown as a function (field) and make the guidance compatible with PDE operators and masks.</p></section>
 <section id="problem"><h2>Problem</h2><p>Inverse problems for PDEs (inpainting, sparse sensors, data assimilation) require drawing samples of solution fields consistent with partial observations. Standard diffusion priors sample unconditionally; naive conditioning can be weak or expensive. FunDPS targets practical posterior sampling for PDE fields by combining diffusion priors with measurement/physics guidance in a function-space framing.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

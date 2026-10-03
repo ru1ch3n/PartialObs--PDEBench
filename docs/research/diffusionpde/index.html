@@ -29,6 +29,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>Train a diffusion model on joint fields (coefficients + solutions) and perform PDE reconstruction under sparse observations via guided sampling that combines observation consistency and PDE-residual guidance.</p></section>
 <section id="problem"><h2>Problem</h2><p>Given partial observations of a PDE solution (e.g., sparse sensors / masked pixels) and optionally unknown PDE coefficients, reconstruct the full field (and the hidden coefficient field) in a way that is consistent with both the observations and the governing PDE.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

@@ -1,0 +1,43 @@
+name: Reproduce a Result
+description: Report a precisely scoped check or reproduction, with evidence.
+title: "[Reproduction] "
+body:
+  - type: input
+    id: result
+    attributes:
+      label: Snapshot and result identity
+      description: Snapshot ID, PDE, method, training view and test view.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Verification scope
+      options:
+        - Configuration and artifact inspection
+        - Rescoring existing predictions
+        - Rerunning inference
+        - Retraining and evaluation
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction package
+      description: Commands, environment, code/evaluator commit, data/split and checkpoint hashes, config, seed, budget and public evidence links.
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Outcome and comparison rule
+      description: Expected and observed results, tolerance and its justification, failures and missing coverage. Distinguish sample SD from seed uncertainty.
+    validations:
+      required: true
+  - type: textarea
+    id: credit
+    attributes:
+      label: Credit and limitations
+      description: Public contributor names, roles, limitations and checks not performed.
+    validations:
+      required: true

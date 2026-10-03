@@ -8,14 +8,14 @@ If that folder is missing/empty, it falls back to the legacy
 ``scripts/research_db.ndjson`` file.
 
 It writes:
-  - docs/index.html                     (homepage: summary + paper tree)
+  - docs/index.html and platform pages (versioned evaluation platform)
   - docs/research/index.html            (research hub + category browser)
   - docs/research/<slug>/index.html     (one page per paper)
   - docs/pde-problems/index.html        (PDE-centric index)
   - docs/baselines/index.html           (baseline-centric index)
   - docs/builder/index.html             (interactive benchmark command builder)
   - docs/server/index.html              (Linux + portable Slurm run guide)
-  - docs/contribute/index.html          (how to add/curate papers)
+  - docs/contribute/literature.html     (how to add/curate papers)
 
 This repo uses GitHub Pages with /docs as the site root.
 """
@@ -925,6 +925,13 @@ def page(
   </header>
 
   <main class=\"container\">
+    <aside class=\"note\" aria-label=\"Current PDE-OBS release\">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href=\"{root}index.html\">PDE-OBS project homepage</a>,
+      <a href=\"https://github.com/ru1ch3n/PDE-OBS\">public code repository</a>, or
+      <a href=\"https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md\">current installation guide</a>.
+    </aside>
     {body_html}
 
     <footer class=\"footer\">
@@ -2501,11 +2508,10 @@ def main() -> None:
     )
 
     # Core pages
-    write(DOCS / "index.html", render_home(papers))
     write(DOCS / "research" / "index.html", render_research_index(papers))
     write(DOCS / "builder" / "index.html", render_builder())
     write(DOCS / "server" / "index.html", render_server())
-    write(DOCS / "contribute" / "index.html", render_contribute(papers))
+    write(DOCS / "contribute" / "literature.html", render_contribute(papers))
 
     # Single generic placeholder page for non-curated papers
     write(DOCS / "research" / "paper" / "index.html", render_paper_placeholder())
@@ -2525,6 +2531,10 @@ def main() -> None:
     # PDE problems and baselines index pages
     write(DOCS / "pde-problems" / "index.html", render_pde_problems(papers))
     write(DOCS / "baselines" / "index.html", render_baselines(papers))
+
+    from build_platform import build
+
+    build(render_research_index(papers))
 
     print(
         f"Generated: {len(curated)} curated paper pages + {len(papers)} index entries (papers_db.json)."

@@ -33,6 +33,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>PDE-Refiner wraps an existing neural PDE solver with an iterative correction mechanism. Given an initial prediction, a refiner network predicts corrections based on the current state and (optionally) PDE residual/constraints, improving accuracy and long-horizon stability.</p></section>
 <section id="problem"><h2>Problem</h2><p>Neural PDE solvers often accumulate error during rollouts or when asked to reconstruct missing data. Training a single forward pass model can be insufficient for high accuracy across many steps. PDE-Refiner targets this by explicitly learning a correction step that can be applied repeatedly.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

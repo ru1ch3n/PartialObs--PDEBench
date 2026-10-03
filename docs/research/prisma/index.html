@@ -33,6 +33,13 @@
   </header>
 
   <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
     <section id="tldr"><h2>TL;DR</h2><p>PRISMA reframes &quot;physics guidance&quot; for diffusion neural operators: instead of adding a PDE-residual gradient at sampling time, it feeds residual information into the denoiser as a *frequency-aware attention signal*. This aims to improve high-frequency fidelity and stability for inverse problems under sparse/partial observations.</p></section>
 <section id="problem"><h2>Problem</h2><p>Diffusion-based PDE priors are powerful for inverse problems, but *loss guidance* (injecting ∇||F(u)|| during sampling) can be unstable and expensive because it requires repeated PDE residual evaluations/gradients. PRISMA targets more stable and efficient conditioning by integrating residual information into the denoiser through spectral attention.</p></section>
 <section id="benefits"><h2>Benefits vs others</h2><ul>

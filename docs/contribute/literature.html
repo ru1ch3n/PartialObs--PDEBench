@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#071225" />
+  <title>Contribute</title>
+  <link rel="stylesheet" href="../assets/style.css?v=2026-08-18-design-v4" />
+
+</head>
+
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-top">
+        <div>
+          <h1>Contribute</h1>
+          <p class="subtitle">Current DB: <b>301</b> papers (<b>12</b> curated).</p>
+
+        </div>
+
+
+      </div>
+
+
+
+      <nav class="nav"><a href="../index.html">Home</a><a href="../research/">Research</a><a href="../pde-problems/">PDE problems</a><a href="../baselines/">Baselines</a><a href="../benchmark/">Benchmark</a><a href="../builder/">Builder</a><a href="../server/">Run</a><a href="../contribute/" aria-current="page">Contribute</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <aside class="note" aria-label="Current PDE-OBS release">
+      <strong>Earlier documentation and research archive.</strong>
+      This page describes the earlier tools or literature, not the current released protocol.
+      Start at the <a href="../index.html">PDE-OBS project homepage</a>,
+      <a href="https://github.com/ru1ch3n/PDE-OBS">public code repository</a>, or
+      <a href="https://github.com/ru1ch3n/PDE-OBS/blob/main/docs/installation.md">current installation guide</a>.
+    </aside>
+
+    <h1>Contribute</h1>
+    <p class="muted">Current DB: <b>301</b> papers (<b>12</b> curated).</p>
+
+    <div class="card">
+      <h2>Contribute code or report a problem</h2>
+      <p>Code changes use GitHub pull requests. Read the <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/blob/main/CONTRIBUTING.md">contribution guide</a> before opening one, and use <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/issues">GitHub Issues</a> for reproducible bugs or enhancement requests.</p>
+      <p>Do not disclose a suspected vulnerability in a public issue. Follow the private process in the <a href="https://github.com/ru1ch3n/PartialObs--PDEBench/security/policy">security policy</a>.</p>
+    </div>
+
+    <div class="card">
+      <h2>How the data is stored</h2>
+      <ul>
+        <li><b>Index list (metadata)</b>: <code>scripts/research_db.ndjson</code> (JSON Lines). Add new papers here (title/authors/year/links) when you want them searchable.</li>
+        <li><b>Curated summaries (rich content)</b>: <code>data/curations/&lt;slug&gt;.json</code>. Only add these for papers you want to curate deeply (tables, math, detailed settings).</li>
+      </ul>
+      <p class="muted">Tip: keep most papers as <b>index-only</b>; curate a small set with high quality and lots of details.</p>
+    </div>
+
+    <div class="card">
+      <h2>Add a new curated paper (step-by-step)</h2>
+      <ol>
+        <li>Find the paper in <a href="../research/">Research</a>. Open its page (index view) and copy the <b>slug</b> from the URL (<code>?slug=...</code>).</li>
+        <li>Create <code>data/curations/&lt;slug&gt;.json</code> using the template below.</li>
+        <li>Fill in the fields. For <b>results_tables</b>, please copy the numbers from the paper’s tables (metrics, settings, baselines). For <b>core_math</b>, include the core idea + equations in LaTeX.</li>
+        <li>Rebuild the website: <code>python scripts/generate_research_site.py</code></li>
+        <li>Commit and push. GitHub Pages will serve <code>docs/</code>.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Template (copy/paste)</h2>
+      <pre><code>{
+  &quot;slug&quot;: &quot;my-paper-2025&quot;,
+  &quot;status&quot;: &quot;curated&quot;,
+  &quot;full_title&quot;: &quot;Full paper title goes here&quot;,
+  &quot;short_title&quot;: &quot;MyPaper&quot;,
+  &quot;authors&quot;: &quot;First Author; Second Author; ...&quot;,
+  &quot;year&quot;: 2025,
+  &quot;venue&quot;: &quot;ICLR&quot;,
+  &quot;method_class&quot;: &quot;Operator learning&quot;,
+  &quot;links&quot;: {
+    &quot;paper&quot;: &quot;https://arxiv.org/abs/xxxx.xxxxx&quot;,
+    &quot;code&quot;: &quot;https://github.com/user/repo&quot;
+  },
+
+  &quot;tldr&quot;: &quot;2–4 sentences: what the method does + why it matters.&quot;,
+  &quot;problem&quot;: &quot;What problem does the paper solve? (be concrete about partial observation / inverse / operator learning / etc.)&quot;,
+
+  &quot;contrib&quot;: [
+    &quot;Main contribution #1 (method idea).&quot;,
+    &quot;Main contribution #2 (training / inference trick).&quot;,
+    &quot;Main contribution #3 (benchmark / dataset / analysis).&quot;
+  ],
+  &quot;benefits&quot;: [
+    &quot;Why this is better than prior work (accuracy / speed / generalization / stability / data efficiency).&quot;
+  ],
+
+  &quot;core_math&quot;: [
+    &quot;Put the key equations here in LaTeX (no $...$ wrappers).&quot;,
+    &quot;Example: G_\theta(u)(y) = \sum_{k=1}^p b_k(u)\,t_k(y)&quot;
+  ],
+
+  &quot;data_setting&quot;: [
+    &quot;Dataset: size, how generated, train/val/test split.&quot;,
+    &quot;PDE + domain + discretization / resolution.&quot;,
+    &quot;Observation pattern (mask/sensors) + noise model.&quot;
+  ],
+  &quot;model_setting&quot;: [
+    &quot;Architecture (layers, width, latent dims, Fourier modes, etc.).&quot;,
+    &quot;Inputs/outputs parameterization (what is u, what is a, what is y).&quot;
+  ],
+  &quot;training_setting&quot;: [
+    &quot;Optimizer, learning rate schedule, epochs/steps, batch size, hardware.&quot;
+  ],
+
+  &quot;baselines&quot;: [
+    &quot;Baseline A&quot;,
+    &quot;Baseline B&quot;
+  ],
+
+  &quot;results_tables&quot;: [
+    {
+      &quot;title&quot;: &quot;Main quantitative results (copy numbers from the paper tables)&quot;,
+      &quot;note&quot;: &quot;Write the metric + what lower/higher means.&quot;,
+      &quot;header&quot;: [&quot;Setting&quot;, &quot;Method&quot;, &quot;Metric&quot;],
+      &quot;rows&quot;: [
+        [&quot;...&quot;, &quot;MyPaper&quot;, &quot;0.012&quot;],
+        [&quot;...&quot;, &quot;Baseline A&quot;, &quot;0.034&quot;]
+      ]
+    }
+  ],
+
+  &quot;interesting&quot;: [
+    &quot;Any extra insights that are useful for readers (failure modes, ablations, theory notes, etc.).&quot;
+  ],
+
+  &quot;bibtex&quot;: &quot;@inproceedings{...}&quot;
+}</code></pre>
+      <p class="muted">You can add extra fields if useful; unknown fields are ignored by the site generator.</p>
+    </div>
+
+    <div class="card">
+      <h2>Batch BibTeX export</h2>
+      <p>On the <a href="../research/">Research</a> page you can use the <b>Pick</b> checkboxes to select many papers and export a BibTeX file (copy or download).</p>
+    </div>
+
+    <div class="card">
+      <h2>Bulk import (optional)</h2>
+      <p>If you have a BibTeX file and want to convert it into index entries (NDJSON), use:</p>
+      <pre><code>python scripts/import_bibtex_to_json.py path/to/papers.bib</code></pre>
+      <p class="muted">This script is best-effort and produces metadata. Curations still require human-written JSON files.</p>
+    </div>
+
+
+    <footer class="footer">
+      <div class="muted">Generated deterministically from repository sources.</div>
+    </footer>
+  </main>
+</body>
+</html>

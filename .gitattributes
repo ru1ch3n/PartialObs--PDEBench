@@ -9,3 +9,6 @@
 *.jpg binary
 *.jpeg binary
 *.pdf binary
+
+# Snapshot digests use canonical bytes on every platform.
+docs/assets/snapshots/*.json text eol=lf
